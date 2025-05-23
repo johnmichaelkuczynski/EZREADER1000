@@ -30,10 +30,15 @@ export function InputEditor({
   const [isDragActive, setIsDragActive] = useState(false);
   
   // Setup dropzone
-  const { getRootProps, getInputProps } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive: dropzoneIsDragActive } = useDropzone({
     onDrop: async (acceptedFiles) => {
       if (acceptedFiles.length > 0) {
-        await onFileUpload(acceptedFiles[0]);
+        try {
+          await onFileUpload(acceptedFiles[0]);
+          console.log("File uploaded successfully:", acceptedFiles[0].name);
+        } catch (error) {
+          console.error("Error uploading file:", error);
+        }
       }
     },
     onDragEnter: () => setIsDragActive(true),
@@ -43,7 +48,8 @@ export function InputEditor({
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
       'application/msword': ['.doc'],
       'text/plain': ['.txt']
-    }
+    },
+    noClick: true // Disable the click behavior of the dropzone
   });
   
   // Handle file input change
@@ -134,7 +140,11 @@ export function InputEditor({
       </div>
       
       <CardContent className="p-0">
-        <div className="editor overflow-y-auto p-0">
+        <div 
+          {...getRootProps()}
+          className={`editor overflow-y-auto p-0 ${isDragActive ? 'border-2 border-dashed border-blue-300' : ''}`}
+        >
+          <input {...getInputProps()} />
           <Textarea
               className="min-h-[600px] h-full rounded-none border-0 resize-none focus-visible:ring-0"
               placeholder="Type or paste your text here..."
@@ -143,7 +153,6 @@ export function InputEditor({
             />
           {false && (
             <div 
-              {...getRootProps()}
               className={`border-2 border-dashed border-slate-200 rounded-lg h-full min-h-[300px] flex flex-col items-center justify-center p-6 text-center cursor-pointer ${
                 isDragActive ? 'drag-active' : ''
               }`}
