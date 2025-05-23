@@ -1,5 +1,5 @@
 // Chunk a large text into smaller parts for processing
-export function chunkText(text: string, chunkSize: number = 1000): string[] {
+export function chunkText(text: string, chunkSize: number = 500): string[] {
   // No need to chunk if the text is smaller than the chunk size
   if (countWords(text) <= chunkSize) {
     return [text];
