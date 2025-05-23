@@ -155,7 +155,7 @@ export function ChatInterface({
         <form className="flex items-end gap-2" onSubmit={handleSubmit}>
           <div className="flex-1 relative">
             <Textarea
-              className="w-full border border-slate-200 rounded-lg p-3 pr-12 text-sm focus:outline-none focus:ring-1 focus:ring-primary min-h-[80px] resize-none"
+              className="w-full border border-slate-200 rounded-lg p-3 pr-12 text-sm focus:outline-none focus:ring-1 focus:ring-primary min-h-[200px] resize-none"
               placeholder="Type your rewrite instructions here..."
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
