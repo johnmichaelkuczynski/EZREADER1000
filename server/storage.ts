@@ -79,7 +79,7 @@ export class DatabaseStorage implements IStorage {
   
   async deleteDocument(id: number): Promise<boolean> {
     const result = await db.delete(documents).where(eq(documents.id, id));
-    return result.count > 0;
+    return Boolean(result.rowCount);
   }
   
   // Content source operations
@@ -108,7 +108,7 @@ export class DatabaseStorage implements IStorage {
   
   async deleteContentSource(id: number): Promise<boolean> {
     const result = await db.delete(contentSources).where(eq(contentSources.id, id));
-    return result.count > 0;
+    return Boolean(result.rowCount);
   }
   
   // Saved instructions operations
@@ -137,7 +137,7 @@ export class DatabaseStorage implements IStorage {
   
   async deleteSavedInstructions(id: number): Promise<boolean> {
     const result = await db.delete(savedInstructions).where(eq(savedInstructions.id, id));
-    return result.count > 0;
+    return Boolean(result.rowCount);
   }
 }
 
