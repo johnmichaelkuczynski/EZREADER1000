@@ -192,7 +192,14 @@ export class MemStorage implements IStorage {
   async createDocument(document: InsertDocument): Promise<Document> {
     const id = this.currentDocumentId++;
     const now = new Date();
-    const newDocument: Document = { ...document, id, createdAt: now };
+    const newDocument: Document = { 
+      ...document, 
+      id, 
+      createdAt: now,
+      instructions: document.instructions || null,
+      userId: document.userId || null,
+      outputText: document.outputText || null
+    };
     this.documents.set(id, newDocument);
     return newDocument;
   }
@@ -222,7 +229,13 @@ export class MemStorage implements IStorage {
   async createContentSource(contentSource: InsertContentSource): Promise<ContentSource> {
     const id = this.currentContentSourceId++;
     const now = new Date();
-    const newContentSource: ContentSource = { ...contentSource, id, createdAt: now };
+    const newContentSource: ContentSource = { 
+      ...contentSource, 
+      id, 
+      createdAt: now,
+      source: contentSource.source || null,
+      documentId: contentSource.documentId || null
+    };
     this.contentSources.set(id, newContentSource);
     return newContentSource;
   }
@@ -252,7 +265,12 @@ export class MemStorage implements IStorage {
   async createSavedInstructions(instruction: InsertSavedInstructions): Promise<SavedInstructions> {
     const id = this.currentSavedInstructionsId++;
     const now = new Date();
-    const newInstruction: SavedInstructions = { ...instruction, id, createdAt: now };
+    const newInstruction: SavedInstructions = { 
+      ...instruction, 
+      id, 
+      createdAt: now,
+      userId: instruction.userId || null
+    };
     this.savedInstructions.set(id, newInstruction);
     return newInstruction;
   }

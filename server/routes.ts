@@ -181,7 +181,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const transcribedText = await transcribeAudio(audioBuffer);
       
       res.json({ result: transcribedText });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error transcribing audio:', error);
       res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to transcribe audio' });
     }
@@ -194,7 +194,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const searchResults = await searchOnline(query);
       
       res.json(searchResults);
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         res.status(400).json({ error: fromZodError(error).message });
       } else {
@@ -212,7 +212,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const content = await fetchWebContent(url);
       res.json({ content });
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         res.status(400).json({ error: fromZodError(error).message });
       } else {
@@ -241,7 +241,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       res.json({ success });
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         res.status(400).json({ error: fromZodError(error).message });
       } else {
@@ -270,7 +270,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       res.json(savedInstructions);
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         res.status(400).json({ error: fromZodError(error).message });
       } else {
@@ -287,7 +287,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const savedInstructions = await storage.getSavedInstructionsByUserId(userId);
       
       res.json(savedInstructions);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error getting saved instructions:', error);
       res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to get saved instructions' });
     }
