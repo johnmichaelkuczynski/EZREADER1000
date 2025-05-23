@@ -275,52 +275,32 @@ export default function Home() {
             
             {/* Text Processing Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Side-by-side editors grid */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold mb-2">Source Document</h3>
-                {/* Content Source for reference material */}
-                <div className="mb-4">
-                  <ContentSourceBox
-                    text={contentSource}
-                    onTextChange={setContentSource}
-                    onClear={() => setContentSource('')}
-                    useContentSource={useContentSource}
-                    onUseContentSourceChange={setUseContentSource}
-                    onFileUpload={handleContentSourceFileUpload}
-                    contentSourceFileRef={contentSourceFileRef}
-                  />
-                </div>
-                
-                {/* Input Editor */}
-                <InputEditor
-                  text={inputText}
-                  onTextChange={setInputText}
-                  onFileUpload={handleInputFileUpload}
-                  onClear={clearInput}
-                  onCopy={copyToClipboard}
-                  onDetectAI={(text) => detectAIText(text, true)}
-                  isDetecting={isInputDetecting}
-                  inputFileRef={inputFileRef}
-                />
-              </div>
+              {/* Input Editor */}
+              <InputEditor
+                text={inputText}
+                onTextChange={setInputText}
+                onFileUpload={handleInputFileUpload}
+                onClear={clearInput}
+                onCopy={copyToClipboard}
+                onDetectAI={(text) => detectAIText(text, true)}
+                isDetecting={isInputDetecting}
+                inputFileRef={inputFileRef}
+              />
               
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold mb-2">Transformed Document</h3>
-                {/* Output Editor */}
-                <OutputEditor
-                  text={outputText}
-                  onTextChange={setOutputText}
-                  onClear={clearOutput}
-                  onCopy={copyToClipboard}
-                  onExportPDF={exportAsPDF}
-                  onExportDOCX={exportAsDOCX}
-                  onDetectAI={(text) => detectAIText(text, false)}
-                  onSendEmail={sendEmailWithDocument}
-                  isDetecting={isOutputDetecting}
-                  isSendingEmail={isSendingEmail}
-                  inputText={inputText}
-                />
-              </div>
+              {/* Output Editor */}
+              <OutputEditor
+                text={outputText}
+                onTextChange={setOutputText}
+                onClear={clearOutput}
+                onCopy={copyToClipboard}
+                onExportPDF={exportAsPDF}
+                onExportDOCX={exportAsDOCX}
+                onDetectAI={(text) => detectAIText(text, false)}
+                onSendEmail={sendEmailWithDocument}
+                isDetecting={isOutputDetecting}
+                isSendingEmail={isSendingEmail}
+                inputText={inputText}
+              />
             </div>
             
             {/* Processing Status Bar - shown only when processing */}

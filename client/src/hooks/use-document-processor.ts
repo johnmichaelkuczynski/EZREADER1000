@@ -16,7 +16,7 @@ export function useDocumentProcessor() {
     {
       id: uuidv4(),
       role: 'assistant',
-      content: 'Welcome to EZ Reader! Provide instructions on how you\'d like your text to be transformed. For example:\n\n• Summarize this content while maintaining key points\n• Rewrite in a more conversational tone\n• Convert this text to a bullet-point list\n• Simplify for a middle-school reading level'
+      content: 'Provide instructions on how you\'d like your text to be transformed. For example:\n\n• Summarize this content while maintaining key points\n• Rewrite in a more conversational tone\n• Convert this text to a bullet-point list\n• Simplify for a middle-school reading level'
     }
   ]);
   const [isInputDetecting, setIsInputDetecting] = useState<boolean>(false);

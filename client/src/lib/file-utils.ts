@@ -44,9 +44,10 @@ async function extractTextFromPDF(file: File): Promise<string> {
     }
     
     return text;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error extracting text from PDF:', error);
-    throw new Error(`Failed to extract text from PDF: ${error.message}`);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    throw new Error(`Failed to extract text from PDF: ${errorMessage}`);
   }
 }
 
@@ -57,9 +58,10 @@ async function extractTextFromDOCX(file: File): Promise<string> {
   try {
     const result = await mammoth.extractRawText({ arrayBuffer });
     return result.value;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error extracting text from DOCX:', error);
-    throw new Error(`Failed to extract text from DOCX: ${error.message}`);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    throw new Error(`Failed to extract text from DOCX: ${errorMessage}`);
   }
 }
 
