@@ -23,9 +23,22 @@ export function useDocumentProcessor() {
   const [isOutputDetecting, setIsOutputDetecting] = useState<boolean>(false);
   const [inputAIResult, setInputAIResult] = useState<{ isAI: boolean; confidence: number; details: string } | null>(null);
   const [outputAIResult, setOutputAIResult] = useState<{ isAI: boolean; confidence: number; details: string } | null>(null);
+  const [savedInstructions, setSavedInstructions] = useState<string>('');
   
   const { toast } = useToast();
-  const { llmProvider, setLLMProvider, processing, processFullText, cancelProcessing, getEstimatedChunks } = useLLM();
+  const { 
+    llmProvider, 
+    setLLMProvider, 
+    processing, 
+    processFullText, 
+    processSelectedChunks,
+    cancelProcessing, 
+    getEstimatedChunks,
+    documentChunks,
+    showChunkSelector,
+    setShowChunkSelector
+  } = useLLM();
+  
   const inputFileRef = useRef<HTMLInputElement>(null);
   const contentSourceFileRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLInputElement>(null);
@@ -51,6 +64,9 @@ export function useDocumentProcessor() {
     }
     
     try {
+      // Save the instructions for potential use with selected chunks later
+      setSavedInstructions(instructions);
+      
       // Add the user message
       const userMessageId = uuidv4();
       setMessages(prev => [...prev, {
@@ -77,7 +93,7 @@ export function useDocumentProcessor() {
       if (estimatedChunks > 1) {
         toast({
           title: "Processing large document",
-          description: `Document will be processed in ${estimatedChunks} chunks.`,
+          description: `Document will be divided into ${estimatedChunks} chunks. You'll be able to select which chunks to process.`,
         });
       }
       
@@ -102,6 +118,19 @@ export function useDocumentProcessor() {
         }
       );
       
+      // If the chunk selector is shown, we need to wait for user selection
+      // The actual processing will happen in processSelectedDocumentChunks
+      if (showChunkSelector) {
+        // Update the assistant message to guide the user
+        setMessages(prev => prev.map(msg => 
+          msg.id === messageIdRef.current
+            ? { ...msg, content: 'Please select which chunks of the document you would like to process from the list below.' }
+            : msg
+        ));
+        return '';
+      }
+      
+      // If we get here, the document was processed normally (single chunk)
       // Final update to output text (should be the same as last chunk update)
       setOutputText(result);
       
@@ -113,23 +142,95 @@ export function useDocumentProcessor() {
       ));
       
       return result;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error processing document:', error);
       
       // Update the assistant message with the error
       setMessages(prev => prev.map(msg => 
-        msg.id === messageIdRef.current
-          ? { ...msg, content: `Error processing document: ${error.message}` }
+        msg.id === assistantMessageId
+          ? { ...msg, content: `Error processing document: ${error?.message || 'Unknown error'}` }
           : msg
       ));
       
       toast({
         title: "Processing failed",
-        description: error.message,
+        description: error?.message || 'Unknown error occurred',
         variant: "destructive"
       });
     }
-  }, [inputText, outputText, contentSource, useContentSource, reprocessOutput, llmProvider, toast, processFullText, getEstimatedChunks]);
+  }, [inputText, outputText, contentSource, useContentSource, reprocessOutput, llmProvider, toast, processFullText, getEstimatedChunks, showChunkSelector, setMessages, setSavedInstructions]);
+  
+  // Process selected document chunks
+  const processSelectedDocumentChunks = useCallback(async (selectedIndices: number[]) => {
+    if (selectedIndices.length === 0) {
+      toast({
+        title: "No chunks selected",
+        description: "Please select at least one chunk to process.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      // Add processing message
+      const assistantMessageId = uuidv4();
+      setMessages(prev => [...prev, {
+        id: assistantMessageId,
+        role: 'assistant',
+        content: `Processing ${selectedIndices.length} selected chunk(s)...`
+      }]);
+      
+      // Store the assistant message ID for updating status
+      const messageIdRef = { current: assistantMessageId };
+      
+      // Process only the selected chunks
+      const result = await processSelectedChunks(
+        selectedIndices,
+        savedInstructions,
+        contentSource,
+        useContentSource,
+        // Add callback to update output text in real-time as each chunk is processed
+        (currentResult, currentChunk, totalChunks) => {
+          // Update the output text as each chunk is processed
+          setOutputText(currentResult);
+          
+          // Also update the assistant message to show progress
+          setMessages(prev => prev.map(msg => 
+            msg.id === messageIdRef.current
+              ? { ...msg, content: `Processing selected chunks: Completed chunk ${currentChunk} of ${totalChunks} (${Math.round((currentChunk/totalChunks) * 100)}%)` }
+              : msg
+          ));
+        }
+      );
+      
+      // Final update to output text (should be the same as last chunk update)
+      setOutputText(result);
+      
+      // Update the assistant message
+      setMessages(prev => prev.map(msg => 
+        msg.id === messageIdRef.current
+          ? { ...msg, content: 'Selected chunks processed successfully! Results have been displayed in the output box.' }
+          : msg
+      ));
+      
+      return result;
+    } catch (error: any) {
+      console.error('Error processing selected chunks:', error);
+      
+      // Update the assistant message with the error
+      setMessages(prev => prev.map(msg => 
+        msg.id === messageIdRef.current
+              ? { ...msg, content: `Error processing selected chunks: ${error?.message || 'Unknown error'}` }
+              : msg
+      ));
+      
+      toast({
+        title: "Processing failed",
+        description: error?.message || 'Unknown error occurred',
+        variant: "destructive"
+      });
+    }
+  }, [savedInstructions, contentSource, useContentSource, processSelectedChunks, toast, setMessages]);
   
   // Handle file upload for the input editor
   const handleInputFileUpload = useCallback(async (file: File) => {
@@ -141,11 +242,11 @@ export function useDocumentProcessor() {
         title: "File uploaded",
         description: `Successfully extracted ${text.length} characters from ${file.name}`,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading file:', error);
       toast({
         title: "Upload failed",
-        description: error.message,
+        description: error?.message || "Failed to process file",
         variant: "destructive"
       });
     }
@@ -161,11 +262,11 @@ export function useDocumentProcessor() {
         title: "Source file uploaded",
         description: `Successfully extracted ${text.length} characters`,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading content source file:', error);
       toast({
         title: "Upload failed",
-        description: error.message,
+        description: error?.message || "Failed to process file",
         variant: "destructive"
       });
     }
@@ -186,11 +287,11 @@ export function useDocumentProcessor() {
         title: "Transcription complete",
         description: `Added ${transcribedText.length} characters to the input`,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error transcribing audio:', error);
       toast({
         title: "Transcription failed",
-        description: error.message,
+        description: error?.message || "Failed to transcribe audio",
         variant: "destructive"
       });
     }
@@ -230,7 +331,7 @@ export function useDocumentProcessor() {
       });
       
       return result;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error detecting AI:', error);
       
       if (isInput) {
@@ -241,7 +342,7 @@ export function useDocumentProcessor() {
       
       toast({
         title: "Detection failed",
-        description: error.message,
+        description: error?.message || "Failed to analyze text",
         variant: "destructive"
       });
     }
@@ -285,6 +386,7 @@ export function useDocumentProcessor() {
     setMessages,
     processing,
     processDocument,
+    processSelectedDocumentChunks,
     cancelProcessing,
     inputFileRef,
     contentSourceFileRef,
@@ -301,6 +403,9 @@ export function useDocumentProcessor() {
     clearOutput,
     clearChat,
     llmProvider,
-    setLLMProvider
+    setLLMProvider,
+    documentChunks,
+    showChunkSelector,
+    setShowChunkSelector
   };
 }
