@@ -193,11 +193,11 @@ export default function Home() {
       await handleAudioTranscription(audioFile);
       setAudioTranscribeDialogOpen(false);
       setAudioFile(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Transcription error:', error);
       toast({
         title: "Transcription failed",
-        description: error.message,
+        description: error?.message || "Failed to transcribe audio",
         variant: "destructive"
       });
     }
@@ -300,7 +300,10 @@ export default function Home() {
                 onFileUpload={handleInputFileUpload}
                 onClear={clearInput}
                 onCopy={copyToClipboard}
-                onDetectAI={(text) => detectAIText(text, true)}
+                onDetectAI={(text) => {
+                  detectAIText(text, true);
+                  return Promise.resolve();
+                }}
                 isDetecting={isInputDetecting}
                 inputFileRef={inputFileRef}
               />
@@ -313,7 +316,10 @@ export default function Home() {
                 onCopy={copyToClipboard}
                 onExportPDF={exportAsPDF}
                 onExportDOCX={exportAsDOCX}
-                onDetectAI={(text) => detectAIText(text, false)}
+                onDetectAI={(text) => {
+                  detectAIText(text, false);
+                  return Promise.resolve();
+                }}
                 onSendEmail={sendEmailWithDocument}
                 isDetecting={isOutputDetecting}
                 isSendingEmail={isSendingEmail}
