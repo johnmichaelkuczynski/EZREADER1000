@@ -60,7 +60,7 @@ async function extractTextFromDOCX(file: File): Promise<string> {
     return result.value;
   } catch (error: unknown) {
     console.error('Error extracting text from DOCX:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorMessage = error instanceof Error ? error.message : String(error || 'Unknown error');
     throw new Error(`Failed to extract text from DOCX: ${errorMessage}`);
   }
 }
