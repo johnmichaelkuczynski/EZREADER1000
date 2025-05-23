@@ -257,9 +257,22 @@ export default function Home() {
         </div>
         
         {/* Content Source Box and Main Editors Grid */}
-        <div className="grid grid-cols-1 gap-6">
-          {/* Main Editor Area */}
-          <div className="w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Content Source Box - Left Column on Large Screens */}
+          <div className="lg:col-span-3 order-2 lg:order-1">
+            <ContentSourceBox
+              text={contentSource}
+              onTextChange={setContentSource}
+              onClear={() => setContentSource('')}
+              useContentSource={useContentSource}
+              onUseContentSourceChange={setUseContentSource}
+              onFileUpload={handleContentSourceFileUpload}
+              contentSourceFileRef={contentSourceFileRef}
+            />
+          </div>
+          
+          {/* Main Editor Area - Right Column on Large Screens */}
+          <div className="lg:col-span-9 order-1 lg:order-2">
             {/* Editor Toolbar */}
             <EditorToolbar
               onProcess={handleProcess}
