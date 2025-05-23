@@ -72,7 +72,8 @@ export function ContentSourceBox({
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
       'application/msword': ['.doc'],
       'text/plain': ['.txt']
-    }
+    },
+    noClick: true // Disable the default click behavior
   });
   
   // Handle file input change
@@ -234,7 +235,12 @@ export function ContentSourceBox({
               variant="outline"
               size="sm"
               className="mt-3"
-              onClick={() => contentSourceFileRef.current?.click()}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (contentSourceFileRef.current) {
+                  contentSourceFileRef.current.click();
+                }
+              }}
             >
               <Upload className="h-4 w-4 mr-1" /> Select File
             </Button>
