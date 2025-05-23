@@ -4,8 +4,7 @@ import { jsPDF } from 'jspdf';
 import { Document, Packer, Paragraph } from 'docx';
 
 // Set PDF.js worker path
-const pdfjsWorker = import('pdfjs-dist/build/pdf.worker.entry');
-pdfjs.GlobalWorkerOptions.workerSrc = await pdfjsWorker;
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 // Extract text from a file (PDF or DOCX)
 export async function extractTextFromFile(file: File): Promise<string> {
