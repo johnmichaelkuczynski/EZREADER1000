@@ -10,6 +10,19 @@ export async function processTextWithAnthropic(options: ProcessTextOptions): Pro
   const { text, instructions, contentSource, useContentSource, maxTokens = 4000 } = options;
   
   let systemPrompt = "You are an assistant that transforms text according to user instructions.";
+  
+  // Check if instructions contain keywords about shortening
+  const requestsShorterOutput = instructions.toLowerCase().includes('shorter') || 
+                               instructions.toLowerCase().includes('summarize') || 
+                               instructions.toLowerCase().includes('reduce') ||
+                               instructions.toLowerCase().includes('condense') ||
+                               instructions.toLowerCase().includes('brief');
+  
+  // Add the instruction about length unless user has specified they want shorter output
+  if (!requestsShorterOutput) {
+    systemPrompt += " IMPORTANT: Unless explicitly requested otherwise, your rewrite MUST be longer than the original text. Add more examples, explanations, or details to make the content more comprehensive.";
+  }
+  
   let userContent = `Instructions: ${instructions}\n\nText to transform:\n${text}`;
   
   if (useContentSource && contentSource) {

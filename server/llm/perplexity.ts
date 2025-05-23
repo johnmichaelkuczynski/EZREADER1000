@@ -5,7 +5,23 @@ const API_URL = 'https://api.perplexity.ai/chat/completions';
 export async function processTextWithPerplexity(options: ProcessTextOptions): Promise<string> {
   const { text, instructions, contentSource, useContentSource } = options;
   
-  let systemPrompt = "Be precise and concise. Transform the provided text according to the instructions.";
+  // Base system prompt
+  let systemPrompt = "Transform the provided text according to the instructions.";
+  
+  // Check if instructions contain keywords about shortening
+  const requestsShorterOutput = instructions.toLowerCase().includes('shorter') || 
+                               instructions.toLowerCase().includes('summarize') || 
+                               instructions.toLowerCase().includes('reduce') ||
+                               instructions.toLowerCase().includes('condense') ||
+                               instructions.toLowerCase().includes('brief');
+  
+  // Add the instruction about length unless user has specified they want shorter output
+  if (!requestsShorterOutput) {
+    systemPrompt += " IMPORTANT: Unless explicitly requested otherwise, your rewrite MUST be longer than the original text. Add more examples, explanations, or details to make the content more comprehensive.";
+  } else {
+    systemPrompt += " Be precise and concise as requested.";
+  }
+  
   let userContent = `Instructions: ${instructions}\n\nText to transform:\n${text}`;
   
   if (useContentSource && contentSource) {
