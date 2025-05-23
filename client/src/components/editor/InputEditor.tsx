@@ -137,7 +137,7 @@ export function InputEditor({
         <div className="editor overflow-y-auto p-0">
           {text ? (
             <Textarea
-              className="min-h-[300px] h-full rounded-none border-0 resize-none focus-visible:ring-0"
+              className="min-h-[600px] h-full rounded-none border-0 resize-none focus-visible:ring-0"
               placeholder="Type or paste your text here..."
               value={text}
               onChange={(e) => onTextChange(e.target.value)}
