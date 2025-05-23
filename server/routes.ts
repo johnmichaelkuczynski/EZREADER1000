@@ -293,5 +293,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update API keys
+  app.post('/api/update-api-keys', async (req: Request, res: Response) => {
+    try {
+      const { openaiKey, anthropicKey, perplexityKey } = req.body;
+      
+      // Update environment variables
+      if (openaiKey) process.env.OPENAI_API_KEY = openaiKey;
+      if (anthropicKey) process.env.ANTHROPIC_API_KEY = anthropicKey;
+      if (perplexityKey) process.env.PERPLEXITY_API_KEY = perplexityKey;
+      
+      res.status(200).json({ success: true, message: 'API keys updated successfully' });
+    } catch (error: unknown) {
+      console.error('Error updating API keys:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : 'Failed to update API keys' 
+      });
+    }
+  });
+
   return httpServer;
 }
