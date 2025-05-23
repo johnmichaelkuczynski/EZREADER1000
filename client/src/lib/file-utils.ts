@@ -101,28 +101,69 @@ export function exportToPDF(text: string, filename = 'document.pdf'): void {
 
 // Export text as DOCX
 export async function exportToDOCX(text: string, filename = 'document.docx'): Promise<void> {
-  // Split text into paragraphs
-  const paragraphs = text
-    .split('\n')
-    .filter(para => para.trim() !== '')
-    .map(para => new Paragraph({
-      text: para
-    }));
-  
-  const doc = new Document({
-    sections: [{
-      properties: {},
-      children: paragraphs
-    }]
-  });
-  
-  const buffer = await Packer.toBuffer(doc);
-  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-  
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = filename;
-  link.click();
-  
-  URL.revokeObjectURL(link.href);
+  try {
+    // Import required modules
+    const { Document, Paragraph, Packer, TextRun } = await import('docx');
+    
+    // Process text to handle markdown-like formatting
+    const lines = text.split('\n');
+    const children = [];
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      
+      if (line === '') {
+        // Add empty paragraph for spacing
+        children.push(new Paragraph({}));
+      } else if (line.startsWith('# ')) {
+        // Heading 1
+        children.push(new Paragraph({
+          children: [new TextRun({ text: line.substring(2), bold: true, size: 36 })],
+        }));
+      } else if (line.startsWith('## ')) {
+        // Heading 2
+        children.push(new Paragraph({
+          children: [new TextRun({ text: line.substring(3), bold: true, size: 30 })],
+        }));
+      } else if (line.startsWith('### ')) {
+        // Heading 3
+        children.push(new Paragraph({
+          children: [new TextRun({ text: line.substring(4), bold: true, size: 26 })],
+        }));
+      } else {
+        // Regular paragraph
+        children.push(new Paragraph({
+          children: [new TextRun({ text: line })],
+        }));
+      }
+    }
+    
+    // Create document
+    const doc = new Document({
+      sections: [{
+        properties: {},
+        children: children
+      }]
+    });
+    
+    // Generate document buffer
+    const buffer = await Packer.toBuffer(doc);
+    const blob = new Blob([buffer], { 
+      type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
+    });
+    
+    // Create download link
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+    
+    // Clean up
+    URL.revokeObjectURL(link.href);
+    
+    console.log('DOCX export completed successfully');
+  } catch (error) {
+    console.error('Error exporting as DOCX:', error);
+    throw new Error('Failed to export document as DOCX');
+  }
 }
