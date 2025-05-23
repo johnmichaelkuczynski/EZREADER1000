@@ -102,105 +102,41 @@ export function exportToPDF(text: string, filename = 'document.pdf'): void {
 // Export text as DOCX
 export async function exportToDOCX(text: string, filename = 'document.docx'): Promise<void> {
   try {
-    // Directly import all the required modules
-    const docx = await import('docx');
-    const { Document, Paragraph, Packer, TextRun } = docx;
-    
-    // Process text to handle markdown-like formatting
-    const lines = text.split('\n');
-    const children = [];
+    // Create a simple document structure
+    const paragraphs = text.split('\n').map(line => 
+      new Paragraph({
+        children: [{ text: line || ' ' }], // Add space for empty lines
+      })
+    );
 
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      
-      if (!line || line.trim() === '') {
-        // Add empty paragraph for spacing
-        children.push(new Paragraph({}));
-      } else if (line.startsWith('# ')) {
-        // Heading 1
-        children.push(new Paragraph({
-          children: [new TextRun({ text: line.substring(2), bold: true, size: 36 })],
-        }));
-      } else if (line.startsWith('## ')) {
-        // Heading 2
-        children.push(new Paragraph({
-          children: [new TextRun({ text: line.substring(3), bold: true, size: 30 })],
-        }));
-      } else if (line.startsWith('### ')) {
-        // Heading 3
-        children.push(new Paragraph({
-          children: [new TextRun({ text: line.substring(4), bold: true, size: 26 })],
-        }));
-      } else if (line.startsWith('**') && line.endsWith('**')) {
-        // Bold text
-        children.push(new Paragraph({
-          children: [new TextRun({ text: line.substring(2, line.length - 2), bold: true })],
-        }));
-      } else if (line.startsWith('*') && line.endsWith('*')) {
-        // Italic text
-        children.push(new Paragraph({
-          children: [new TextRun({ text: line.substring(1, line.length - 1), italics: true })],
-        }));
-      } else {
-        // Regular paragraph
-        children.push(new Paragraph({
-          children: [new TextRun({ text: line })],
-        }));
-      }
-    }
-    
-    // Create document with minimal structure to prevent errors
     const doc = new Document({
       sections: [{
         properties: {},
-        children: children.length > 0 ? children : [new Paragraph({ text: text })]
-      }]
+        children: paragraphs,
+      }],
     });
+
+    // Use Packer.toBlob for better browser compatibility
+    const blob = await Packer.toBlob(doc);
     
-    try {
-      // Generate document buffer
-      const buffer = await Packer.toBuffer(doc);
-      const blob = new Blob([buffer], { 
-        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
-      });
-      
-      // Create download link
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = filename;
-      document.body.appendChild(link); // Append to document before clicking
-      link.click();
-      
-      // Remove link and clean up
+    // Create and trigger download
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.style.display = 'none';
+    
+    document.body.appendChild(link);
+    link.click();
+    
+    // Clean up after a short delay
+    setTimeout(() => {
       document.body.removeChild(link);
-      URL.revokeObjectURL(link.href);
-      
-      console.log('DOCX export completed successfully');
-    } catch (packingError) {
-      console.error('Error packing DOCX:', packingError);
-      // Fallback to a simpler document structure
-      const simpleDoc = new Document({
-        sections: [{
-          properties: {},
-          children: [new Paragraph({ text: text })]
-        }]
-      });
-      
-      const buffer = await Packer.toBuffer(simpleDoc);
-      const blob = new Blob([buffer], { 
-        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
-      });
-      
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(link.href);
-    }
+      URL.revokeObjectURL(url);
+    }, 100);
+    
   } catch (error) {
-    console.error('Error exporting as DOCX:', error);
-    alert('Failed to export document as DOCX. Please try again or use PDF export instead.');
+    console.error('Error exporting to DOCX:', error);
+    throw new Error('Failed to export document as DOCX. Please try again.');
   }
 }
