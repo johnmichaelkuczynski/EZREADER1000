@@ -50,8 +50,21 @@ export function ContentSourceBox({
   const { getRootProps, getInputProps } = useDropzone({
     onDrop: async (acceptedFiles) => {
       if (acceptedFiles.length > 0) {
-        await onFileUpload(acceptedFiles[0]);
-        setActiveTab('manual');
+        try {
+          await onFileUpload(acceptedFiles[0]);
+          setActiveTab('manual');
+          toast({
+            title: "File uploaded successfully",
+            description: `File ${acceptedFiles[0].name} has been processed.`
+          });
+        } catch (error) {
+          console.error("Error uploading file:", error);
+          toast({
+            title: "Upload failed",
+            description: error instanceof Error ? error.message : "Could not process file",
+            variant: "destructive"
+          });
+        }
       }
     },
     accept: {
@@ -66,8 +79,21 @@ export function ContentSourceBox({
   const handleFileInputChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files && files.length > 0) {
-      await onFileUpload(files[0]);
-      setActiveTab('manual');
+      try {
+        await onFileUpload(files[0]);
+        setActiveTab('manual');
+        toast({
+          title: "File uploaded successfully",
+          description: `File ${files[0].name} has been processed.`
+        });
+      } catch (error) {
+        console.error("Error uploading file:", error);
+        toast({
+          title: "Upload failed",
+          description: error instanceof Error ? error.message : "Could not process file",
+          variant: "destructive"
+        });
+      }
     }
   };
   
