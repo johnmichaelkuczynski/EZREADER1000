@@ -78,7 +78,10 @@ export function OutputEditor({
   return (
     <Card className="overflow-hidden">
       <div className="flex justify-between items-center px-4 py-2 border-b border-slate-200">
-        <h2 className="font-semibold">Output</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="font-semibold">Output</h2>
+          <Badge variant="outline" className="ml-2">{wordCount} words</Badge>
+        </div>
         <div className="flex gap-1">
           <TooltipProvider>
             <Tooltip>

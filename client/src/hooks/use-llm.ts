@@ -18,7 +18,8 @@ export function useLLM() {
     instructions: string,
     contentSource?: string,
     useContentSource = false,
-    reprocessOutput = false
+    reprocessOutput = false,
+    onChunkProcessed?: (currentResult: string, currentChunk: number, totalChunks: number) => void
   ): Promise<string> => {
     try {
       if (!inputText || !instructions) {
