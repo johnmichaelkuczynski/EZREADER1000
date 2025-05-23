@@ -1,7 +1,8 @@
 import mammoth from 'mammoth';
 import * as pdfjs from 'pdfjs-dist';
 import { jsPDF } from 'jspdf';
-import { Document, Packer, Paragraph } from 'docx';
+import { Document, Packer, Paragraph, TextRun } from 'docx';
+import { saveAs } from 'file-saver';
 
 // Set PDF.js worker path
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
@@ -99,41 +100,26 @@ export function exportToPDF(text: string, filename = 'document.pdf'): void {
   doc.save(filename);
 }
 
-// Export text as DOCX
+// Export text as DOCX using proper Word document structure
 export async function exportToDOCX(text: string, filename = 'document.docx'): Promise<void> {
   try {
-    // Create a simple document structure
-    const paragraphs = text.split('\n').map(line => 
-      new Paragraph({
-        children: [{ text: line || ' ' }], // Add space for empty lines
-      })
-    );
-
+    // Create proper Word document structure
     const doc = new Document({
-      sections: [{
-        properties: {},
-        children: paragraphs,
-      }],
+      sections: [
+        {
+          properties: {},
+          children: text.split('\n').map(line => 
+            new Paragraph({
+              children: [new TextRun(line || ' ')], // Use TextRun for proper formatting
+            })
+          ),
+        },
+      ],
     });
 
-    // Use Packer.toBlob for better browser compatibility
+    // Generate proper DOCX blob and download using file-saver
     const blob = await Packer.toBlob(doc);
-    
-    // Create and trigger download
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    link.style.display = 'none';
-    
-    document.body.appendChild(link);
-    link.click();
-    
-    // Clean up after a short delay
-    setTimeout(() => {
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    }, 100);
+    saveAs(blob, filename);
     
   } catch (error) {
     console.error('Error exporting to DOCX:', error);
