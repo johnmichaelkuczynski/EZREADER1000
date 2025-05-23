@@ -90,7 +90,15 @@ export function useDocumentProcessor() {
         reprocessOutput,
         // Add callback to update output text in real-time as each chunk is processed
         (currentResult, currentChunk, totalChunks) => {
+          // Update the output text as each chunk is processed
           setOutputText(currentResult);
+          
+          // Also update the assistant message to show progress
+          setMessages(prev => prev.map(msg => 
+            msg.id === messageIdRef.current
+              ? { ...msg, content: `Processing document: Completed chunk ${currentChunk} of ${totalChunks} (${Math.round((currentChunk/totalChunks) * 100)}%)` }
+              : msg
+          ));
         }
       );
       
@@ -99,8 +107,8 @@ export function useDocumentProcessor() {
       
       // Update the assistant message
       setMessages(prev => prev.map(msg => 
-        msg.id === assistantMessageId
-          ? { ...msg, content: 'Document processed successfully!' }
+        msg.id === messageIdRef.current
+          ? { ...msg, content: 'Document processed successfully! All chunks have been displayed in the output box.' }
           : msg
       ));
       
@@ -110,7 +118,7 @@ export function useDocumentProcessor() {
       
       // Update the assistant message with the error
       setMessages(prev => prev.map(msg => 
-        msg.id === prev[prev.length - 1].id && msg.role === 'assistant'
+        msg.id === messageIdRef.current
           ? { ...msg, content: `Error processing document: ${error.message}` }
           : msg
       ));
