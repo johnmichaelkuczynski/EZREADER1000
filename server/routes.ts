@@ -10,6 +10,7 @@ import {
   searchOnlineSchema, 
   sendEmailSchema 
 } from "@shared/schema";
+import { stripMarkdown } from "./utils/markdown-stripper";
 import { processTextWithOpenAI, detectAIWithOpenAI, transcribeAudio } from "./llm/openai";
 import { processTextWithAnthropic, detectAIWithAnthropic } from "./llm/anthropic";
 import { processTextWithPerplexity, detectAIWithPerplexity } from "./llm/perplexity";
@@ -71,7 +72,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           throw new Error('Invalid LLM provider');
       }
       
-      res.json({ result: processedText });
+      // Strip markdown from the processed text to improve readability
+      const cleanedText = stripMarkdown(processedText);
+      res.json({ result: cleanedText });
     } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         res.status(400).json({ error: fromZodError(error).message });
@@ -129,8 +132,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           throw new Error('Invalid LLM provider');
       }
       
+      // Strip markdown from the processed chunk text
+      const cleanedText = stripMarkdown(processedText);
+      
       res.json({ 
-        result: processedText,
+        result: cleanedText,
         chunkIndex: data.chunkIndex,
         totalChunks: data.totalChunks
       });
