@@ -67,6 +67,9 @@ export function useDocumentProcessor() {
         content: `I'll process your document according to these instructions using ${llmProvider}. Starting now...`
       }]);
       
+      // Store the assistant message ID for updating status
+      const messageIdRef = { current: assistantMessageId };
+      
       // Determine the source text (input or output if reprocessing)
       const textToProcess = reprocessOutput && outputText ? outputText : inputText;
       const estimatedChunks = getEstimatedChunks(textToProcess);
@@ -78,16 +81,20 @@ export function useDocumentProcessor() {
         });
       }
       
-      // Process the text
+      // Process the text with real-time chunk updates
       const result = await processFullText(
         textToProcess,
         instructions,
         contentSource,
         useContentSource,
-        reprocessOutput
+        reprocessOutput,
+        // Add callback to update output text in real-time as each chunk is processed
+        (currentResult, currentChunk, totalChunks) => {
+          setOutputText(currentResult);
+        }
       );
       
-      // Update the output text
+      // Final update to output text (should be the same as last chunk update)
       setOutputText(result);
       
       // Update the assistant message

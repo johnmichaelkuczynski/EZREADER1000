@@ -60,7 +60,7 @@ export function useLLM() {
       }
       
       // Process multiple chunks sequentially
-      return await processMultipleChunks(chunks, instructions, contentSource, useContentSource);
+      return await processMultipleChunks(chunks, instructions, contentSource, useContentSource, onChunkProcessed);
     } catch (error) {
       setProcessing({
         isProcessing: false,
@@ -78,7 +78,8 @@ export function useLLM() {
     chunks: string[],
     instructions: string,
     contentSource?: string,
-    useContentSource = false
+    useContentSource = false,
+    onChunkProcessed?: (currentResult: string, currentChunk: number, totalChunks: number) => void
   ): Promise<string> => {
     try {
       setProcessing({
@@ -112,6 +113,11 @@ export function useLLM() {
         
         // Append the processed chunk to the result
         result += (result ? '\n\n' : '') + chunkResult.result;
+        
+        // Call the callback with the current result if provided
+        if (onChunkProcessed) {
+          onChunkProcessed(result, i + 1, chunks.length);
+        }
         
         // Update progress
         setProcessing({
