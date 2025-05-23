@@ -171,14 +171,13 @@ export function OutputEditor({
       
       <CardContent className="p-0">
         <div className="editor overflow-y-auto p-0">
-          {text ? (
-            <Textarea
+          <Textarea
               className="min-h-[600px] h-full rounded-none border-0 resize-none focus-visible:ring-0"
               placeholder="Processed text will appear here..."
               value={text}
               onChange={(e) => onTextChange(e.target.value)}
             />
-          ) : (
+          {false && (
             <div className="flex flex-col items-center justify-center h-full min-h-[300px] text-center p-6">
               <FileIcon className="h-10 w-10 text-slate-300 mb-3" />
               <p className="text-slate-500">Processed text will appear here</p>

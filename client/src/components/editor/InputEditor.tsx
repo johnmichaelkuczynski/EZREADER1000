@@ -135,14 +135,13 @@ export function InputEditor({
       
       <CardContent className="p-0">
         <div className="editor overflow-y-auto p-0">
-          {text ? (
-            <Textarea
+          <Textarea
               className="min-h-[600px] h-full rounded-none border-0 resize-none focus-visible:ring-0"
               placeholder="Type or paste your text here..."
               value={text}
               onChange={(e) => onTextChange(e.target.value)}
             />
-          ) : (
+          {false && (
             <div 
               {...getRootProps()}
               className={`border-2 border-dashed border-slate-200 rounded-lg h-full min-h-[300px] flex flex-col items-center justify-center p-6 text-center cursor-pointer ${
