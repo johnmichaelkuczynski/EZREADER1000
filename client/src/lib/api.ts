@@ -1,0 +1,95 @@
+import { apiRequest } from "./queryClient";
+import type { 
+  ProcessTextRequest, 
+  ProcessChunkRequest,
+  AIDetectionResult, 
+  SearchResult,
+  EmailData,
+  SavedInstruction
+} from "@/types";
+
+// Process text with the selected LLM
+export async function processText(data: ProcessTextRequest): Promise<string> {
+  const response = await apiRequest("POST", "/api/process-text", data);
+  const result = await response.json();
+  return result.result;
+}
+
+// Process a chunk of text for large documents
+export async function processChunk(data: ProcessChunkRequest): Promise<{
+  result: string;
+  chunkIndex: number;
+  totalChunks: number;
+}> {
+  const response = await apiRequest("POST", "/api/process-chunk", data);
+  return await response.json();
+}
+
+// Detect if text was AI-generated
+export async function detectAI(text: string): Promise<AIDetectionResult> {
+  const response = await apiRequest("POST", "/api/detect-ai", { text });
+  return await response.json();
+}
+
+// Transcribe audio file
+export async function transcribeAudio(audioFile: File): Promise<string> {
+  const formData = new FormData();
+  formData.append("audio", audioFile);
+  
+  const response = await fetch("/api/transcribe", {
+    method: "POST",
+    body: formData,
+    credentials: "include"
+  });
+  
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Transcription failed: ${response.status} - ${errorText}`);
+  }
+  
+  const result = await response.json();
+  return result.result;
+}
+
+// Search for content online
+export async function searchOnline(query: string): Promise<{
+  results: SearchResult[];
+  content: string;
+}> {
+  const response = await apiRequest("POST", "/api/search-online", { query });
+  return await response.json();
+}
+
+// Fetch content from a URL
+export async function fetchContent(url: string): Promise<string> {
+  const response = await apiRequest("POST", "/api/fetch-content", { url });
+  const result = await response.json();
+  return result.content;
+}
+
+// Send email with processed text
+export async function sendEmail(data: EmailData): Promise<boolean> {
+  const response = await apiRequest("POST", "/api/send-email", data);
+  const result = await response.json();
+  return result.success;
+}
+
+// Save instructions
+export async function saveInstructions(name: string, instructions: string): Promise<SavedInstruction> {
+  const response = await apiRequest("POST", "/api/save-instructions", { name, instructions });
+  return await response.json();
+}
+
+// Get saved instructions
+export async function getSavedInstructions(): Promise<SavedInstruction[]> {
+  const response = await fetch("/api/saved-instructions", {
+    credentials: "include"
+  });
+  
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to get saved instructions: ${response.status} - ${errorText}`);
+  }
+  
+  return await response.json();
+}
