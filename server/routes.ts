@@ -72,7 +72,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.json({ result: processedText });
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         res.status(400).json({ error: fromZodError(error).message });
       } else {
@@ -134,7 +134,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         chunkIndex: data.chunkIndex,
         totalChunks: data.totalChunks
       });
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         res.status(400).json({ error: fromZodError(error).message });
       } else {
@@ -154,18 +154,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const result = await detectAIWithGPTZero(text);
         res.json(result);
       } catch (gptzeroError) {
-        console.log("GPTZero failed, falling back to model-based detection:", gptzeroError.message);
+        console.log("GPTZero failed, falling back to model-based detection:", gptzeroError instanceof Error ? gptzeroError.message : 'GPTZero error');
         
         // Fall back to OpenAI for detection
         const result = await detectAIWithOpenAI(text);
         res.json(result);
       }
-    } catch (error) {
-      if (error instanceof ZodError) {
-        res.status(400).json({ error: error.message });
+    } catch (error: unknown) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: fromZodError(error).message });
       } else {
         console.error('Error detecting AI:', error);
-        res.status(500).json({ error: error.message || 'Failed to detect AI content' });
+        res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to detect AI content' });
       }
     }
   });
@@ -183,7 +183,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ result: transcribedText });
     } catch (error) {
       console.error('Error transcribing audio:', error);
-      res.status(500).json({ error: error.message || 'Failed to transcribe audio' });
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to transcribe audio' });
     }
   });
 
@@ -195,11 +195,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(searchResults);
     } catch (error) {
-      if (error instanceof ZodError) {
-        res.status(400).json({ error: error.message });
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: fromZodError(error).message });
       } else {
         console.error('Error searching online:', error);
-        res.status(500).json({ error: error.message || 'Failed to search online' });
+        res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to search online' });
       }
     }
   });
@@ -213,11 +213,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const content = await fetchWebContent(url);
       res.json({ content });
     } catch (error) {
-      if (error instanceof ZodError) {
-        res.status(400).json({ error: error.message });
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: fromZodError(error).message });
       } else {
         console.error('Error fetching content:', error);
-        res.status(500).json({ error: error.message || 'Failed to fetch content' });
+        res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to fetch content' });
       }
     }
   });
@@ -242,11 +242,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({ success });
     } catch (error) {
-      if (error instanceof ZodError) {
-        res.status(400).json({ error: error.message });
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: fromZodError(error).message });
       } else {
         console.error('Error sending email:', error);
-        res.status(500).json({ error: error.message || 'Failed to send email' });
+        res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to send email' });
       }
     }
   });
@@ -271,11 +271,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(savedInstructions);
     } catch (error) {
-      if (error instanceof ZodError) {
-        res.status(400).json({ error: error.message });
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: fromZodError(error).message });
       } else {
         console.error('Error saving instructions:', error);
-        res.status(500).json({ error: error.message || 'Failed to save instructions' });
+        res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to save instructions' });
       }
     }
   });
@@ -289,7 +289,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(savedInstructions);
     } catch (error) {
       console.error('Error getting saved instructions:', error);
-      res.status(500).json({ error: error.message || 'Failed to get saved instructions' });
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to get saved instructions' });
     }
   });
 
