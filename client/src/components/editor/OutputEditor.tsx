@@ -19,7 +19,8 @@ import {
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Trash2, Copy, Download, Bot, Mail } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Badge } from '@/components/ui/badge';
 
 interface OutputEditorProps {
   text: string;
@@ -52,6 +53,13 @@ export function OutputEditor({
   const [emailTo, setEmailTo] = useState('');
   const [emailSubject, setEmailSubject] = useState('EZ Reader - Transformed Document');
   const [emailMessage, setEmailMessage] = useState('Here is the transformed document you requested.');
+  const [wordCount, setWordCount] = useState(0);
+  
+  // Calculate word count whenever text changes
+  useEffect(() => {
+    const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+    setWordCount(words);
+  }, [text]);
   
   const handleSendEmail = async () => {
     const success = await onSendEmail(

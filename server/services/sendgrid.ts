@@ -4,7 +4,7 @@ import { MailService } from '@sendgrid/mail';
 const mailService = new MailService();
 mailService.setApiKey(process.env.SENDGRID_API_KEY || "");
 
-const DEFAULT_FROM_EMAIL = "noreply@ezreader.app";
+const DEFAULT_FROM_EMAIL = "jm@analyticphilosophy.ai";
 
 interface EmailParams {
   to: string;
