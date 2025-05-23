@@ -7,6 +7,7 @@ import { ContentSourceBox } from "@/components/editor/ContentSourceBox";
 import { ChatInterface } from "@/components/editor/ChatInterface";
 import { ProcessingStatusBar } from "@/components/editor/ProcessingStatusBar";
 import { EditorToolbar } from "@/components/editor/EditorToolbar";
+import { ChunkSelector } from "@/components/editor/ChunkSelector";
 import { useDocumentProcessor } from "@/hooks/use-document-processor";
 import { useFileOperations } from "@/hooks/use-file-operations";
 import { 
@@ -38,6 +39,7 @@ export default function Home() {
     setMessages,
     processing,
     processDocument,
+    processSelectedDocumentChunks,
     cancelProcessing,
     inputFileRef,
     contentSourceFileRef,
@@ -52,7 +54,10 @@ export default function Home() {
     clearOutput,
     clearChat,
     llmProvider,
-    setLLMProvider
+    setLLMProvider,
+    documentChunks,
+    showChunkSelector,
+    setShowChunkSelector
   } = useDocumentProcessor();
 
   const {
@@ -98,11 +103,11 @@ export default function Home() {
         title: "Search complete",
         description: `Found ${result.results.length} results`,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error searching online:', error);
       toast({
         title: "Search failed",
-        description: error.message,
+        description: error?.message || "Failed to search online",
         variant: "destructive"
       });
     } finally {
@@ -135,11 +140,11 @@ export default function Home() {
           
           await handleAudioTranscription(audioFile);
           setVoiceDialogOpen(false);
-        } catch (error) {
+        } catch (error: any) {
           console.error('Transcription error:', error);
           toast({
             title: "Transcription failed",
-            description: error.message,
+            description: error?.message || "Failed to transcribe audio",
             variant: "destructive"
           });
         } finally {
@@ -315,6 +320,15 @@ export default function Home() {
                 inputText={inputText}
               />
             </div>
+            
+            {/* Chunk Selector - shown when document is divided into chunks */}
+            {showChunkSelector && documentChunks.length > 0 && (
+              <ChunkSelector
+                chunks={documentChunks}
+                onProcessSelected={processSelectedDocumentChunks}
+                onCancel={() => setShowChunkSelector(false)}
+              />
+            )}
             
             {/* Processing Status Bar - shown only when processing */}
             {processing.isProcessing && (

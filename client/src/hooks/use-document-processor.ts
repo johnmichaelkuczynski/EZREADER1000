@@ -146,11 +146,17 @@ export function useDocumentProcessor() {
       console.error('Error processing document:', error);
       
       // Update the assistant message with the error
-      setMessages(prev => prev.map(msg => 
-        msg.id === assistantMessageId
-          ? { ...msg, content: `Error processing document: ${error?.message || 'Unknown error'}` }
-          : msg
-      ));
+      setMessages(prev => {
+        // Find the last assistant message to update
+        const lastAssistantMessage = [...prev].reverse().find(msg => msg.role === 'assistant');
+        if (!lastAssistantMessage) return prev;
+        
+        return prev.map(msg => 
+          msg.id === lastAssistantMessage.id
+            ? { ...msg, content: `Error processing document: ${error?.message || 'Unknown error'}` }
+            : msg
+        );
+      });
       
       toast({
         title: "Processing failed",
@@ -180,9 +186,6 @@ export function useDocumentProcessor() {
         content: `Processing ${selectedIndices.length} selected chunk(s)...`
       }]);
       
-      // Store the assistant message ID for updating status
-      const messageIdRef = { current: assistantMessageId };
-      
       // Process only the selected chunks
       const result = await processSelectedChunks(
         selectedIndices,
@@ -196,7 +199,7 @@ export function useDocumentProcessor() {
           
           // Also update the assistant message to show progress
           setMessages(prev => prev.map(msg => 
-            msg.id === messageIdRef.current
+            msg.id === assistantMessageId
               ? { ...msg, content: `Processing selected chunks: Completed chunk ${currentChunk} of ${totalChunks} (${Math.round((currentChunk/totalChunks) * 100)}%)` }
               : msg
           ));
@@ -208,7 +211,7 @@ export function useDocumentProcessor() {
       
       // Update the assistant message
       setMessages(prev => prev.map(msg => 
-        msg.id === messageIdRef.current
+        msg.id === assistantMessageId
           ? { ...msg, content: 'Selected chunks processed successfully! Results have been displayed in the output box.' }
           : msg
       ));
@@ -218,11 +221,17 @@ export function useDocumentProcessor() {
       console.error('Error processing selected chunks:', error);
       
       // Update the assistant message with the error
-      setMessages(prev => prev.map(msg => 
-        msg.id === messageIdRef.current
-              ? { ...msg, content: `Error processing selected chunks: ${error?.message || 'Unknown error'}` }
-              : msg
-      ));
+      setMessages(prev => {
+        // Find the last assistant message to update
+        const lastAssistantMessage = [...prev].reverse().find(msg => msg.role === 'assistant');
+        if (!lastAssistantMessage) return prev;
+        
+        return prev.map(msg => 
+          msg.id === lastAssistantMessage.id
+            ? { ...msg, content: `Error processing selected chunks: ${error?.message || 'Unknown error'}` }
+            : msg
+        );
+      });
       
       toast({
         title: "Processing failed",
