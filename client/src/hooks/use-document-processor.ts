@@ -800,147 +800,70 @@ export function useDocumentProcessor() {
       setShowSpecialContent(true);
       setSpecialContent("Processing your query about the document...");
       
-      // Get the input text to chunk
-      const textToProcess = inputText;
-      
-      // Generate chunks if we don't have them
-      if (textToProcess) {
-        const chunks = chunkText(textToProcess, 300);
-        setDialogueChunks(chunks);
+      // Check if we have a document to process
+      if (!inputText || inputText.length === 0) {
+        setSpecialContent("No document found. Please upload or enter a document first.");
+        return;
       }
       
-      // If we don't have summaries yet but we have text to process, generate summaries
-      if (documentMap.length === 0 && inputText.length > 0) {
-        setSpecialContent("Generating document summaries for your document. This may take a moment...");
-        
-        const chunks = chunkText(inputText, 300);
-        // Store the chunks for later use
-        setDialogueChunks(chunks);
-        
-        // Create temporary summaries for all chunks
-        for (let i = 0; i < chunks.length; i++) {
-          const chunkContent = chunks[i];
-          
-          // Create a simple summary for each chunk (2-3 sentences)
-          const tempSummary = `Section ${i+1}: This section contains approximately ${chunkContent.length} characters of text from the document.`;
-          
-          // Add to document map
-          setDocumentMap(prev => {
-            const newMap = [...prev];
-            newMap[i] = tempSummary;
-            return newMap;
-          });
+      // DIRECT DOCUMENT PROCESSING APPROACH
+      // Instead of generating summaries, we'll directly use document content
+      setSpecialContent(`Analyzing your document to answer: "${query}"`);
+      
+      // Create reasonable chunks from the document
+      const chunks = chunkText(inputText, 2000); // Larger chunks for better context
+      setDialogueChunks(chunks);
+      
+      // Create a sample of the document with representative sections
+      let documentContent = "";
+      
+      // For small documents, use the entire text
+      if (inputText.length < 8000) {
+        documentContent = inputText;
+      } 
+      // For medium documents, use the first 3 chunks
+      else if (chunks.length <= 5) {
+        const chunksTouse = Math.min(chunks.length, 3);
+        for (let i = 0; i < chunksTouse; i++) {
+          documentContent += `\n\n--- DOCUMENT SECTION ${i+1} ---\n\n${chunks[i]}`;
         }
+      } 
+      // For larger documents, use beginning, middle and end
+      else {
+        // Get sections from beginning, middle and end
+        const beginning = chunks[0];
+        const middle = chunks[Math.floor(chunks.length / 2)];
+        const end = chunks[chunks.length - 1];
         
-        // Now process an actual summary for the first 10 chunks only (to avoid overloading)
-        // This will happen in the background while the user waits
-        const chunkLimit = Math.min(chunks.length, 10);
-        setSpecialContent(`Generating summaries for ${chunkLimit} sections to answer your query. Please wait...`);
-        
-        for (let i = 0; i < chunkLimit; i++) {
-          try {
-            const chunkContent = chunks[i];
-            
-            // Create a real summary for the chunk
-            const response = await processText({
-              inputText: chunkContent,
-              instructions: "Summarize this section in 2-3 sentences, capturing the key points.",
-              contentSource: "",
-              useContentSource: false,
-              llmProvider
-            });
-            
-            // Update document map with real summary
-            setDocumentMap(prev => {
-              const newMap = [...prev];
-              newMap[i] = `Section ${i+1}: ${response}`;
-              return newMap;
-            });
-            
-            // Update status
-            setSpecialContent(`Generated summaries for ${i+1} of ${chunkLimit} sections. Please wait...`);
-          } catch (error) {
-            console.error(`Error creating summary for chunk ${i}:`, error);
-          }
-        }
+        documentContent = `--- BEGINNING OF DOCUMENT ---\n\n${beginning}\n\n`;
+        documentContent += `--- MIDDLE OF DOCUMENT ---\n\n${middle}\n\n`;
+        documentContent += `--- END OF DOCUMENT ---\n\n${end}`;
       }
       
-      // Now actually process the query with the document map
-      // Construct the input with section summaries (use what we have, even if incomplete)
-      setSpecialContent(`Processing your query: "${query}"...`);
-      
-      // First make sure we have meaningful summaries
-      let summariesReady = false;
-      
-      // Check if summaries are just placeholders or actual content
-      const hasRealSummaries = documentMap.some(summary => 
-        !summary.includes("This section contains approximately") && 
-        summary.split(" ").length > 10
-      );
-      
-      // If we don't have real summaries yet, generate them directly from input text
-      if (!hasRealSummaries && inputText) {
-        const chunks = chunkText(inputText);
-        const chunkLimit = Math.min(chunks.length, 10); // Limit to 10 chunks for performance
-        
-        // Update status
-        setSpecialContent(`Creating detailed summaries of your document (${chunkLimit} sections)...`);
-        
-        // Process each chunk to create real summaries
-        for (let i = 0; i < chunkLimit; i++) {
-          try {
-            // Get the chunk text
-            const chunkContent = chunks[i];
-            
-            // Process the chunk with the LLM to get a real summary
-            const summary = await processText({
-              inputText: chunkContent,
-              instructions: "Summarize this section in 2-3 sentences, capturing the key points and main ideas.",
-              contentSource: "",
-              useContentSource: false,
-              llmProvider
-            });
-            
-            // Update the document map with the real summary
-            setDocumentMap(prev => {
-              const newMap = [...prev];
-              newMap[i] = `Section ${i+1}: ${summary}`;
-              return newMap;
-            });
-            
-            // Update status
-            setSpecialContent(`Generated summary ${i+1} of ${chunkLimit}. Please wait...`);
-          } catch (error) {
-            console.error(`Error creating summary for chunk ${i}:`, error);
-          }
-        }
-        
-        summariesReady = true;
-      } else if (documentMap.length > 0) {
-        // We already have real summaries
-        summariesReady = true;
-      }
-      
-      // Join available summaries
-      const summaries = documentMap.length > 0 ? documentMap.join("\n\n") : 
-                      "No section summaries available. This is a large document with multiple sections.";
-      
-      // Create a more specific prompt based on the query type
-      let instructions = "Answer the query thoroughly based on the document content.";
+      // Create a specific prompt based on the query type
+      let instructions = "Analyze only the provided document content. Do not add information not present in the document.";
       let prompt = "";
       
       if (query.toLowerCase().includes("table of contents") || query.toLowerCase().includes("outline")) {
-        prompt = `Based on these section summaries, create a detailed table of contents for the document:\n\n${summaries}`;
-        instructions = "Create a hierarchical table of contents with main sections and subsections based on the content.";
-      } else if (query.toLowerCase().includes("summarize") || query.toLowerCase().includes("summary")) {
-        prompt = `Based on these section summaries from the document, provide a comprehensive summary:\n\n${summaries}`;
-        instructions = "Create a cohesive summary that captures the main points, arguments and conclusions from the document.";
-      } else if (query.toLowerCase().includes("key points") || query.toLowerCase().includes("main ideas")) {
-        prompt = `Based on these section summaries, what are the key points or main ideas in the document?:\n\n${summaries}`;
-        instructions = "Extract and explain the most important ideas, arguments or findings from the document.";
-      } else {
-        // Generic query
-        prompt = `Based on the following section summaries from the document, ${query}:\n\n${summaries}`;
+        prompt = `Create a detailed table of contents with proper hierarchical organization for this document:\n\n${documentContent}`;
+        instructions = "Create a hierarchical table of contents based strictly on the content provided. Format with proper indentation and numbering.";
+      } 
+      else if (query.toLowerCase().includes("summarize") || query.toLowerCase().includes("summary")) {
+        prompt = `Provide a comprehensive, detailed summary of this document:\n\n${documentContent}`;
+        instructions = "Summarize the key points, arguments, and conclusions from the document. Be specific and focus on the actual content.";
+      } 
+      else if (query.toLowerCase().includes("key points") || query.toLowerCase().includes("main ideas")) {
+        prompt = `What are the key points or main ideas in this document?\n\n${documentContent}`;
+        instructions = "Extract and explain the most important concepts, arguments, or findings directly from the document.";
+      }
+      else if (query.toLowerCase().includes("argument") || query.toLowerCase().includes("thesis")) {
+        prompt = `What is the main argument or thesis of this document?\n\n${documentContent}`;
+        instructions = "Identify and explain the central thesis or main argument that the document presents.";
+      }
+      else {
+        // For any other query type
+        prompt = `${query}\n\nDocument content:\n${documentContent}`;
+        instructions = "Answer the query using only the provided document content. Be specific and accurate.";
       }
       
       // Process the query
