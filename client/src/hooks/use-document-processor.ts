@@ -393,6 +393,9 @@ export function useDocumentProcessor() {
     setInputAIResult(null);
     setOutputAIResult(null);
     
+    // Reset saved instructions
+    setSavedInstructions('');
+    
     // Reset chat
     clearChat();
     
@@ -410,7 +413,7 @@ export function useDocumentProcessor() {
       title: "Reset complete",
       description: "All content has been cleared and operations stopped.",
     });
-  }, [clearChat, cancelProcessing, processing.isProcessing, showChunkSelector, setShowChunkSelector, toast]);
+  }, [clearChat, cancelProcessing, processing.isProcessing, showChunkSelector, setShowChunkSelector, setSavedInstructions, toast]);
   
   // Process special commands from the dialogue box
   const processSpecialCommand = useCallback(async (command: string) => {
