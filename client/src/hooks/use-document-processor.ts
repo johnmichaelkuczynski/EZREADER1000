@@ -16,7 +16,7 @@ export function useDocumentProcessor() {
     {
       id: uuidv4(),
       role: 'assistant',
-      content: 'Provide instructions on how you\'d like your text to be transformed. For example:\n\n• Summarize this content while maintaining key points\n• Rewrite in a more conversational tone\n• Convert this text to a bullet-point list\n• Simplify for a middle-school reading level'
+      content: 'Enter your rewrite instructions above.'
     }
   ]);
   const [isInputDetecting, setIsInputDetecting] = useState<boolean>(false);
@@ -528,14 +528,14 @@ export function useDocumentProcessor() {
         prompt = "You are having a conversation about a document. Answer the following query about it as helpfully as possible: '" + command + "'. Here's the document: " + textToProcess;
       }
       
-      // Process using the appropriate LLM (explicitly use the current LLM provider)
+      // Process using the appropriate LLM through the API
       const response = await processText({
         inputText: textToProcess,
         instructions: prompt,
-        contentSource: "",  // No content source needed for analysis
+        contentSource: "",
         useContentSource: false,
         reprocessOutput: false,
-        llmProvider: llmProvider  // Pass the current LLM provider for the dialogue box
+        llmProvider
       });
       
       // Update the assistant message with the direct response
