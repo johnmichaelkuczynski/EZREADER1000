@@ -4,8 +4,11 @@ import { jsPDF } from 'jspdf';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { saveAs } from 'file-saver';
 
-// Set PDF.js worker path
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+// Set up PDF.js worker
+const pdfjsVersion = pdfjs.version;
+// Simpler approach to prevent import.meta errors
+const workerUrl = `/pdf.worker.min.js`;
+pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
 
 // Extract text from a file (PDF or DOCX)
 export async function extractTextFromFile(file: File): Promise<string> {
@@ -27,11 +30,29 @@ export async function extractTextFromFile(file: File): Promise<string> {
 
 // Extract text from PDF
 async function extractTextFromPDF(file: File): Promise<string> {
-  const arrayBuffer = await file.arrayBuffer();
-  const typedArray = new Uint8Array(arrayBuffer);
+  // Create a fake worker to avoid worker.js errors
+  if (typeof window !== 'undefined' && !window.pdfjsWorker) {
+    console.log("Warning: Setting up fake worker.");
+    // @ts-ignore
+    window.pdfjsWorker = {
+      WorkerMessageHandler: {
+        setup: () => {},
+      },
+    };
+  }
   
   try {
-    const pdf = await pdfjs.getDocument({ data: typedArray }).promise;
+    const arrayBuffer = await file.arrayBuffer();
+    const typedArray = new Uint8Array(arrayBuffer);
+    
+    // Use a disableFontFace and disableWorker for more reliability
+    const loadingTask = pdfjs.getDocument({
+      data: typedArray,
+      disableFontFace: true,
+      disableWorker: true,
+    });
+    
+    const pdf = await loadingTask.promise;
     let text = '';
     
     for (let i = 1; i <= pdf.numPages; i++) {
