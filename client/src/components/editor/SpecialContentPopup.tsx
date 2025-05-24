@@ -127,7 +127,7 @@ export function SpecialContentPopup({
   
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>Generated Content</DialogTitle>
           <DialogDescription>
@@ -135,14 +135,14 @@ export function SpecialContentPopup({
           </DialogDescription>
         </DialogHeader>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0 overflow-hidden">
           <TabsList className="grid grid-cols-2">
             <TabsTrigger value="view">View Content</TabsTrigger>
             <TabsTrigger value="share">Download & Share</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="view" className="flex-1 flex flex-col min-h-0">
-            <ScrollArea className="flex-1 border rounded-md p-4 my-2">
+          <TabsContent value="view" className="flex-1 flex flex-col min-h-0 overflow-hidden">
+            <ScrollArea className="flex-1 border rounded-md p-4 my-2 h-[400px]">
               <div className="prose prose-sm max-w-none whitespace-pre-wrap">
                 {content}
               </div>
