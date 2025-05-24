@@ -1,12 +1,16 @@
 import { ProcessTextOptions } from './openai';
+import { protectMathFormulas, restoreMathFormulas } from "../utils/math-formula-protection";
 
 const API_URL = 'https://api.perplexity.ai/chat/completions';
 
 export async function processTextWithPerplexity(options: ProcessTextOptions): Promise<string> {
   const { text, instructions, contentSource, useContentSource } = options;
   
+  // Protect math formulas before processing
+  const { processedText, mathBlocks } = protectMathFormulas(text);
+  
   // Base system prompt
-  let systemPrompt = "Transform the provided text according to the instructions.";
+  let systemPrompt = "Transform the provided text according to the instructions. Do not modify any content within [[MATH_BLOCK_*]] or [[MATH_INLINE_*]] tokens as they contain special mathematical notation.";
   
   // Check if instructions contain keywords about shortening
   const requestsShorterOutput = instructions.toLowerCase().includes('shorter') || 
@@ -22,7 +26,8 @@ export async function processTextWithPerplexity(options: ProcessTextOptions): Pr
     systemPrompt += " Be precise and concise as requested.";
   }
   
-  let userContent = `Instructions: ${instructions}\n\nText to transform:\n${text}`;
+  // Use the protected text with math formulas replaced by tokens
+  let userContent = `Instructions: ${instructions}\n\nText to transform:\n${processedText}`;
   
   if (useContentSource && contentSource) {
     userContent += `\n\nAdditional content source for reference:\n${contentSource}`;
@@ -58,8 +63,13 @@ export async function processTextWithPerplexity(options: ProcessTextOptions): Pr
     }
     
     const data = await response.json();
-    return data.choices[0].message.content;
-  } catch (error) {
+    const processedContent = data.choices[0].message.content;
+    
+    // Restore math formulas in the processed text
+    const finalResult = restoreMathFormulas(processedContent, mathBlocks);
+    
+    return finalResult;
+  } catch (error: any) {
     console.error("Perplexity processing error:", error);
     throw new Error(`Failed to process text with Perplexity: ${error.message}`);
   }

@@ -81,17 +81,39 @@ export async function detectAIWithAnthropic(text: string): Promise<{ isAI: boole
     let result: any = { isAI: false, confidence: 0.5, details: "Analysis failed" };
     
     try {
-      // Parse the JSON from the response
-      const matches = response.content[0].text.match(/\{[\s\S]*\}/);
-      if (matches && matches[0]) {
-        result = JSON.parse(matches[0]);
+      // Extract content safely
+      let content = '';
+      if (response.content && response.content.length > 0) {
+        const contentBlock = response.content[0];
+        if ('text' in contentBlock) {
+          content = contentBlock.text;
+          // Parse the JSON from the response
+          const matches = content.match(/\{[\s\S]*\}/);
+          if (matches && matches[0]) {
+            result = JSON.parse(matches[0]);
+          }
+        }
       }
     } catch (parseError) {
       console.error("Failed to parse Anthropic JSON response:", parseError);
       // Extract information from the text response as fallback
-      const content = response.content[0].text.toLowerCase();
+      let content = '';
+      if (response.content && response.content.length > 0) {
+        const contentBlock = response.content[0];
+        if ('text' in contentBlock) {
+          content = contentBlock.text.toLowerCase();
+        }
+      }
       result.isAI = content.includes("ai generated") || content.includes("written by ai");
-      result.details = response.content[0].text;
+      // Get details safely
+      if (response.content && response.content.length > 0) {
+        const contentBlock = response.content[0];
+        if ('text' in contentBlock) {
+          result.details = contentBlock.text;
+        } else {
+          result.details = "No details available";
+        }
+      }
     }
     
     return {

@@ -26,7 +26,8 @@ export function protectMathFormulas(text: string): {
   
   // Also process inline math formulas ($...$) 
   // but make sure we don't match currency symbols like $50
-  const finalProcessed = processedText.replace(/\$([^\s].*?[^\s])\$/g, (match, formula) => {
+  // Look for dollar signs with non-whitespace content between them
+  const finalProcessed = processedText.replace(/\$([^\s$][^$]*?[^\s$])\$/g, (match, formula) => {
     const token = `[[MATH_INLINE_${count}]]`;
     mathBlocks.set(token, match);
     count++;
