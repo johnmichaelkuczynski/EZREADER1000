@@ -869,16 +869,84 @@ export function useDocumentProcessor() {
       // Construct the input with section summaries (use what we have, even if incomplete)
       setSpecialContent(`Processing your query: "${query}"...`);
       
+      // First make sure we have meaningful summaries
+      let summariesReady = false;
+      
+      // Check if summaries are just placeholders or actual content
+      const hasRealSummaries = documentMap.some(summary => 
+        !summary.includes("This section contains approximately") && 
+        summary.split(" ").length > 10
+      );
+      
+      // If we don't have real summaries yet, generate them directly from input text
+      if (!hasRealSummaries && inputText) {
+        const chunks = chunkText(inputText);
+        const chunkLimit = Math.min(chunks.length, 10); // Limit to 10 chunks for performance
+        
+        // Update status
+        setSpecialContent(`Creating detailed summaries of your document (${chunkLimit} sections)...`);
+        
+        // Process each chunk to create real summaries
+        for (let i = 0; i < chunkLimit; i++) {
+          try {
+            // Get the chunk text
+            const chunkContent = chunks[i];
+            
+            // Process the chunk with the LLM to get a real summary
+            const summary = await processText({
+              inputText: chunkContent,
+              instructions: "Summarize this section in 2-3 sentences, capturing the key points and main ideas.",
+              contentSource: "",
+              useContentSource: false,
+              llmProvider
+            });
+            
+            // Update the document map with the real summary
+            setDocumentMap(prev => {
+              const newMap = [...prev];
+              newMap[i] = `Section ${i+1}: ${summary}`;
+              return newMap;
+            });
+            
+            // Update status
+            setSpecialContent(`Generated summary ${i+1} of ${chunkLimit}. Please wait...`);
+          } catch (error) {
+            console.error(`Error creating summary for chunk ${i}:`, error);
+          }
+        }
+        
+        summariesReady = true;
+      } else if (documentMap.length > 0) {
+        // We already have real summaries
+        summariesReady = true;
+      }
+      
       // Join available summaries
       const summaries = documentMap.length > 0 ? documentMap.join("\n\n") : 
                       "No section summaries available. This is a large document with multiple sections.";
       
-      const input = `Based on the following section summaries from the document, ${query}:\n\n${summaries}`;
+      // Create a more specific prompt based on the query type
+      let instructions = "Answer the query thoroughly based on the document content.";
+      let prompt = "";
+      
+      if (query.toLowerCase().includes("table of contents") || query.toLowerCase().includes("outline")) {
+        prompt = `Based on these section summaries, create a detailed table of contents for the document:\n\n${summaries}`;
+        instructions = "Create a hierarchical table of contents with main sections and subsections based on the content.";
+      } else if (query.toLowerCase().includes("summarize") || query.toLowerCase().includes("summary")) {
+        prompt = `Based on these section summaries from the document, provide a comprehensive summary:\n\n${summaries}`;
+        instructions = "Create a cohesive summary that captures the main points, arguments and conclusions from the document.";
+      } else if (query.toLowerCase().includes("key points") || query.toLowerCase().includes("main ideas")) {
+        prompt = `Based on these section summaries, what are the key points or main ideas in the document?:\n\n${summaries}`;
+        instructions = "Extract and explain the most important ideas, arguments or findings from the document.";
+      } else {
+        // Generic query
+        prompt = `Based on the following section summaries from the document, ${query}:\n\n${summaries}`;
+      }
       
       // Process the query
       const response = await processText({
-        inputText: input,
-        instructions: "Answer the query as thoroughly as possible based on the section summaries provided.",
+        inputText: prompt,
+        instructions: instructions,
         contentSource: "",
         useContentSource: false,
         llmProvider
