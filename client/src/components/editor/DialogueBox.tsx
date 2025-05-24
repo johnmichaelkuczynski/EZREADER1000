@@ -190,6 +190,13 @@ export function DialogueBox({
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               className="min-h-[80px]"
+              onKeyDown={(e) => {
+                // Submit form when Enter is pressed without Shift
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmit(e);
+                }
+              }}
               disabled={isProcessing}
             />
           </div>
