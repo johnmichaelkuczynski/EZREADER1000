@@ -4,62 +4,58 @@
  */
 export async function extractTextFromPDF(pdfBuffer: Buffer): Promise<string> {
   try {
-    // Convert buffer to string and look for text patterns
-    const pdfString = pdfBuffer.toString('utf-8', 0, pdfBuffer.length);
+    // Convert buffer to text
+    const pdfText = pdfBuffer.toString('utf8');
     
-    // Format the output with basic information
-    let result = `# PDF Document\n`;
-    result += `Size: ${Math.round(pdfBuffer.length / 1024)} KB\n\n`;
+    // Extract readable text content using regex patterns commonly found in PDFs
+    let extractedText = '';
     
-    // Try to extract some metadata
-    const titleMatch = pdfString.match(/\/Title\s*\(([^)]+)\)/i);
-    if (titleMatch && titleMatch[1]) {
-      result += `Title: ${titleMatch[1].trim()}\n`;
-    }
+    // Extract text objects marked with BT...ET (Begin Text/End Text)
+    const textObjectRegex = /BT\s*([^]*?)\s*ET/g;
+    let textMatch;
     
-    const authorMatch = pdfString.match(/\/Author\s*\(([^)]+)\)/i);
-    if (authorMatch && authorMatch[1]) {
-      result += `Author: ${authorMatch[1].trim()}\n`;
-    }
-    
-    // Extract readable text portions
-    const textParts: string[] = [];
-    
-    // Look for text blocks in PDF format
-    const textMatches = pdfString.match(/\(([A-Za-z0-9\s.,;:'"!?()-]{5,})\)/g) || [];
-    if (textMatches.length > 0) {
-      // Process only the text segments that look meaningful
-      const cleanSegments = textMatches
-        .map(seg => seg.substring(1, seg.length - 1)) // Remove parentheses
-        .filter(seg => seg.length > 10 && /[a-zA-Z]{3,}/.test(seg)) // Only text with actual words
-        .map(seg => seg.replace(/\\n/g, '\n').replace(/\\r/g, '')) // Handle escaped newlines
-        .slice(0, 200); // Limit to first 200 segments
+    while ((textMatch = textObjectRegex.exec(pdfText)) !== null) {
+      // Process text objects to extract readable content
+      const textObject = textMatch[1];
       
-      textParts.push(...cleanSegments);
+      // Extract text strings (marked with parentheses or angle brackets)
+      const textStringRegex = /\((.*?)\)|<([0-9A-Fa-f]+)>/g;
+      let stringMatch;
+      
+      while ((stringMatch = textStringRegex.exec(textObject)) !== null) {
+        const textString = stringMatch[1] || '';
+        if (textString.length > 0) {
+          extractedText += textString + ' ';
+        }
+      }
     }
     
-    // Add content section if we found text
-    if (textParts.length > 0) {
-      result += `\n## Content:\n\n${textParts.join(' ')}\n`;
-    } else {
-      result += `\nThis PDF file contains limited machine-readable text content. The document may consist primarily of images or scanned content.`;
+    // If nothing was extracted with the text object approach, try a simpler method
+    if (extractedText.trim().length === 0) {
+      // Look for text between parentheses (common in PDF text objects)
+      const simpleTextRegex = /\(([^\)\\]+)\)/g;
+      let simpleMatch;
+      
+      while ((simpleMatch = simpleTextRegex.exec(pdfText)) !== null) {
+        if (simpleMatch[1] && simpleMatch[1].trim().length > 0) {
+          extractedText += simpleMatch[1] + ' ';
+        }
+      }
     }
     
-    return result;
+    // If still nothing, fall back to extracting readable characters
+    if (extractedText.trim().length === 0) {
+      // Filter only printable ASCII characters
+      extractedText = pdfText
+        .replace(/[^\x20-\x7E\r\n]/g, ' ')  // Keep only printable ASCII
+        .replace(/\s+/g, ' ')               // Normalize whitespace
+        .trim();
+    }
+    
+    return extractedText.trim() || 'No text could be extracted from this PDF.';
   } catch (error) {
-    console.error('Error extracting PDF text:', error);
-    return 'Unable to extract text from this PDF format. The file may be encrypted or damaged.';
-  }
-}
-
-/**
- * Process a PDF file buffer and extract its text
- */
-export async function processPDFFile(fileBuffer: Buffer): Promise<string> {
-  try {
-    return await extractTextFromPDF(fileBuffer);
-  } catch (error) {
-    console.error('Error processing PDF file:', error);
-    throw new Error('Failed to process PDF file');
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error extracting PDF text:', errorMessage);
+    return `Error processing PDF: ${errorMessage}`;
   }
 }

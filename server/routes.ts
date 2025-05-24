@@ -17,7 +17,7 @@ import { processTextWithPerplexity, detectAIWithPerplexity } from "./llm/perplex
 import { detectAIWithGPTZero } from "./services/gptzero";
 import { searchOnline, fetchWebContent } from "./services/google";
 import { sendDocumentEmail } from "./services/sendgrid";
-import { extractTextFromPDF } from "./services/pdf-parser";
+import { extractTextFromPDF } from "./services/pdf-extractor";
 
 // Configure multer storage
 const upload = multer({
