@@ -1,8 +1,8 @@
 import pdfParse from 'pdf-parse';
 
 /**
- * Extract text from a PDF buffer with clear math section markup
- * This approach clearly labels math sections rather than trying to preserve exact notation
+ * Extract text from a PDF buffer with minimal processing
+ * This focuses on preserving the original text while cleaning up common PDF extraction issues
  */
 export async function extractTextFromPDF(pdfBuffer: Buffer): Promise<string> {
   try {
@@ -31,52 +31,29 @@ export async function extractTextFromPDF(pdfBuffer: Buffer): Promise<string> {
       if (result.length > 0) result += '\n';
     }
     
-    // Process the extracted text to identify mathematical sections
+    // Process the extracted text with minimal changes
     let processedText = text;
     
-    // Detect potential math sections using LaTeX-like patterns
-    // We'll wrap these in special markers for clear identification
-    let mathBlockCount = 1;
-    let inlineCount = 1;
-    
-    // First, mark up full equation blocks with proper spacing
+    // Only mark up very complex mathematical expressions
+    // Look for LaTeX-style math environments which are clear indicators of math content
     processedText = processedText.replace(
-      /(\$\$[\s\S]*?\$\$)/g, 
-      (_match, content) => `\n[[MATHBLOCK${mathBlockCount++}]]\n`
+      /\\begin\{(?:equation|align|gather|multline|eqnarray|matrix|pmatrix|bmatrix|vmatrix|Vmatrix|array)\}[\s\S]*?\\end\{(?:equation|align|gather|multline|eqnarray|matrix|pmatrix|bmatrix|vmatrix|Vmatrix|array)\}/g,
+      (match) => `\n[COMPLEX MATH EXPRESSION]\n`
     );
     
-    // Find potential LaTeX commands
-    processedText = processedText.replace(
-      /\\(?:sum|int|frac|sqrt|alpha|beta|gamma|delta|theta|lambda|sigma|omega|infty|partial|nabla|begin\{.*?\}[\s\S]*?end\{.*?\})/g,
-      (match) => `[[MATHEXPRESSION${inlineCount++}: ${match}]]`
-    );
+    // Clean up common PDF extraction issues
+    processedText = processedText
+      // Fix excessive whitespace
+      .replace(/\s{3,}/g, '\n\n')
+      // Fix line breaks in the middle of sentences (common in PDFs)
+      .replace(/(\w)-\n(\w)/g, '$1$2')
+      // Remove page numbers that appear as single numbers on lines
+      .replace(/^\s*\d+\s*$/gm, '')
+      // Clean up bullet points
+      .replace(/•/g, '* ');
     
-    // Find potential inline math between dollar signs but not currency
-    // This uses negative lookbehind to avoid marking up currency
-    processedText = processedText.replace(
-      /(?<![0-9])\$(.*?)\$/g,
-      (_match, content) => `[[INLINEMATH${inlineCount++}]]`
-    );
-    
-    // Identify lines with unusual symbol density that might be math
-    const lines = processedText.split('\n');
-    const processedLines = lines.map(line => {
-      // Check if the line has a high ratio of math-like symbols
-      const mathSymbols = line.match(/[\+\-\*\/\=\(\)\[\]\{\}\^\_\<\>]/g) || [];
-      const symbolRatio = mathSymbols.length / (line.length || 1);
-      
-      // If high symbol ratio and not already marked as math, tag it
-      if (symbolRatio > 0.15 && 
-          !line.includes('[[MATHBLOCK') && 
-          !line.includes('[[INLINEMATH') &&
-          !line.includes('[[MATHEXPRESSION')) {
-        return `[[POSSIBLE_MATH${mathBlockCount++}]]\n${line}`;
-      }
-      return line;
-    });
-    
-    // Reassemble the text
-    result += processedLines.join('\n');
+    // Add the cleaned text
+    result += processedText;
     
     return result;
   } catch (error) {
