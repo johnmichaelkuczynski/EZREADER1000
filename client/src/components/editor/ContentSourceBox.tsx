@@ -147,11 +147,11 @@ export function ContentSourceBox({
       
       setSearchDialogOpen(false);
       setActiveTab('manual');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error searching online:', error);
       toast({
         title: "Search failed",
-        description: error.message,
+        description: error instanceof Error ? error.message : "Search failed unexpectedly",
         variant: "destructive"
       });
     } finally {

@@ -50,6 +50,7 @@ export default function Home() {
     audioRef,
     handleInputFileUpload,
     handleContentSourceFileUpload,
+    handleMultipleContentSourceFileUpload,
     handleAudioTranscription,
     isInputDetecting,
     isOutputDetecting,
@@ -282,6 +283,7 @@ export default function Home() {
               useContentSource={useContentSource}
               onUseContentSourceChange={setUseContentSource}
               onFileUpload={handleContentSourceFileUpload}
+              onMultipleFileUpload={handleMultipleContentSourceFileUpload}
               contentSourceFileRef={contentSourceFileRef}
             />
           </div>

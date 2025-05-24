@@ -684,6 +684,7 @@ export function useDocumentProcessor() {
     audioRef,
     handleInputFileUpload,
     handleContentSourceFileUpload,
+    handleMultipleContentSourceFileUpload,
     handleAudioTranscription,
     isInputDetecting,
     isOutputDetecting,
