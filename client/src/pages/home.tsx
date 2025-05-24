@@ -39,6 +39,8 @@ export default function Home() {
     setReprocessOutput,
     messages,
     setMessages,
+    dialogueMessages,
+    setDialogueMessages,
     processing,
     processDocument,
     processSelectedDocumentChunks,
@@ -373,14 +375,14 @@ export default function Home() {
             
             {/* Dialogue Box - For discussing text and special commands */}
             <DialogueBox
-              messages={messages.filter(msg => msg.role === 'user' || msg.content.indexOf('Enter your rewrite instructions') === -1)}
+              messages={dialogueMessages}
               onSendMessage={(content) => {
                 const newMessage = {
                   id: crypto.randomUUID(),
                   role: 'user' as const,
                   content
                 };
-                setMessages(prev => [...prev, newMessage]);
+                setDialogueMessages(prev => [...prev, newMessage]);
                 processDocument(content);
               }}
               onProcessSpecialCommand={processSpecialCommand}

@@ -599,6 +599,8 @@ export function useDocumentProcessor() {
     setReprocessOutput,
     messages,
     setMessages,
+    dialogueMessages,
+    setDialogueMessages,
     processing,
     processDocument,
     processSelectedDocumentChunks,
