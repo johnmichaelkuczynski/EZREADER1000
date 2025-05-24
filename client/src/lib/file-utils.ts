@@ -23,55 +23,72 @@ export async function extractTextFromFile(file: File): Promise<string> {
   }
 }
 
-// Simple PDF text extraction without PDF.js dependency
+// More advanced PDF text extraction
 async function extractTextFromPDF(file: File): Promise<string> {
   try {
-    // Use a simple FileReader approach
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
+    // First extract the title and basic info from the filename
+    const filename = file.name;
+    const fileSize = Math.round(file.size/1024);
+    
+    // Create a header with file information
+    let extractedText = `# PDF Document: ${filename}\n`;
+    extractedText += `File size: ${fileSize} KB\n\n`;
+    
+    // Try to extract some readable text from readable portions
+    try {
+      // Use ArrayBuffer to get better control over the binary data
+      const arrayBuffer = await file.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
       
-      reader.onload = function(event) {
-        try {
-          // Extract usable text content from the binary PDF
-          let content = '';
-          
-          if (event.target?.result) {
-            content = event.target.result.toString();
-            
-            // Look for text markers in PDF
-            const textMarkers = content.match(/\(\(([^)]+)\)\)/g) || [];
-            const textParts = textMarkers.map(m => m.replace(/\(\(|\)\)/g, ''));
-            
-            if (textParts.length > 0) {
-              // If we found text markers, join them
-              content = textParts.join(' ');
-            } else {
-              // Otherwise clean the raw content
-              content = content
-                .replace(/[\x00-\x1F\x7F-\xFF]/g, ' ') // Replace non-printable chars
-                .replace(/\s+/g, ' ')                  // Normalize whitespace
-                .trim();
-            }
-          }
-          
-          if (content.length > 100) {
-            resolve(content);
-          } else {
-            // Provide a message for limited extraction
-            resolve(`PDF file "${file.name}" was uploaded (${Math.round(file.size/1024)} KB), but text extraction is limited. You can still refer to this content in your instructions.`);
-          }
-        } catch (e) {
-          reject(new Error(`Could not extract text from "${file.name}"`));
-        }
-      };
+      // Convert to string and look for text patterns
+      let textContent = '';
       
-      reader.onerror = function() {
-        reject(new Error(`Error reading the PDF file "${file.name}"`));
-      };
+      // Try to find PDF text objects (between BT and ET markers)
+      const pdfStr = new TextDecoder('utf-8').decode(bytes);
       
-      // Try to read as text
-      reader.readAsText(file);
-    });
+      // Extract the first part of the document that might contain metadata
+      const header = pdfStr.substring(0, Math.min(1000, pdfStr.length));
+      
+      // Try to extract title from PDF metadata
+      const titleMatch = header.match(/\/Title\s*\(([^)]+)\)/i);
+      if (titleMatch && titleMatch[1]) {
+        extractedText += `Title: ${titleMatch[1].trim()}\n`;
+      }
+      
+      // Try to extract author from PDF metadata
+      const authorMatch = header.match(/\/Author\s*\(([^)]+)\)/i);
+      if (authorMatch && authorMatch[1]) {
+        extractedText += `Author: ${authorMatch[1].trim()}\n`;
+      }
+      
+      // Try to extract keywords from readable text portions
+      let readableText = '';
+      
+      // Look for common readable text patterns in PDFs
+      const readableSegments = pdfStr.match(/\(([A-Za-z0-9\s.,;:'"!?()-]{10,})\)/g) || [];
+      if (readableSegments.length > 0) {
+        // Process only the clearest text segments
+        const cleanSegments = readableSegments
+          .map(seg => seg.substring(1, seg.length - 1)) // Remove parentheses
+          .filter(seg => seg.length > 15 && seg.split(/\s+/).length > 3) // Only multi-word segments
+          .map(seg => seg.replace(/\\n/g, '\n').replace(/\\r/g, '')) // Handle escaped newlines
+          .slice(0, 50); // Limit to first 50 segments to avoid overwhelming
+        
+        readableText = cleanSegments.join('\n');
+      }
+      
+      if (readableText.length > 100) {
+        extractedText += "\n## Content Preview:\n" + readableText;
+      } else {
+        // If we couldn't extract clean text, add a note
+        extractedText += "\nThis PDF file contains limited machine-readable text content. You may need to refer to specific elements by describing their visual appearance or position in the document.";
+      }
+    } catch (parseError) {
+      // If detailed extraction fails, provide a fallback
+      extractedText += "\nUnable to extract detailed content from this PDF. You can still reference it in your instructions by document name.";
+    }
+    
+    return extractedText;
   } catch (error: unknown) {
     console.error('Error extracting text from PDF:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
