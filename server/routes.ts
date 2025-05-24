@@ -17,6 +17,7 @@ import { processTextWithPerplexity, detectAIWithPerplexity } from "./llm/perplex
 import { detectAIWithGPTZero } from "./services/gptzero";
 import { searchOnline, fetchWebContent } from "./services/google";
 import { sendDocumentEmail } from "./services/sendgrid";
+import { processPDFFile } from "./services/pdf-extractor";
 
 // Configure multer storage
 const upload = multer({
@@ -225,6 +226,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error('Error fetching content:', error);
         res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to fetch content' });
       }
+    }
+  });
+  
+  // Process PDF file - server-side PDF extraction
+  app.post('/api/process-pdf', upload.single('pdf'), async (req: Request, res: Response) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No PDF file provided' });
+      }
+      
+      // Process the PDF file with the server-side library
+      const pdfBuffer = req.file.buffer;
+      const extractedText = await processPDFFile(pdfBuffer);
+      
+      // Return the extracted text
+      res.json({ 
+        text: extractedText,
+        filename: req.file.originalname,
+        size: req.file.size
+      });
+    } catch (error: unknown) {
+      console.error('Error processing PDF file:', error);
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to process PDF file' });
     }
   });
 

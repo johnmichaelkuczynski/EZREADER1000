@@ -51,6 +51,26 @@ export async function transcribeAudio(audioFile: File): Promise<string> {
   return result.result;
 }
 
+// Process PDF file using server-side extraction
+export async function processPDFFile(pdfFile: File): Promise<string> {
+  const formData = new FormData();
+  formData.append("pdf", pdfFile);
+  
+  const response = await fetch("/api/process-pdf", {
+    method: "POST",
+    body: formData,
+    credentials: "include"
+  });
+  
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`PDF processing failed: ${response.status} - ${errorText}`);
+  }
+  
+  const result = await response.json();
+  return result.text;
+}
+
 // Search for content online
 export async function searchOnline(query: string): Promise<{
   results: SearchResult[];

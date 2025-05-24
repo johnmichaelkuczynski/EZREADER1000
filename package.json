@@ -69,6 +69,7 @@
     "openai": "^4.103.0",
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
+    "pdf-parse": "^1.1.1",
     "pdfjs-dist": "^5.2.133",
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
