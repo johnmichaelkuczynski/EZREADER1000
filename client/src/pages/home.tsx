@@ -373,7 +373,7 @@ export default function Home() {
             
             {/* Dialogue Box - For discussing text and special commands */}
             <DialogueBox
-              messages={messages.filter(msg => msg.role === 'user' || msg.content.indexOf('Provide instructions on how') === -1)}
+              messages={messages.filter(msg => msg.role === 'user' || msg.content.indexOf('Enter your rewrite instructions') === -1)}
               onSendMessage={(content) => {
                 const newMessage = {
                   id: crypto.randomUUID(),

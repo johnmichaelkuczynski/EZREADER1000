@@ -3,7 +3,7 @@ import { useLLM } from './use-llm';
 import { Message } from '@/types';
 import { extractTextFromFile } from '@/lib/file-utils';
 import { v4 as uuidv4 } from 'uuid';
-import { transcribeAudio, detectAI } from '@/lib/api';
+import { transcribeAudio, detectAI, processText } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
 export function useDocumentProcessor() {
@@ -379,7 +379,7 @@ export function useDocumentProcessor() {
       {
         id: uuidv4(),
         role: 'assistant',
-        content: 'Welcome to EZ Reader! Provide instructions on how you\'d like your text to be transformed. For example:\n\n• Summarize this content while maintaining key points\n• Rewrite in a more conversational tone\n• Convert this text to a bullet-point list\n• Simplify for a middle-school reading level'
+        content: 'Enter your rewrite instructions above.'
       }
     ]);
   }, []);
@@ -529,14 +529,14 @@ export function useDocumentProcessor() {
       }
       
       // Process using the appropriate LLM (explicitly use the current LLM provider)
-      const response = await processFullText(
-        textToProcess,
-        prompt,
-        "",  // No content source needed for analysis
-        false,
-        false,
-        llmProvider  // Pass the current LLM provider for the dialogue box
-      );
+      const response = await processText({
+        inputText: textToProcess,
+        instructions: prompt,
+        contentSource: "",  // No content source needed for analysis
+        useContentSource: false,
+        reprocessOutput: false,
+        llmProvider: llmProvider  // Pass the current LLM provider for the dialogue box
+      });
       
       // Update the assistant message with the direct response
       setMessages(prev => prev.map(msg => 
