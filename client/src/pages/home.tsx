@@ -405,7 +405,15 @@ export default function Home() {
         onCopyToClipboard={copyToClipboard}
         onExportPDF={exportAsPDF}
         onExportDOCX={exportAsDOCX}
-        onSendEmail={sendEmailWithDocument}
+        onSendEmail={(params) => {
+          return sendEmailWithDocument(
+            params.to,
+            params.subject,
+            params.message,
+            "Original Document",
+            params.document
+          );
+        }}
       />
       
       {/* Find Online Dialog */}

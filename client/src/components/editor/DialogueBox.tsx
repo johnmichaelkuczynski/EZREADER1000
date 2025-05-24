@@ -50,25 +50,9 @@ export function DialogueBox({
     
     if (!inputValue.trim()) return;
     
-    // Check if this is a special command
-    const specialCommands = [
-      'generate table of contents',
-      'generate toc',
-      'create table of contents',
-      'create toc',
-      'generate bibliography',
-      'create bibliography',
-      'generate references',
-      'list references'
-    ];
-    
-    const isRewriteChunkCommand = /rewrite chunk \d+/i.test(inputValue.toLowerCase());
-    
-    if (specialCommands.some(cmd => inputValue.toLowerCase().includes(cmd)) || isRewriteChunkCommand) {
-      onProcessSpecialCommand(inputValue);
-    } else {
-      onSendMessage(inputValue);
-    }
+    // All commands now go through the special command processor
+    // which handles the conversation directly in the chat interface
+    onProcessSpecialCommand(inputValue);
     
     setInputValue('');
   };

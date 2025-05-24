@@ -419,7 +419,7 @@ export function useDocumentProcessor() {
     });
   }, [clearChat, cancelProcessing, processing.isProcessing, showChunkSelector, setShowChunkSelector, setSavedInstructions, toast]);
   
-  // Process special commands from the dialogue box
+  // Process commands in the dialogue box - similar to a ChatGPT conversation
   const processSpecialCommand = useCallback(async (command: string) => {
     if (!inputText && !outputText) {
       toast({
@@ -431,7 +431,7 @@ export function useDocumentProcessor() {
     }
     
     try {
-      // Add the command to the chat
+      // Add the user's message to the chat
       const userMessageId = uuidv4();
       setMessages(prev => [...prev, {
         id: userMessageId,
@@ -439,63 +439,22 @@ export function useDocumentProcessor() {
         content: command
       }]);
       
-      // Add processing message
+      // Add typing indicator message
       const assistantMessageId = uuidv4();
       setMessages(prev => [...prev, {
         id: assistantMessageId,
         role: 'assistant',
-        content: `Processing special command...`
+        content: `Thinking about your request...`
       }]);
       
       // Determine which text to use (prefer output if available)
       const textToProcess = outputText || inputText;
       
-      // Handle different special commands
-      if (command.toLowerCase().includes("table of contents") || command.toLowerCase().includes("toc")) {
-        // Generate table of contents
-        const instructions = "Generate a detailed table of contents for this document. Include section numbers, titles, and brief descriptions.";
-        const result = await processFullText(
-          textToProcess,
-          instructions,
-          "",
-          false,
-          false
-        );
-        
-        // Store in special content instead of replacing output
-        setSpecialContent(result);
-        setShowSpecialContent(true);
-        
-        // Update the assistant message
-        setMessages(prev => prev.map(msg => 
-          msg.id === assistantMessageId
-            ? { ...msg, content: "Table of contents generated successfully! You can view it in the popup." }
-            : msg
-        ));
-      } 
-      else if (command.toLowerCase().includes("bibliography") || command.toLowerCase().includes("references")) {
-        // Generate bibliography
-        const instructions = "Extract all references and citations from this document and format them as a proper bibliography.";
-        const result = await processFullText(
-          textToProcess,
-          instructions,
-          "",
-          false,
-          false
-        );
-        
-        // Store in special content instead of replacing output
-        setSpecialContent(result);
-        setShowSpecialContent(true);
-        
-        // Update the assistant message
-        setMessages(prev => prev.map(msg => 
-          msg.id === assistantMessageId
-            ? { ...msg, content: "Bibliography generated successfully! You can view it in the popup." }
-            : msg
-        ));
-      }
-      else if (command.toLowerCase().match(/rewrite chunk \d+/)) {
+      // Construct a prompt that provides context and handles the specific request
+      let prompt = "";
+      
+      // Special handling for "rewrite chunk" commands
+      if (command.toLowerCase().match(/rewrite chunk \d+/)) {
         // Extract chunk number and any instructions
         const chunkMatch = command.match(/rewrite chunk (\d+)/i);
         if (chunkMatch && documentChunks.length > 0) {
@@ -524,73 +483,69 @@ export function useDocumentProcessor() {
             // Update the assistant message
             setMessages(prev => prev.map(msg => 
               msg.id === assistantMessageId
-                ? { ...msg, content: `Chunk ${chunkIndex + 1} has been rewritten and updated in the output.` }
+                ? { ...msg, content: `I've rewritten chunk ${chunkIndex + 1} and updated it in the output box. The new version should better address your requirements for ${instructions}.` }
                 : msg
             ));
+            return;
           } else {
             // Invalid chunk index
             setMessages(prev => prev.map(msg => 
               msg.id === assistantMessageId
-                ? { ...msg, content: `Error: Chunk ${chunkIndex + 1} does not exist. The document has ${documentChunks.length} chunks.` }
+                ? { ...msg, content: `I can't find chunk ${chunkIndex + 1}. The document only has ${documentChunks.length} chunks. Please specify a valid chunk number.` }
                 : msg
             ));
+            return;
           }
         } else {
           // No chunks available
           setMessages(prev => prev.map(msg => 
             msg.id === assistantMessageId
-              ? { ...msg, content: `Error: No chunks are available. Process the document first.` }
+              ? { ...msg, content: `I can't process chunk operations yet. The document needs to be processed first to divide it into chunks. Try a general instruction first or use the "Process" button above.` }
               : msg
           ));
+          return;
         }
       }
-      else if (command.toLowerCase().includes("title") || 
-               command.toLowerCase().includes("heading") ||
-               command.toLowerCase().includes("summarize") ||
-               command.toLowerCase().includes("analyze")) {
-        // For analytical commands that shouldn't replace the output
-        const result = await processFullText(
-          textToProcess,
-          command,
-          contentSource,
-          useContentSource,
-          false
-        );
-        
-        // Store in special content instead of replacing output
-        setSpecialContent(result);
-        setShowSpecialContent(true);
-        
-        // Update the assistant message
-        setMessages(prev => prev.map(msg => 
-          msg.id === assistantMessageId
-            ? { ...msg, content: `Command processed successfully! You can view the results in the popup.` }
-            : msg
-        ));
+      
+      // Create an appropriate prompt based on the user's request
+      if (command.toLowerCase().includes("table of contents") || command.toLowerCase().includes("toc")) {
+        prompt = "You are analyzing a document. Create a detailed table of contents for it, including section numbers, titles, and brief descriptions for each section. Format it clearly with proper indentation for subsections. Here's the document: " + textToProcess;
+      } 
+      else if (command.toLowerCase().includes("bibliography") || command.toLowerCase().includes("references")) {
+        prompt = "You are analyzing a document. Extract all references and citations from it and format them as a properly formatted bibliography or reference list. If you can't find explicit references, infer what sources might have been used based on the content. Here's the document: " + textToProcess;
+      }
+      else if (command.toLowerCase().includes("summary") || command.toLowerCase().includes("summarize")) {
+        prompt = "You are analyzing a document. Provide a comprehensive summary of the key points, arguments, and conclusions. Here's the document: " + textToProcess;
+      }
+      else if (command.toLowerCase().includes("analyze") || command.toLowerCase().includes("analysis")) {
+        prompt = "You are analyzing a document. Provide a detailed analysis of its content, structure, arguments, and effectiveness. Identify strengths and weaknesses. Here's the document: " + textToProcess;
+      }
+      else if (command.toLowerCase().includes("title") || command.toLowerCase().includes("heading")) {
+        prompt = "You are analyzing a document. Suggest an appropriate title and section headings based on the content. Explain your reasoning briefly. Here's the document: " + textToProcess;
       }
       else {
-        // For any other command, ask user if they want to replace output or view in popup
-        const result = await processFullText(
-          textToProcess,
-          command,
-          contentSource,
-          useContentSource,
-          false
-        );
-        
-        // Store in special content
-        setSpecialContent(result);
-        setShowSpecialContent(true);
-        
-        // Update the assistant message
-        setMessages(prev => prev.map(msg => 
-          msg.id === assistantMessageId
-            ? { ...msg, content: `Command processed successfully! The result is shown in a popup to prevent overwriting your existing content.` }
-            : msg
-        ));
+        // For general queries about the document
+        prompt = "You are having a conversation about a document. Answer the following query about it as helpfully as possible: '" + command + "'. Here's the document: " + textToProcess;
       }
+      
+      // Process using the appropriate LLM
+      const response = await processFullText(
+        textToProcess,
+        prompt,
+        "",  // No content source needed for analysis
+        false,
+        false
+      );
+      
+      // Update the assistant message with the direct response
+      setMessages(prev => prev.map(msg => 
+        msg.id === assistantMessageId
+          ? { ...msg, content: response }
+          : msg
+      ));
+      
     } catch (error: any) {
-      console.error('Error processing special command:', error);
+      console.error('Error processing dialogue command:', error);
       
       // Update the last assistant message with the error
       setMessages(prev => {
@@ -599,18 +554,18 @@ export function useDocumentProcessor() {
         
         return prev.map(msg => 
           msg.id === lastAssistantMessage.id
-            ? { ...msg, content: `Error processing command: ${error?.message || 'Unknown error'}` }
+            ? { ...msg, content: `I'm sorry, I encountered an error while processing your request: ${error?.message || 'Unknown error'}. Could you try rephrasing or asking something else?` }
             : msg
         );
       });
       
       toast({
-        title: "Command processing failed",
-        description: error?.message || 'Unknown error occurred',
+        title: "Processing failed",
+        description: error?.message || 'Something went wrong with your request',
         variant: "destructive"
       });
     }
-  }, [inputText, outputText, contentSource, useContentSource, documentChunks, processFullText, processSelectedChunks, toast, setSpecialContent, setShowSpecialContent]);
+  }, [inputText, outputText, contentSource, useContentSource, documentChunks, processFullText, processSelectedChunks, toast]);
   
   return {
     inputText,
