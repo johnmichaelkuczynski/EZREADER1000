@@ -17,7 +17,7 @@ import { processTextWithPerplexity, detectAIWithPerplexity } from "./llm/perplex
 import { detectAIWithGPTZero } from "./services/gptzero";
 import { searchOnline, fetchWebContent } from "./services/google";
 import { sendDocumentEmail } from "./services/sendgrid";
-import { processPDFFile } from "./services/pdf-extractor";
+import { extractTextFromPDF } from "./services/pdf-processor";
 
 // Configure multer storage
 const upload = multer({
@@ -236,9 +236,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'No PDF file provided' });
       }
       
-      // Process the PDF file with the server-side library
+      // Process the PDF file with our PDF.js processor
       const pdfBuffer = req.file.buffer;
-      const extractedText = await processPDFFile(pdfBuffer);
+      const extractedText = await extractTextFromPDF(pdfBuffer);
       
       // Return the extracted text
       res.json({ 
