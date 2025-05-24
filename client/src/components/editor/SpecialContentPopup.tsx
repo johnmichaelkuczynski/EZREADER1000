@@ -127,7 +127,7 @@ export function SpecialContentPopup({
   
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] flex flex-col overflow-hidden">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Generated Content</DialogTitle>
           <DialogDescription>
@@ -135,18 +135,18 @@ export function SpecialContentPopup({
           </DialogDescription>
         </DialogHeader>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
           <TabsList className="grid grid-cols-2">
             <TabsTrigger value="view">View Content</TabsTrigger>
             <TabsTrigger value="share">Download & Share</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="view" className="flex-1 flex flex-col min-h-0 overflow-hidden">
-            <ScrollArea className="flex-1 border rounded-md p-4 my-2 h-[400px]">
-              <div className="prose prose-sm max-w-none whitespace-pre-wrap">
+          <TabsContent value="view" className="flex-1">
+            <div className="border rounded-md my-2 h-[50vh] overflow-auto">
+              <div className="prose prose-sm max-w-none whitespace-pre-wrap p-4">
                 {content}
               </div>
-            </ScrollArea>
+            </div>
             
             <div className="flex justify-end space-x-2 mt-4">
               <Button variant="outline" onClick={handleCopy}>
