@@ -529,26 +529,20 @@ export function useDocumentProcessor() {
             ));
             
             return;
-            setMessages(prev => prev.map(msg => 
-              msg.id === assistantMessageId
-                ? { ...msg, content: `I've rewritten chunk ${chunkIndex + 1} and updated it in the output box. The new version should better address your requirements for ${instructions}.` }
-                : msg
-            ));
-            return;
           } else {
             // Invalid chunk index
-            setMessages(prev => prev.map(msg => 
+            setDialogueMessages(prev => prev.map(msg => 
               msg.id === assistantMessageId
-                ? { ...msg, content: `I can't find chunk ${chunkIndex + 1}. The document only has ${documentChunks.length} chunks. Please specify a valid chunk number.` }
+                ? { ...msg, content: `I can't find chunk ${chunkIndex + 1}. The document only has ${dialogueChunks.length} chunks. Please specify a valid chunk number between 1 and ${dialogueChunks.length}.` }
                 : msg
             ));
             return;
           }
         } else {
           // No chunks available
-          setMessages(prev => prev.map(msg => 
+          setDialogueMessages(prev => prev.map(msg => 
             msg.id === assistantMessageId
-              ? { ...msg, content: `I can't process chunk operations yet. The document needs to be processed first to divide it into chunks. Try a general instruction first or use the "Process" button above.` }
+              ? { ...msg, content: `I can't process chunk operations for this document. Please make sure there is text in the input or output box first.` }
               : msg
           ));
           return;
@@ -576,9 +570,24 @@ export function useDocumentProcessor() {
         prompt = "You are having a conversation about a document. Answer the following query about it as helpfully as possible: '" + command + "'. Here's the document: " + textToProcess;
       }
       
+      // For large documents, only process the first few chunks to avoid token limits
+      let textToSend = textToProcess;
+      
+      // Check if document is very large (more than 10,000 characters)
+      if (textToProcess.length > 10000) {
+        // Use only the first 1-3 chunks depending on size
+        const numChunksToUse = textToProcess.length > 30000 ? 1 : 
+                              textToProcess.length > 20000 ? 2 : 3;
+        
+        textToSend = dialogueChunks.slice(0, numChunksToUse).join("\n\n");
+        
+        // Add a note that we're using a limited portion of the text
+        prompt = prompt.replace("Here's the document:", "Note: This document is very large, so I'm only analyzing the beginning portion. Here's the excerpt:");
+      }
+      
       // Process using the appropriate LLM through the API
       const response = await processText({
-        inputText: textToProcess,
+        inputText: textToSend,
         instructions: prompt,
         contentSource: "",
         useContentSource: false,
