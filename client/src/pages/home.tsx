@@ -5,6 +5,7 @@ import { InputEditor } from "@/components/editor/InputEditor";
 import { OutputEditor } from "@/components/editor/OutputEditor";
 import { ContentSourceBox } from "@/components/editor/ContentSourceBox";
 import { ChatInterface } from "@/components/editor/ChatInterface";
+import { DialogueBox } from "@/components/editor/DialogueBox";
 import { ProcessingStatusBar } from "@/components/editor/ProcessingStatusBar";
 import { EditorToolbar } from "@/components/editor/EditorToolbar";
 import { ChunkSelector } from "@/components/editor/ChunkSelector";
@@ -53,6 +54,8 @@ export default function Home() {
     clearInput,
     clearOutput,
     clearChat,
+    resetAll,
+    processSpecialCommand,
     llmProvider,
     setLLMProvider,
     documentChunks,
@@ -361,6 +364,27 @@ export default function Home() {
               onClearChat={clearChat}
               reprocessOutput={reprocessOutput}
               onReprocessOutputChange={setReprocessOutput}
+            />
+            
+            {/* Dialogue Box - For discussing text and special commands */}
+            <DialogueBox
+              messages={messages}
+              onSendMessage={(content) => {
+                const newMessage = {
+                  id: crypto.randomUUID(),
+                  role: 'user' as const,
+                  content
+                };
+                setMessages(prev => [...prev, newMessage]);
+                processDocument(content);
+              }}
+              onProcessSpecialCommand={processSpecialCommand}
+              onReset={resetAll}
+              inputText={inputText}
+              outputText={outputText}
+              contentSource={contentSource}
+              instructions={messages.filter(msg => msg.role === 'user').pop()?.content || ''}
+              isProcessing={processing.isProcessing}
             />
           </div>
         </div>

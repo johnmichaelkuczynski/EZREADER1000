@@ -379,6 +379,198 @@ export function useDocumentProcessor() {
       }
     ]);
   }, []);
+
+  // Reset everything - wipe slate clean and shut down any operations
+  const resetAll = useCallback(() => {
+    // Clear all text content
+    setInputText('');
+    setOutputText('');
+    setContentSource('');
+    
+    // Reset flags and results
+    setUseContentSource(false);
+    setReprocessOutput(false);
+    setInputAIResult(null);
+    setOutputAIResult(null);
+    
+    // Reset chat
+    clearChat();
+    
+    // Cancel any ongoing processing
+    if (processing.isProcessing) {
+      cancelProcessing();
+    }
+    
+    // Hide chunk selector if visible
+    if (showChunkSelector) {
+      setShowChunkSelector(false);
+    }
+    
+    toast({
+      title: "Reset complete",
+      description: "All content has been cleared and operations stopped.",
+    });
+  }, [clearChat, cancelProcessing, processing.isProcessing, showChunkSelector, setShowChunkSelector, toast]);
+  
+  // Process special commands from the dialogue box
+  const processSpecialCommand = useCallback(async (command: string) => {
+    if (!inputText && !outputText) {
+      toast({
+        title: "No content to process",
+        description: "Please enter or generate some text first.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      // Add the command to the chat
+      const userMessageId = uuidv4();
+      setMessages(prev => [...prev, {
+        id: userMessageId,
+        role: 'user',
+        content: command
+      }]);
+      
+      // Add processing message
+      const assistantMessageId = uuidv4();
+      setMessages(prev => [...prev, {
+        id: assistantMessageId,
+        role: 'assistant',
+        content: `Processing special command...`
+      }]);
+      
+      // Determine which text to use (prefer output if available)
+      const textToProcess = outputText || inputText;
+      
+      // Handle different special commands
+      if (command.toLowerCase().includes("table of contents") || command.toLowerCase().includes("toc")) {
+        // Generate table of contents
+        const instructions = "Generate a detailed table of contents for this document. Include section numbers, titles, and brief descriptions.";
+        const result = await processFullText(
+          textToProcess,
+          instructions,
+          "",
+          false,
+          false
+        );
+        
+        // Update the assistant message with the result
+        setMessages(prev => prev.map(msg => 
+          msg.id === assistantMessageId
+            ? { ...msg, content: result }
+            : msg
+        ));
+      } 
+      else if (command.toLowerCase().includes("bibliography") || command.toLowerCase().includes("references")) {
+        // Generate bibliography
+        const instructions = "Extract all references and citations from this document and format them as a proper bibliography.";
+        const result = await processFullText(
+          textToProcess,
+          instructions,
+          "",
+          false,
+          false
+        );
+        
+        // Update the assistant message with the result
+        setMessages(prev => prev.map(msg => 
+          msg.id === assistantMessageId
+            ? { ...msg, content: result }
+            : msg
+        ));
+      }
+      else if (command.toLowerCase().match(/rewrite chunk \d+/)) {
+        // Extract chunk number and any instructions
+        const chunkMatch = command.match(/rewrite chunk (\d+)/i);
+        if (chunkMatch && documentChunks.length > 0) {
+          const chunkIndex = parseInt(chunkMatch[1]) - 1; // Convert to 0-based index
+          
+          if (chunkIndex >= 0 && chunkIndex < documentChunks.length) {
+            // Extract any additional instructions after the chunk number
+            const additionalInstructions = command.substring(command.indexOf(chunkMatch[0]) + chunkMatch[0].length).trim();
+            const instructions = additionalInstructions || "Rewrite this chunk to improve clarity and flow";
+            
+            // Process just this chunk
+            const result = await processSelectedChunks(
+              [chunkIndex],
+              instructions,
+              contentSource,
+              useContentSource
+            );
+            
+            // Update the output with the result
+            const updatedOutput = outputText 
+              ? documentChunks.map((chunk, idx) => idx === chunkIndex ? result : chunk).join('\n\n') 
+              : result;
+            
+            setOutputText(updatedOutput);
+            
+            // Update the assistant message
+            setMessages(prev => prev.map(msg => 
+              msg.id === assistantMessageId
+                ? { ...msg, content: `Chunk ${chunkIndex + 1} has been rewritten and updated in the output.` }
+                : msg
+            ));
+          } else {
+            // Invalid chunk index
+            setMessages(prev => prev.map(msg => 
+              msg.id === assistantMessageId
+                ? { ...msg, content: `Error: Chunk ${chunkIndex + 1} does not exist. The document has ${documentChunks.length} chunks.` }
+                : msg
+            ));
+          }
+        } else {
+          // No chunks available
+          setMessages(prev => prev.map(msg => 
+            msg.id === assistantMessageId
+              ? { ...msg, content: `Error: No chunks are available. Process the document first.` }
+              : msg
+          ));
+        }
+      } 
+      else {
+        // For any other command, treat it as regular instructions
+        const result = await processFullText(
+          textToProcess,
+          command,
+          contentSource,
+          useContentSource,
+          false
+        );
+        
+        // Update the output
+        setOutputText(result);
+        
+        // Update the assistant message
+        setMessages(prev => prev.map(msg => 
+          msg.id === assistantMessageId
+            ? { ...msg, content: `Command processed successfully. The output has been updated.` }
+            : msg
+        ));
+      }
+    } catch (error: any) {
+      console.error('Error processing special command:', error);
+      
+      // Update the last assistant message with the error
+      setMessages(prev => {
+        const lastAssistantMessage = [...prev].reverse().find(msg => msg.role === 'assistant');
+        if (!lastAssistantMessage) return prev;
+        
+        return prev.map(msg => 
+          msg.id === lastAssistantMessage.id
+            ? { ...msg, content: `Error processing command: ${error?.message || 'Unknown error'}` }
+            : msg
+        );
+      });
+      
+      toast({
+        title: "Command processing failed",
+        description: error?.message || 'Unknown error occurred',
+        variant: "destructive"
+      });
+    }
+  }, [inputText, outputText, contentSource, useContentSource, documentChunks, processFullText, processSelectedChunks, toast]);
   
   return {
     inputText,
@@ -411,6 +603,8 @@ export function useDocumentProcessor() {
     clearInput,
     clearOutput,
     clearChat,
+    resetAll,
+    processSpecialCommand,
     llmProvider,
     setLLMProvider,
     documentChunks,
