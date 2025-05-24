@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { ProcessTextOptions } from './openai';
+import { protectMathFormulas, restoreMathFormulas } from "../utils/math-formula-protection";
 
 // the newest Anthropic model is "claude-3-7-sonnet-20250219" which was released February 24, 2025
 const anthropic = new Anthropic({
@@ -9,7 +10,10 @@ const anthropic = new Anthropic({
 export async function processTextWithAnthropic(options: ProcessTextOptions): Promise<string> {
   const { text, instructions, contentSource, useContentSource, maxTokens = 4000 } = options;
   
-  let systemPrompt = "You are an assistant that transforms text according to user instructions.";
+  // Protect math formulas before processing
+  const { processedText, mathBlocks } = protectMathFormulas(text);
+  
+  let systemPrompt = "You are an assistant that transforms text according to user instructions. Do not modify any content within [[MATH_BLOCK_*]] or [[MATH_INLINE_*]] tokens as they contain special mathematical notation.";
   
   // Check if instructions contain keywords about shortening
   const requestsShorterOutput = instructions.toLowerCase().includes('shorter') || 
@@ -23,7 +27,8 @@ export async function processTextWithAnthropic(options: ProcessTextOptions): Pro
     systemPrompt += " IMPORTANT: Unless explicitly requested otherwise, your rewrite MUST be longer than the original text. Add more examples, explanations, or details to make the content more comprehensive.";
   }
   
-  let userContent = `Instructions: ${instructions}\n\nText to transform:\n${text}`;
+  // Use the protected text with math formulas replaced by tokens
+  let userContent = `Instructions: ${instructions}\n\nText to transform:\n${processedText}`;
   
   if (useContentSource && contentSource) {
     systemPrompt += " Use the provided content source for additional context or information.";
@@ -40,14 +45,29 @@ export async function processTextWithAnthropic(options: ProcessTextOptions): Pro
       ],
     });
     
-    return message.content[0].text;
-  } catch (error) {
+    // Get the response content
+    let responseContent = '';
+    
+    // Handle different response types from Anthropic API
+    if (message.content && message.content.length > 0) {
+      const contentBlock = message.content[0];
+      if ('text' in contentBlock) {
+        responseContent = contentBlock.text;
+      }
+    }
+    
+    // Restore math formulas in the processed text
+    const finalResult = restoreMathFormulas(responseContent, mathBlocks);
+    
+    return finalResult;
+  } catch (error: any) {
     console.error("Anthropic processing error:", error);
     throw new Error(`Failed to process text with Anthropic: ${error.message}`);
   }
 }
 
 export async function detectAIWithAnthropic(text: string): Promise<{ isAI: boolean; confidence: number; details: string }> {
+  // No need to protect math formulas for AI detection
   try {
     const response = await anthropic.messages.create({
       model: "claude-3-7-sonnet-20250219",
