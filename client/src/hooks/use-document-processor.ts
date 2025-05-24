@@ -19,6 +19,15 @@ export function useDocumentProcessor() {
       content: 'Enter your rewrite instructions above.'
     }
   ]);
+  
+  // Separate state for dialogue messages
+  const [dialogueMessages, setDialogueMessages] = useState<Message[]>([
+    {
+      id: uuidv4(),
+      role: 'assistant',
+      content: 'I can help answer questions about your document. What would you like to know?'
+    }
+  ]);
   const [isInputDetecting, setIsInputDetecting] = useState<boolean>(false);
   const [isOutputDetecting, setIsOutputDetecting] = useState<boolean>(false);
   const [inputAIResult, setInputAIResult] = useState<{ isAI: boolean; confidence: number; details: string } | null>(null);
@@ -382,6 +391,15 @@ export function useDocumentProcessor() {
         content: 'Enter your rewrite instructions above.'
       }
     ]);
+    
+    // Also clear dialogue messages
+    setDialogueMessages([
+      {
+        id: uuidv4(),
+        role: 'assistant',
+        content: 'I can help answer questions about your document. What would you like to know?'
+      }
+    ]);
   }, []);
 
   // Reset everything - wipe slate clean and shut down any operations
@@ -431,17 +449,17 @@ export function useDocumentProcessor() {
     }
     
     try {
-      // Add the user's message to the chat
+      // Add the user's message to the dialogue chat (not the rewrite instructions)
       const userMessageId = uuidv4();
-      setMessages(prev => [...prev, {
+      setDialogueMessages(prev => [...prev, {
         id: userMessageId,
         role: 'user',
         content: command
       }]);
       
-      // Add typing indicator message
+      // Add typing indicator message to dialogue
       const assistantMessageId = uuidv4();
-      setMessages(prev => [...prev, {
+      setDialogueMessages(prev => [...prev, {
         id: assistantMessageId,
         role: 'assistant',
         content: `Thinking about your request...`
