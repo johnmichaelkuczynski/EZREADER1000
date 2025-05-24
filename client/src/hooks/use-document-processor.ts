@@ -5,6 +5,7 @@ import { extractTextFromFile } from '@/lib/file-utils';
 import { v4 as uuidv4 } from 'uuid';
 import { transcribeAudio, detectAI, processText } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { chunkText } from '@/lib/text-chunker';
 
 export function useDocumentProcessor() {
   const [inputText, setInputText] = useState<string>('');
@@ -468,37 +469,66 @@ export function useDocumentProcessor() {
       // Determine which text to use (prefer output if available)
       const textToProcess = outputText || inputText;
       
+      // Always create chunks for the document for dialogue processing
+      // This ensures we can handle large documents without hitting token limits
+      const dialogueChunks = chunkText(textToProcess, 300); // Use smaller chunks (300 words) for dialogue
+      
       // Construct a prompt that provides context and handles the specific request
       let prompt = "";
+      
+      // Handle showing chunk information
+      if (command.toLowerCase().includes("show chunks") || command.toLowerCase().includes("list chunks")) {
+        setDialogueMessages(prev => prev.map(msg => 
+          msg.id === assistantMessageId
+            ? { ...msg, content: `I've divided the document into ${dialogueChunks.length} chunks. You can ask about a specific chunk by saying "rewrite chunk X" or "summarize chunk X" where X is a number between 1 and ${dialogueChunks.length}.` }
+            : msg
+        ));
+        return;
+      }
+      
+      // For very large documents, recommend using chunks
+      if (dialogueChunks.length > 5 && !command.toLowerCase().includes("chunk")) {
+        setDialogueMessages(prev => prev.map(msg => 
+          msg.id === assistantMessageId
+            ? { ...msg, content: `This is a large document (${textToProcess.length} characters, approximately ${Math.round(textToProcess.length/5)} tokens). I've divided it into ${dialogueChunks.length} chunks.\n\nFor better results, please try:\n1. Asking about a specific chunk: "summarize chunk 3"\n2. Type "show chunks" to see information about all chunks\n3. Ask a more specific question about the document` }
+            : msg
+        ));
+        return;
+      }
       
       // Special handling for "rewrite chunk" commands
       if (command.toLowerCase().match(/rewrite chunk \d+/)) {
         // Extract chunk number and any instructions
         const chunkMatch = command.match(/rewrite chunk (\d+)/i);
-        if (chunkMatch && documentChunks.length > 0) {
+        if (chunkMatch && dialogueChunks.length > 0) {
           const chunkIndex = parseInt(chunkMatch[1]) - 1; // Convert to 0-based index
           
-          if (chunkIndex >= 0 && chunkIndex < documentChunks.length) {
+          if (chunkIndex >= 0 && chunkIndex < dialogueChunks.length) {
+            // Use the specified chunk from our dialogue chunks
+            const chunkText = dialogueChunks[chunkIndex];
+            
             // Extract any additional instructions after the chunk number
             const additionalInstructions = command.substring(command.indexOf(chunkMatch[0]) + chunkMatch[0].length).trim();
             const instructions = additionalInstructions || "Rewrite this chunk to improve clarity and flow";
             
             // Process just this chunk
-            const result = await processSelectedChunks(
-              [chunkIndex],
-              instructions,
-              contentSource,
-              useContentSource
-            );
+            const response = await processText({
+              inputText: chunkText,
+              instructions: instructions,
+              contentSource: "",
+              useContentSource: false,
+              reprocessOutput: false,
+              llmProvider
+            });
             
-            // Update the output with the result
-            const updatedOutput = outputText 
-              ? documentChunks.map((chunk, idx) => idx === chunkIndex ? result : chunk).join('\n\n') 
-              : result;
+            // Update the assistant message with the processed chunk
+            setDialogueMessages(prev => prev.map(msg => 
+              msg.id === assistantMessageId
+                ? { ...msg, content: response }
+                : msg
+            ));
             
-            setOutputText(updatedOutput);
-            
-            // Update the assistant message
+            return;
             setMessages(prev => prev.map(msg => 
               msg.id === assistantMessageId
                 ? { ...msg, content: `I've rewritten chunk ${chunkIndex + 1} and updated it in the output box. The new version should better address your requirements for ${instructions}.` }
