@@ -556,8 +556,8 @@ export function useDocumentProcessor() {
         llmProvider
       });
       
-      // Update the assistant message with the direct response
-      setMessages(prev => prev.map(msg => 
+      // Update the assistant message with the direct response in the dialogue messages
+      setDialogueMessages(prev => prev.map(msg => 
         msg.id === assistantMessageId
           ? { ...msg, content: response }
           : msg
@@ -566,8 +566,8 @@ export function useDocumentProcessor() {
     } catch (error: any) {
       console.error('Error processing dialogue command:', error);
       
-      // Update the last assistant message with the error
-      setMessages(prev => {
+      // Update the last assistant message with the error in dialogue messages
+      setDialogueMessages(prev => {
         const lastAssistantMessage = [...prev].reverse().find(msg => msg.role === 'assistant');
         if (!lastAssistantMessage) return prev;
         
