@@ -292,5 +292,5 @@ export class MemStorage implements IStorage {
   }
 }
 
-// Use MemStorage for development as instructed in the guidelines
-export const storage = new MemStorage();
+// Use DatabaseStorage to connect to Neon PostgreSQL database
+export const storage = new DatabaseStorage();
