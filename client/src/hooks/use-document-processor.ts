@@ -627,11 +627,11 @@ export function useDocumentProcessor() {
         return;
       }
       
-      // For very large documents, recommend using chunks
-      if (dialogueChunks.length > 5 && !command.toLowerCase().includes("chunk")) {
+      // For very large documents, recommend using chunks only if synthesis mode is not enabled
+      if (dialogueChunks.length > 5 && !command.toLowerCase().includes("chunk") && !enableSynthesisMode) {
         setDialogueMessages(prev => prev.map(msg => 
           msg.id === assistantMessageId
-            ? { ...msg, content: `This is a large document (${textToProcess.length} characters, approximately ${Math.round(textToProcess.length/5)} tokens). I've divided it into ${dialogueChunks.length} chunks.\n\nFor better results, please try:\n1. Asking about a specific chunk: "summarize chunk 3"\n2. Type "show chunks" to see information about all chunks\n3. Ask a more specific question about the document` }
+            ? { ...msg, content: `This is a large document (${textToProcess.length} characters, approximately ${Math.round(textToProcess.length/5)} tokens). I've divided it into ${dialogueChunks.length} chunks.\n\nFor better results, please try:\n1. Asking about a specific chunk: "summarize chunk 3"\n2. Type "show chunks" to see information about all chunks\n3. Ask a more specific question about the document\n4. Or enable Full Document Synthesis Mode in the toolbar to analyze the entire document at once` }
             : msg
         ));
         return;
