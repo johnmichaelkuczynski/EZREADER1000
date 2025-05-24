@@ -528,13 +528,14 @@ export function useDocumentProcessor() {
         prompt = "You are having a conversation about a document. Answer the following query about it as helpfully as possible: '" + command + "'. Here's the document: " + textToProcess;
       }
       
-      // Process using the appropriate LLM
+      // Process using the appropriate LLM (explicitly use the current LLM provider)
       const response = await processFullText(
         textToProcess,
         prompt,
         "",  // No content source needed for analysis
         false,
-        false
+        false,
+        llmProvider  // Pass the current LLM provider for the dialogue box
       );
       
       // Update the assistant message with the direct response
