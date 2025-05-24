@@ -4,9 +4,8 @@ import { jsPDF } from 'jspdf';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { saveAs } from 'file-saver';
 
-// Configure PDF.js to work without requiring a worker file
-// This is a simpler approach that works in more environments
-pdfjs.GlobalWorkerOptions.workerSrc = '';
+// Configure PDF.js to use our custom worker
+pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
 
 // Extract text from a file (PDF or DOCX)
 export async function extractTextFromFile(file: File): Promise<string> {
