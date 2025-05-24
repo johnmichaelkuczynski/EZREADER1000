@@ -39,6 +39,10 @@ export function useDocumentProcessor() {
   const [specialContent, setSpecialContent] = useState<string>('');
   const [showSpecialContent, setShowSpecialContent] = useState<boolean>(false);
   
+  // Full Document Synthesis Mode
+  const [documentMap, setDocumentMap] = useState<string[]>([]);
+  const [enableSynthesisMode, setEnableSynthesisMode] = useState<boolean>(false);
+  
   const { toast } = useToast();
   const { 
     llmProvider, 
@@ -129,6 +133,50 @@ export function useDocumentProcessor() {
               ? { ...msg, content: `Processing document: Completed chunk ${currentChunk} of ${totalChunks} (${Math.round((currentChunk/totalChunks) * 100)}%)` }
               : msg
           ));
+
+          // For synthesis mode, we'll handle summaries elsewhere
+          // This helps avoid circular references in the implementation
+          if (enableSynthesisMode && totalChunks > 1) {
+            // For the first chunk, clear the document map to start fresh
+            if (currentChunk === 1) {
+              setDocumentMap([]);
+            }
+            
+            // Store chunk text for later summarization
+            const chunks = chunkText(textToProcess);
+            if (chunks.length >= currentChunk) {
+              // We'll summarize the chunks after processing is complete
+              // This avoids circular dependency issues
+              const chunkText = chunks[currentChunk - 1];
+              const chunkIndex = currentChunk - 1;
+              
+              // Use setTimeout to avoid blocking the UI
+              setTimeout(async () => {
+                try {
+                  // Create a simple instruction to summarize the chunk
+                  const summaryInstruction = "Summarize this section in 1–2 sentences:";
+                  
+                  // Process the chunk using the API
+                  const response = await processText({
+                    inputText: chunkText,
+                    instructions: summaryInstruction,
+                    contentSource: "",
+                    useContentSource: false,
+                    llmProvider
+                  });
+                  
+                  // Add the summary to the document map
+                  setDocumentMap(prev => {
+                    const newMap = [...prev];
+                    newMap[chunkIndex] = `Section ${chunkIndex + 1}: ${response}`;
+                    return newMap;
+                  });
+                } catch (error) {
+                  console.error(`Error creating summary for chunk ${chunkIndex}:`, error);
+                }
+              }, 0);
+            }
+          }
         }
       );
       
@@ -660,6 +708,74 @@ export function useDocumentProcessor() {
     }
   }, [inputText, outputText, contentSource, useContentSource, documentChunks, processFullText, processSelectedChunks, toast]);
   
+  // Function to create a summary for a chunk of text
+  const createChunkSummary = useCallback(async (chunkText: string, chunkIndex: number) => {
+    try {
+      // Create a simple instruction to summarize the chunk
+      const summaryInstruction = "Summarize this section in 1–2 sentences:";
+      
+      // Process the chunk using the API
+      const response = await processText({
+        inputText: chunkText,
+        instructions: summaryInstruction,
+        contentSource: "",
+        useContentSource: false,
+        llmProvider
+      });
+      
+      // Add the summary to the document map
+      setDocumentMap(prev => {
+        const newMap = [...prev];
+        newMap[chunkIndex] = `Section ${chunkIndex + 1}: ${response}`;
+        return newMap;
+      });
+    } catch (error) {
+      console.error(`Error creating summary for chunk ${chunkIndex}:`, error);
+    }
+  }, [llmProvider]);
+  
+  // Process global questions about the document using the document map
+  const processGlobalQuestion = useCallback(async (query: string) => {
+    if (!documentMap.length) {
+      toast({
+        title: "No document summaries available",
+        description: "Please process a document with Full Document Synthesis Mode enabled first.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      // Show processing state
+      setShowSpecialContent(true);
+      setSpecialContent("Processing your query about the document...");
+      
+      // Construct the input with all section summaries
+      const input = `Based on the following section summaries, ${query}:\n\n${documentMap.join("\n\n")}`;
+      
+      // Process the query
+      const response = await processText({
+        inputText: input,
+        instructions: "Answer the query as thoroughly as possible based on the section summaries.",
+        contentSource: "",
+        useContentSource: false,
+        llmProvider
+      });
+      
+      // Display the result
+      setSpecialContent(response);
+    } catch (error) {
+      console.error('Error processing global question:', error);
+      setSpecialContent(`Error processing your query: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      
+      toast({
+        title: "Processing failed",
+        description: error instanceof Error ? error.message : "Unknown error occurred",
+        variant: "destructive"
+      });
+    }
+  }, [documentMap, toast, llmProvider, setSpecialContent, setShowSpecialContent]);
+  
   return {
     inputText,
     setInputText,
@@ -704,6 +820,11 @@ export function useDocumentProcessor() {
     setLLMProvider,
     documentChunks,
     showChunkSelector,
-    setShowChunkSelector
+    setShowChunkSelector,
+    // Full Document Synthesis Mode
+    enableSynthesisMode,
+    setEnableSynthesisMode,
+    documentMap,
+    processGlobalQuestion
   };
 }

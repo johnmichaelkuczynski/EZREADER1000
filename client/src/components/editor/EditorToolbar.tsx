@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { useState, useEffect } from 'react';
 import { PlayIcon, SearchIcon, MicIcon, FileAudioIcon, SaveIcon } from 'lucide-react';
 import { LLMProvider, SavedInstruction } from '@/types';
