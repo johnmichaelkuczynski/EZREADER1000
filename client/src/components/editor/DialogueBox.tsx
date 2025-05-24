@@ -18,6 +18,9 @@ interface DialogueBoxProps {
   contentSource: string;
   instructions: string;
   isProcessing: boolean;
+  enableSynthesisMode?: boolean;
+  documentMap?: string[];
+  onProcessGlobalQuestion?: (query: string) => Promise<void>;
 }
 
 export function DialogueBox({

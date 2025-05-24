@@ -68,7 +68,12 @@ export default function Home() {
     setLLMProvider,
     documentChunks,
     showChunkSelector,
-    setShowChunkSelector
+    setShowChunkSelector,
+    // Full Document Synthesis Mode
+    enableSynthesisMode,
+    setEnableSynthesisMode,
+    documentMap,
+    processGlobalQuestion
   } = useDocumentProcessor();
 
   const {
@@ -87,6 +92,7 @@ export default function Home() {
   const [isRecording, setIsRecording] = useState(false);
   const [audioTranscribeDialogOpen, setAudioTranscribeDialogOpen] = useState(false);
   const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [enableSynthesisMode, setEnableSynthesisMode] = useState(false);
   
   const { toast } = useToast();
   const mediaRecorder = useRef<MediaRecorder | null>(null);
@@ -301,6 +307,8 @@ export default function Home() {
               setLLMProvider={setLLMProvider}
               onInstructionsSelect={handleInstructionSelect}
               currentInstructions={messages.filter(msg => msg.role === 'user').pop()?.content || ''}
+              enableSynthesisMode={enableSynthesisMode}
+              setEnableSynthesisMode={setEnableSynthesisMode}
             />
             
             {/* Text Processing Section */}

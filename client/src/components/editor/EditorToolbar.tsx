@@ -32,6 +32,8 @@ interface EditorToolbarProps {
   setLLMProvider: (provider: LLMProvider) => void;
   onInstructionsSelect: (instructions: string) => void;
   currentInstructions: string;
+  enableSynthesisMode?: boolean;
+  setEnableSynthesisMode?: (enabled: boolean) => void;
 }
 
 export function EditorToolbar({
@@ -43,7 +45,9 @@ export function EditorToolbar({
   llmProvider,
   setLLMProvider,
   onInstructionsSelect,
-  currentInstructions
+  currentInstructions,
+  enableSynthesisMode = false,
+  setEnableSynthesisMode
 }: EditorToolbarProps) {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [instructionName, setInstructionName] = useState('');
@@ -59,11 +63,12 @@ export function EditorToolbar({
         setIsLoading(true);
         const instructions = await getSavedInstructions();
         setSavedInstructions(instructions);
-      } catch (error) {
+      } catch (err) {
+        const error = err as Error;
         console.error('Error loading saved instructions:', error);
         toast({
           title: "Failed to load saved instructions",
-          description: error.message,
+          description: error.message || "Unknown error occurred",
           variant: "destructive"
         });
       } finally {
@@ -107,11 +112,12 @@ export function EditorToolbar({
       
       setSaveDialogOpen(false);
       setInstructionName('');
-    } catch (error) {
+    } catch (err) {
+      const error = err as Error;
       console.error('Error saving instructions:', error);
       toast({
         title: "Failed to save instructions",
-        description: error.message,
+        description: error.message || "Unknown error occurred",
         variant: "destructive"
       });
     } finally {
@@ -204,6 +210,20 @@ export function EditorToolbar({
         >
           <SaveIcon className="h-4 w-4" />
         </Button>
+        
+        {/* Full Document Synthesis Mode Toggle */}
+        {setEnableSynthesisMode && (
+          <div className="flex items-center space-x-2 ml-2 bg-slate-100 p-2 rounded-md">
+            <Switch
+              id="synthesis-mode"
+              checked={enableSynthesisMode}
+              onCheckedChange={setEnableSynthesisMode}
+            />
+            <Label htmlFor="synthesis-mode" className="text-xs font-medium">
+              Full Document Synthesis Mode
+            </Label>
+          </div>
+        )}
       </div>
       
       {/* Save Instructions Dialog */}
