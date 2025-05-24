@@ -1,7 +1,4 @@
-import * as pdfjsLib from 'pdfjs-dist';
-
-// Disable worker requirement for server-side use
-pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+import pdfParse from 'pdf-parse';
 
 /**
  * Extract text from a PDF buffer using the PDF.js library
@@ -9,62 +6,34 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = '';
  */
 export async function extractTextFromPDF(pdfBuffer: Buffer): Promise<string> {
   try {
-    // Load the PDF document
-    const loadingTask = pdfjsLib.getDocument({
-      data: pdfBuffer,
-      disableFontFace: true,
-    });
+    // Use pdf-parse to extract text from the PDF
+    const data = await pdfParse(pdfBuffer);
     
-    const pdf = await loadingTask.promise;
-    const numPages = pdf.numPages;
+    // Extract text and metadata
+    const { text, info, numpages } = data;
     
-    // Begin extracting metadata if available
-    let documentInfo = '';
-    try {
-      const metadata = await pdf.getMetadata();
-      if (metadata.info) {
-        const info = metadata.info as any;
-        if (info.Title) documentInfo += `Title: ${info.Title}\n`;
-        if (info.Author) documentInfo += `Author: ${info.Author}\n`;
-        if (info.Subject) documentInfo += `Subject: ${info.Subject}\n`;
-        if (info.Keywords) documentInfo += `Keywords: ${info.Keywords}\n`;
-      }
-    } catch (metaError) {
-      console.log('Could not extract PDF metadata:', metaError);
+    // Create a formatted output with metadata if available
+    let result = '';
+    
+    // Add metadata if available
+    if (info) {
+      if (info.Title) result += `Title: ${info.Title}\n`;
+      if (info.Author) result += `Author: ${info.Author}\n`;
+      if (info.Subject) result += `Subject: ${info.Subject}\n`;
+      if (info.Keywords) result += `Keywords: ${info.Keywords}\n`;
+      if (numpages) result += `Pages: ${numpages}\n`;
+      
+      // Add a separator if we have metadata
+      if (result.length > 0) result += '\n';
     }
     
-    // Process all pages to extract text
-    let fullText = '';
-    
-    for (let i = 1; i <= numPages; i++) {
-      try {
-        const page = await pdf.getPage(i);
-        const textContent = await page.getTextContent();
-        
-        // Process each text item from the page
-        if (textContent.items) {
-          const pageText = textContent.items
-            .map((item: any) => item.str || '')
-            .join(' ');
-          
-          fullText += `\n--- Page ${i} ---\n${pageText}\n`;
-        }
-      } catch (pageError) {
-        console.log(`Error processing page ${i}:`, pageError);
-      }
-    }
-    
-    // Format the final output
-    let result = `PDF Document (${numPages} pages)\n`;
-    if (documentInfo) {
-      result += `\n${documentInfo}\n`;
-    }
-    
-    result += `\nContent:\n${fullText}`;
+    // Add the extracted text
+    result += text;
     
     return result;
   } catch (error) {
-    console.error('PDF processing error:', error);
-    return `Error processing PDF: ${error instanceof Error ? error.message : 'Unknown error'}`;
+    console.error('Error extracting PDF text:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    throw new Error(`Failed to extract text from PDF: ${errorMessage}`);
   }
 }
