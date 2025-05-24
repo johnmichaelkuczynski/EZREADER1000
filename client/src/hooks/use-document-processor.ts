@@ -295,6 +295,41 @@ export function useDocumentProcessor() {
     }
   }, [toast]);
   
+  // Handle multiple file uploads for content source editor
+  const handleMultipleContentSourceFileUpload = useCallback(async (files: File[]) => {
+    try {
+      let combinedText = contentSource;
+      let totalCharacters = 0;
+      
+      // Process each file and append its text to the combined content
+      for (const file of files) {
+        const text = await extractTextFromFile(file);
+        totalCharacters += text.length;
+        
+        // Add a separator between files with file name as header
+        if (combinedText) {
+          combinedText += `\n\n--- ${file.name} ---\n\n${text}`;
+        } else {
+          combinedText = `--- ${file.name} ---\n\n${text}`;
+        }
+      }
+      
+      setContentSource(combinedText);
+      
+      toast({
+        title: "Multiple files uploaded",
+        description: `Successfully extracted ${totalCharacters} characters from ${files.length} files`,
+      });
+    } catch (error: any) {
+      console.error('Error uploading multiple content source files:', error);
+      toast({
+        title: "Upload failed",
+        description: error?.message || "Failed to process files",
+        variant: "destructive"
+      });
+    }
+  }, [toast, contentSource]);
+  
   // Handle audio transcription
   const handleAudioTranscription = useCallback(async (file: File) => {
     try {

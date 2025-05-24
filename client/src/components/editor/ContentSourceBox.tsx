@@ -27,6 +27,7 @@ interface ContentSourceBoxProps {
   useContentSource: boolean;
   onUseContentSourceChange: (use: boolean) => void;
   onFileUpload: (file: File) => Promise<void>;
+  onMultipleFileUpload?: (files: File[]) => Promise<void>;
   contentSourceFileRef: React.RefObject<HTMLInputElement>;
 }
 
@@ -37,6 +38,7 @@ export function ContentSourceBox({
   useContentSource,
   onUseContentSourceChange,
   onFileUpload,
+  onMultipleFileUpload,
   contentSourceFileRef
 }: ContentSourceBoxProps) {
   const [activeTab, setActiveTab] = useState<ContentSourceTab['id']>('manual');
@@ -51,17 +53,28 @@ export function ContentSourceBox({
     onDrop: async (acceptedFiles) => {
       if (acceptedFiles.length > 0) {
         try {
-          await onFileUpload(acceptedFiles[0]);
-          setActiveTab('manual');
-          toast({
-            title: "File uploaded successfully",
-            description: `File ${acceptedFiles[0].name} has been processed.`
-          });
+          if (onMultipleFileUpload && acceptedFiles.length > 1) {
+            // Handle multiple files
+            await onMultipleFileUpload(acceptedFiles);
+            setActiveTab('manual');
+            toast({
+              title: "Files uploaded successfully",
+              description: `${acceptedFiles.length} files have been processed.`
+            });
+          } else {
+            // Handle single file (fallback to original behavior)
+            await onFileUpload(acceptedFiles[0]);
+            setActiveTab('manual');
+            toast({
+              title: "File uploaded successfully",
+              description: `File ${acceptedFiles[0].name} has been processed.`
+            });
+          }
         } catch (error) {
-          console.error("Error uploading file:", error);
+          console.error("Error uploading file(s):", error);
           toast({
             title: "Upload failed",
-            description: error instanceof Error ? error.message : "Could not process file",
+            description: error instanceof Error ? error.message : "Could not process file(s)",
             variant: "destructive"
           });
         }
@@ -81,17 +94,30 @@ export function ContentSourceBox({
     const files = event.target.files;
     if (files && files.length > 0) {
       try {
-        await onFileUpload(files[0]);
-        setActiveTab('manual');
-        toast({
-          title: "File uploaded successfully",
-          description: `File ${files[0].name} has been processed.`
-        });
-      } catch (error) {
-        console.error("Error uploading file:", error);
+        const fileArray = Array.from(files);
+        
+        if (onMultipleFileUpload && fileArray.length > 1) {
+          // Handle multiple files
+          await onMultipleFileUpload(fileArray);
+          setActiveTab('manual');
+          toast({
+            title: "Files uploaded successfully",
+            description: `${fileArray.length} files have been processed.`
+          });
+        } else {
+          // Handle single file (fallback to original behavior)
+          await onFileUpload(fileArray[0]);
+          setActiveTab('manual');
+          toast({
+            title: "File uploaded successfully",
+            description: `File ${fileArray[0].name} has been processed.`
+          });
+        }
+      } catch (error: any) {
+        console.error("Error uploading file(s):", error);
         toast({
           title: "Upload failed",
-          description: error instanceof Error ? error.message : "Could not process file",
+          description: error instanceof Error ? error.message : "Could not process file(s)",
           variant: "destructive"
         });
       }
@@ -223,14 +249,15 @@ export function ContentSourceBox({
             <input
               type="file"
               hidden
+              multiple
               ref={contentSourceFileRef}
               onChange={handleFileInputChange}
               accept=".pdf,.docx,.doc,.txt"
             />
             
             <FileText className="h-8 w-8 text-slate-300 mb-2" />
-            <p className="text-sm text-slate-500 mb-2">Drag & drop a file here, or click to browse</p>
-            <p className="text-xs text-slate-400">Supports Word, PDF, and plain text</p>
+            <p className="text-sm text-slate-500 mb-2">Drag & drop files here, or click to browse</p>
+            <p className="text-xs text-slate-400">Supports multiple Word, PDF, and plain text files</p>
             <Button
               variant="outline"
               size="sm"
