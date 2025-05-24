@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Message } from '@/types';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ChevronRight, Eraser, Mic, MicOff, RotateCcw } from 'lucide-react';
@@ -162,11 +162,9 @@ export function DialogueBox({
                       : 'flex-row'
                   }`}
                 >
-                  <Avatar className={message.role === 'user' ? 'bg-primary' : 'bg-slate-300'}>
-                    <AvatarFallback>
-                      {message.role === 'user' ? 'U' : 'AI'}
-                    </AvatarFallback>
-                  </Avatar>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${message.role === 'user' ? 'bg-primary text-white' : 'bg-slate-300 text-slate-600'}`}>
+                    {message.role === 'user' ? 'U' : 'AI'}
+                  </div>
                   <div
                     className={`rounded-lg px-4 py-2 ${
                       message.role === 'user'
