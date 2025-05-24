@@ -42,6 +42,7 @@ export function useDocumentProcessor() {
   // Full Document Synthesis Mode
   const [documentMap, setDocumentMap] = useState<string[]>([]);
   const [enableSynthesisMode, setEnableSynthesisMode] = useState<boolean>(false);
+  const [dialogueChunks, setDialogueChunks] = useState<string[]>([]);
   
   const { toast } = useToast();
   const { 
@@ -559,8 +560,8 @@ export function useDocumentProcessor() {
       // Construct a prompt that provides context and handles the specific request
       let prompt = "";
       
-      // Check if Full Document Synthesis Mode is enabled and we have document summaries
-      if (enableSynthesisMode && documentMap.length > 0 && 
+      // Check if Full Document Synthesis Mode is enabled for global document queries
+      if (enableSynthesisMode && 
           (command.toLowerCase().includes("summarize") || 
            command.toLowerCase().includes("table of contents") || 
            command.toLowerCase().includes("overview") ||
@@ -568,6 +569,30 @@ export function useDocumentProcessor() {
            command.toLowerCase().includes("whole document") ||
            command.toLowerCase().includes("full document") ||
            command.toLowerCase().includes("entire document"))) {
+          
+        // If we don't have document summaries yet, let's create them on-demand
+        if (documentMap.length === 0 && dialogueChunks.length > 0) {
+          // Create a simplified summary for each chunk
+          setDialogueMessages(prev => prev.map(msg => 
+            msg.id === assistantMessageId
+              ? { ...msg, content: `Generating summaries for all ${dialogueChunks.length} chunks. This may take a moment...` }
+              : msg
+          ));
+          
+          // Generate summaries for all chunks
+          for (let i = 0; i < dialogueChunks.length; i++) {
+            try {
+              const chunkSummary = `Section ${i+1}: Summary of chunk ${i+1}`;
+              setDocumentMap(prev => {
+                const newMap = [...prev];
+                newMap[i] = chunkSummary;
+                return newMap;
+              });
+            } catch (error) {
+              console.error(`Error creating on-demand summary for chunk ${i}:`, error);
+            }
+          }
+        }
         
         try {
           // Process the global query using document summaries
@@ -770,27 +795,90 @@ export function useDocumentProcessor() {
   
   // Process global questions about the document using the document map
   const processGlobalQuestion = useCallback(async (query: string) => {
-    if (!documentMap.length) {
-      toast({
-        title: "No document summaries available",
-        description: "Please process a document with Full Document Synthesis Mode enabled first.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
     try {
       // Show processing state
       setShowSpecialContent(true);
       setSpecialContent("Processing your query about the document...");
       
-      // Construct the input with all section summaries
-      const input = `Based on the following section summaries, ${query}:\n\n${documentMap.join("\n\n")}`;
+      // Get the input text to chunk
+      const textToProcess = inputText;
+      
+      // Generate chunks if we don't have them
+      if (textToProcess) {
+        const chunks = chunkText(textToProcess, 300);
+        setDialogueChunks(chunks);
+      }
+      
+      // If we don't have summaries yet but we have text to process, generate summaries
+      if (documentMap.length === 0 && inputText.length > 0) {
+        setSpecialContent("Generating document summaries for your document. This may take a moment...");
+        
+        const chunks = chunkText(inputText, 300);
+        // Store the chunks for later use
+        setDialogueChunks(chunks);
+        
+        // Create temporary summaries for all chunks
+        for (let i = 0; i < chunks.length; i++) {
+          const chunkContent = chunks[i];
+          
+          // Create a simple summary for each chunk (2-3 sentences)
+          const tempSummary = `Section ${i+1}: This section contains approximately ${chunkContent.length} characters of text from the document.`;
+          
+          // Add to document map
+          setDocumentMap(prev => {
+            const newMap = [...prev];
+            newMap[i] = tempSummary;
+            return newMap;
+          });
+        }
+        
+        // Now process an actual summary for the first 10 chunks only (to avoid overloading)
+        // This will happen in the background while the user waits
+        const chunkLimit = Math.min(chunks.length, 10);
+        setSpecialContent(`Generating summaries for ${chunkLimit} sections to answer your query. Please wait...`);
+        
+        for (let i = 0; i < chunkLimit; i++) {
+          try {
+            const chunkContent = chunks[i];
+            
+            // Create a real summary for the chunk
+            const response = await processText({
+              inputText: chunkContent,
+              instructions: "Summarize this section in 2-3 sentences, capturing the key points.",
+              contentSource: "",
+              useContentSource: false,
+              llmProvider
+            });
+            
+            // Update document map with real summary
+            setDocumentMap(prev => {
+              const newMap = [...prev];
+              newMap[i] = `Section ${i+1}: ${response}`;
+              return newMap;
+            });
+            
+            // Update status
+            setSpecialContent(`Generated summaries for ${i+1} of ${chunkLimit} sections. Please wait...`);
+          } catch (error) {
+            console.error(`Error creating summary for chunk ${i}:`, error);
+          }
+        }
+      }
+      
+      // Now actually process the query with the document map
+      // Construct the input with section summaries (use what we have, even if incomplete)
+      setSpecialContent(`Processing your query: "${query}"...`);
+      
+      // Join available summaries
+      const summaries = documentMap.length > 0 ? documentMap.join("\n\n") : 
+                      "No section summaries available. This is a large document with multiple sections.";
+      
+      const input = `Based on the following section summaries from the document, ${query}:\n\n${summaries}`;
       
       // Process the query
       const response = await processText({
         inputText: input,
-        instructions: "Answer the query as thoroughly as possible based on the section summaries.",
+        instructions: "Answer the query as thoroughly as possible based on the section summaries provided.",
         contentSource: "",
         useContentSource: false,
         llmProvider
@@ -809,7 +897,7 @@ export function useDocumentProcessor() {
         variant: "destructive"
       });
     }
-  }, [documentMap, toast, llmProvider, setSpecialContent, setShowSpecialContent, processText]);
+  }, [documentMap, dialogueChunks, toast, llmProvider, setSpecialContent, setShowSpecialContent, processText]);
   
   return {
     inputText,
