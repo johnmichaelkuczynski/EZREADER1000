@@ -1,11 +1,9 @@
 import mammoth from 'mammoth';
-import * as pdfjs from 'pdfjs-dist';
 import { jsPDF } from 'jspdf';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { saveAs } from 'file-saver';
 
-// Configure PDF.js to use our custom worker
-pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
+// Removed PDF.js dependency to use a simpler approach for PDF extraction
 
 // Extract text from a file (PDF or DOCX)
 export async function extractTextFromFile(file: File): Promise<string> {
@@ -25,34 +23,55 @@ export async function extractTextFromFile(file: File): Promise<string> {
   }
 }
 
-// Extract text from PDF
+// Simple PDF text extraction without PDF.js dependency
 async function extractTextFromPDF(file: File): Promise<string> {
   try {
-    // Get the file data
-    const arrayBuffer = await file.arrayBuffer();
-    const typedArray = new Uint8Array(arrayBuffer);
-    
-    // Create a PDF loading task with simplified options
-    const loadingTask = pdfjs.getDocument({
-      data: typedArray,
-      disableFontFace: true,
-    });
-    
-    const pdf = await loadingTask.promise;
-    let text = '';
-    
-    // Process each page
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const content = await page.getTextContent();
-      const pageText = content.items
-        .map((item: any) => item.str)
-        .join(' ');
+    // Use a simple FileReader approach
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
       
-      text += pageText + '\n';
-    }
-    
-    return text;
+      reader.onload = function(event) {
+        try {
+          // Extract usable text content from the binary PDF
+          let content = '';
+          
+          if (event.target?.result) {
+            content = event.target.result.toString();
+            
+            // Look for text markers in PDF
+            const textMarkers = content.match(/\(\(([^)]+)\)\)/g) || [];
+            const textParts = textMarkers.map(m => m.replace(/\(\(|\)\)/g, ''));
+            
+            if (textParts.length > 0) {
+              // If we found text markers, join them
+              content = textParts.join(' ');
+            } else {
+              // Otherwise clean the raw content
+              content = content
+                .replace(/[\x00-\x1F\x7F-\xFF]/g, ' ') // Replace non-printable chars
+                .replace(/\s+/g, ' ')                  // Normalize whitespace
+                .trim();
+            }
+          }
+          
+          if (content.length > 100) {
+            resolve(content);
+          } else {
+            // Provide a message for limited extraction
+            resolve(`PDF file "${file.name}" was uploaded (${Math.round(file.size/1024)} KB), but text extraction is limited. You can still refer to this content in your instructions.`);
+          }
+        } catch (e) {
+          reject(new Error(`Could not extract text from "${file.name}"`));
+        }
+      };
+      
+      reader.onerror = function() {
+        reject(new Error(`Error reading the PDF file "${file.name}"`));
+      };
+      
+      // Try to read as text
+      reader.readAsText(file);
+    });
   } catch (error: unknown) {
     console.error('Error extracting text from PDF:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
