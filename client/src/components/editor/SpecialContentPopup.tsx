@@ -16,7 +16,7 @@ interface SpecialContentPopupProps {
   onCopyToClipboard: (text: string) => Promise<void>;
   onExportPDF: (text: string) => void;
   onExportDOCX: (text: string) => Promise<void>;
-  onSendEmail: (params: { to: string; subject: string; message: string; document: string }) => Promise<void>;
+  onSendEmail: (params: { to: string; subject: string; message: string; document: string }) => Promise<boolean>;
 }
 
 export function SpecialContentPopup({

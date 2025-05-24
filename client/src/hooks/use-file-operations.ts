@@ -25,11 +25,12 @@ export function useFileOperations() {
         title: "Copied to clipboard",
         description: "Text copied successfully.",
       });
-    } catch (error) {
+    } catch (err) {
+      const error = err as Error;
       console.error('Error copying to clipboard:', error);
       toast({
         title: "Copy failed",
-        description: error.message,
+        description: error.message || "Failed to copy to clipboard",
         variant: "destructive"
       });
     }
@@ -54,11 +55,12 @@ export function useFileOperations() {
         title: "Export successful",
         description: `Exported as ${filename}`,
       });
-    } catch (error) {
+    } catch (err) {
+      const error = err as Error;
       console.error('Error exporting as PDF:', error);
       toast({
         title: "Export failed",
-        description: error.message,
+        description: error.message || "Failed to export as PDF",
         variant: "destructive"
       });
     } finally {
@@ -85,11 +87,12 @@ export function useFileOperations() {
         title: "Export successful",
         description: `Exported as ${filename}`,
       });
-    } catch (error) {
+    } catch (err) {
+      const error = err as Error;
       console.error('Error exporting as DOCX:', error);
       toast({
         title: "Export failed",
-        description: error.message,
+        description: error.message || "Failed to export as DOCX",
         variant: "destructive"
       });
     } finally {
@@ -111,7 +114,7 @@ export function useFileOperations() {
         description: "Email address, subject, and transformed text are required.",
         variant: "destructive"
       });
-      return;
+      return false;
     }
     
     try {
@@ -131,16 +134,19 @@ export function useFileOperations() {
       });
       
       return true as boolean; // Success
-    } catch (error: any) {
+    } catch (err) {
+      const error = err as Error;
       console.error('Error sending email:', error);
       toast({
         title: "Email failed",
-        description: error instanceof Error ? error.message : "Failed to send email",
+        description: error.message || "Failed to send email",
         variant: "destructive"
       });
+      return false;
     } finally {
       setIsSendingEmail(false);
     }
+    return true;
   }, [toast]);
   
   return {

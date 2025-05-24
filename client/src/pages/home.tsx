@@ -420,14 +420,13 @@ export default function Home() {
         onExportPDF={exportAsPDF}
         onExportDOCX={exportAsDOCX}
         onSendEmail={async (params) => {
-          const result = await sendEmailWithDocument(
+          return await sendEmailWithDocument(
             params.to,
             params.subject,
             params.message,
             "Original Document",
             params.document
           );
-          return result;
         }}
       />
       

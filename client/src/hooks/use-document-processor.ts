@@ -762,10 +762,11 @@ export function useDocumentProcessor() {
         newMap[chunkIndex] = `Section ${chunkIndex + 1}: ${response}`;
         return newMap;
       });
-    } catch (error) {
+    } catch (err) {
+      const error = err as Error;
       console.error(`Error creating summary for chunk ${chunkIndex}:`, error);
     }
-  }, [llmProvider]);
+  }, [llmProvider, processText]);
   
   // Process global questions about the document using the document map
   const processGlobalQuestion = useCallback(async (query: string) => {
@@ -797,17 +798,18 @@ export function useDocumentProcessor() {
       
       // Display the result
       setSpecialContent(response);
-    } catch (error) {
+    } catch (err) {
+      const error = err as Error;
       console.error('Error processing global question:', error);
-      setSpecialContent(`Error processing your query: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setSpecialContent(`Error processing your query: ${error.message || 'Unknown error'}`);
       
       toast({
         title: "Processing failed",
-        description: error instanceof Error ? error.message : "Unknown error occurred",
+        description: error.message || "Unknown error occurred",
         variant: "destructive"
       });
     }
-  }, [documentMap, toast, llmProvider, setSpecialContent, setShowSpecialContent]);
+  }, [documentMap, toast, llmProvider, setSpecialContent, setShowSpecialContent, processText]);
   
   return {
     inputText,
