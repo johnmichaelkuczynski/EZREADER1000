@@ -92,7 +92,6 @@ export default function Home() {
   const [isRecording, setIsRecording] = useState(false);
   const [audioTranscribeDialogOpen, setAudioTranscribeDialogOpen] = useState(false);
   const [audioFile, setAudioFile] = useState<File | null>(null);
-  const [enableSynthesisMode, setEnableSynthesisMode] = useState(false);
   
   const { toast } = useToast();
   const mediaRecorder = useRef<MediaRecorder | null>(null);
@@ -402,6 +401,9 @@ export default function Home() {
               contentSource={contentSource}
               instructions={messages.filter(msg => msg.role === 'user').pop()?.content || ''}
               isProcessing={processing.isProcessing}
+              enableSynthesisMode={enableSynthesisMode}
+              documentMap={documentMap}
+              onProcessGlobalQuestion={processGlobalQuestion}
             />
           </div>
         </div>
@@ -418,13 +420,14 @@ export default function Home() {
         onExportPDF={exportAsPDF}
         onExportDOCX={exportAsDOCX}
         onSendEmail={async (params) => {
-          await sendEmailWithDocument(
+          const result = await sendEmailWithDocument(
             params.to,
             params.subject,
             params.message,
             "Original Document",
             params.document
           );
+          return result;
         }}
       />
       

@@ -32,7 +32,10 @@ export function DialogueBox({
   outputText,
   contentSource,
   instructions,
-  isProcessing
+  isProcessing,
+  enableSynthesisMode = false,
+  documentMap = [],
+  onProcessGlobalQuestion
 }: DialogueBoxProps) {
   const [inputValue, setInputValue] = useState('');
   const [isRecording, setIsRecording] = useState(false);

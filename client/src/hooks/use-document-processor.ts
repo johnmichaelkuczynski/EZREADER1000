@@ -559,6 +559,39 @@ export function useDocumentProcessor() {
       // Construct a prompt that provides context and handles the specific request
       let prompt = "";
       
+      // Check if Full Document Synthesis Mode is enabled and we have document summaries
+      if (enableSynthesisMode && documentMap.length > 0 && 
+          (command.toLowerCase().includes("summarize") || 
+           command.toLowerCase().includes("table of contents") || 
+           command.toLowerCase().includes("overview") ||
+           command.toLowerCase().includes("explain") ||
+           command.toLowerCase().includes("whole document") ||
+           command.toLowerCase().includes("full document") ||
+           command.toLowerCase().includes("entire document"))) {
+        
+        try {
+          // Process the global query using document summaries
+          await processGlobalQuestion(command);
+          
+          // Update the assistant message to inform the user
+          setDialogueMessages(prev => prev.map(msg => 
+            msg.id === assistantMessageId
+              ? { ...msg, content: `I've processed your request using Full Document Synthesis Mode. The results are shown in the popup window.` }
+              : msg
+          ));
+          
+          return;
+        } catch (error) {
+          console.error('Error using Full Document Synthesis Mode:', error);
+          setDialogueMessages(prev => prev.map(msg => 
+            msg.id === assistantMessageId
+              ? { ...msg, content: `I couldn't process your request using Document Synthesis Mode. Falling back to normal processing...` }
+              : msg
+          ));
+          // Continue with normal processing if synthesis mode fails
+        }
+      }
+      
       // Handle showing chunk information
       if (command.toLowerCase().includes("show chunks") || command.toLowerCase().includes("list chunks")) {
         setDialogueMessages(prev => prev.map(msg => 

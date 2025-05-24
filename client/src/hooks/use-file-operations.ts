@@ -101,10 +101,10 @@ export function useFileOperations() {
   const sendEmailWithDocument = useCallback(async (
     to: string,
     subject: string,
-    text: string,
+    message: string,
     originalText: string,
     transformedText: string
-  ): Promise<void> => {
+  ): Promise<boolean> => {
     if (!to || !subject || !transformedText) {
       toast({
         title: "Missing information",
@@ -120,7 +120,7 @@ export function useFileOperations() {
       await sendEmail({
         to,
         subject,
-        text,
+        text: message,
         originalText,
         transformedText
       });
@@ -130,7 +130,7 @@ export function useFileOperations() {
         description: `Document sent to ${to}`,
       });
       
-      // Success, no return value needed
+      return true as boolean; // Success
     } catch (error: any) {
       console.error('Error sending email:', error);
       toast({
