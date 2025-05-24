@@ -25,6 +25,10 @@ export function useDocumentProcessor() {
   const [outputAIResult, setOutputAIResult] = useState<{ isAI: boolean; confidence: number; details: string } | null>(null);
   const [savedInstructions, setSavedInstructions] = useState<string>('');
   
+  // Special content generated from dialogue
+  const [specialContent, setSpecialContent] = useState<string>('');
+  const [showSpecialContent, setShowSpecialContent] = useState<boolean>(false);
+  
   const { toast } = useToast();
   const { 
     llmProvider, 
@@ -458,10 +462,14 @@ export function useDocumentProcessor() {
           false
         );
         
-        // Update the assistant message with the result
+        // Store in special content instead of replacing output
+        setSpecialContent(result);
+        setShowSpecialContent(true);
+        
+        // Update the assistant message
         setMessages(prev => prev.map(msg => 
           msg.id === assistantMessageId
-            ? { ...msg, content: result }
+            ? { ...msg, content: "Table of contents generated successfully! You can view it in the popup." }
             : msg
         ));
       } 
@@ -476,10 +484,14 @@ export function useDocumentProcessor() {
           false
         );
         
-        // Update the assistant message with the result
+        // Store in special content instead of replacing output
+        setSpecialContent(result);
+        setShowSpecialContent(true);
+        
+        // Update the assistant message
         setMessages(prev => prev.map(msg => 
           msg.id === assistantMessageId
-            ? { ...msg, content: result }
+            ? { ...msg, content: "Bibliography generated successfully! You can view it in the popup." }
             : msg
         ));
       }
@@ -531,9 +543,12 @@ export function useDocumentProcessor() {
               : msg
           ));
         }
-      } 
-      else {
-        // For any other command, treat it as regular instructions
+      }
+      else if (command.toLowerCase().includes("title") || 
+               command.toLowerCase().includes("heading") ||
+               command.toLowerCase().includes("summarize") ||
+               command.toLowerCase().includes("analyze")) {
+        // For analytical commands that shouldn't replace the output
         const result = await processFullText(
           textToProcess,
           command,
@@ -542,13 +557,35 @@ export function useDocumentProcessor() {
           false
         );
         
-        // Update the output
-        setOutputText(result);
+        // Store in special content instead of replacing output
+        setSpecialContent(result);
+        setShowSpecialContent(true);
         
         // Update the assistant message
         setMessages(prev => prev.map(msg => 
           msg.id === assistantMessageId
-            ? { ...msg, content: `Command processed successfully. The output has been updated.` }
+            ? { ...msg, content: `Command processed successfully! You can view the results in the popup.` }
+            : msg
+        ));
+      }
+      else {
+        // For any other command, ask user if they want to replace output or view in popup
+        const result = await processFullText(
+          textToProcess,
+          command,
+          contentSource,
+          useContentSource,
+          false
+        );
+        
+        // Store in special content
+        setSpecialContent(result);
+        setShowSpecialContent(true);
+        
+        // Update the assistant message
+        setMessages(prev => prev.map(msg => 
+          msg.id === assistantMessageId
+            ? { ...msg, content: `Command processed successfully! The result is shown in a popup to prevent overwriting your existing content.` }
             : msg
         ));
       }
@@ -573,7 +610,7 @@ export function useDocumentProcessor() {
         variant: "destructive"
       });
     }
-  }, [inputText, outputText, contentSource, useContentSource, documentChunks, processFullText, processSelectedChunks, toast]);
+  }, [inputText, outputText, contentSource, useContentSource, documentChunks, processFullText, processSelectedChunks, toast, setSpecialContent, setShowSpecialContent]);
   
   return {
     inputText,
@@ -608,6 +645,10 @@ export function useDocumentProcessor() {
     clearChat,
     resetAll,
     processSpecialCommand,
+    specialContent,
+    setSpecialContent,
+    showSpecialContent,
+    setShowSpecialContent,
     llmProvider,
     setLLMProvider,
     documentChunks,

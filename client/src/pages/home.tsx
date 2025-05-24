@@ -6,6 +6,7 @@ import { OutputEditor } from "@/components/editor/OutputEditor";
 import { ContentSourceBox } from "@/components/editor/ContentSourceBox";
 import { ChatInterface } from "@/components/editor/ChatInterface";
 import { DialogueBox } from "@/components/editor/DialogueBox";
+import { SpecialContentPopup } from "@/components/editor/SpecialContentPopup";
 import { ProcessingStatusBar } from "@/components/editor/ProcessingStatusBar";
 import { EditorToolbar } from "@/components/editor/EditorToolbar";
 import { ChunkSelector } from "@/components/editor/ChunkSelector";
@@ -56,6 +57,10 @@ export default function Home() {
     clearChat,
     resetAll,
     processSpecialCommand,
+    specialContent,
+    setSpecialContent,
+    showSpecialContent,
+    setShowSpecialContent,
     llmProvider,
     setLLMProvider,
     documentChunks,
@@ -391,6 +396,17 @@ export default function Home() {
       </main>
       
       <Footer />
+      
+      {/* Special Content Popup - displays generated content without overwriting output */}
+      <SpecialContentPopup
+        isOpen={showSpecialContent}
+        onClose={() => setShowSpecialContent(false)}
+        content={specialContent}
+        onCopyToClipboard={copyToClipboard}
+        onExportPDF={exportAsPDF}
+        onExportDOCX={exportAsDOCX}
+        onSendEmail={sendEmailWithDocument}
+      />
       
       {/* Find Online Dialog */}
       <Dialog open={searchDialogOpen} onOpenChange={setSearchDialogOpen}>
