@@ -13,10 +13,15 @@ export interface ProcessTextOptions {
   maxTokens?: number;
 }
 
+import { protectMathFormulas, restoreMathFormulas } from "../utils/math-formula-protection";
+
 export async function processTextWithOpenAI(options: ProcessTextOptions): Promise<string> {
   const { text, instructions, contentSource, useContentSource, maxTokens = 4000 } = options;
   
-  let systemPrompt = "You are a helpful assistant that transforms text according to user instructions.";
+  // Protect math formulas before processing
+  const { processedText, mathBlocks } = protectMathFormulas(text);
+  
+  let systemPrompt = "You are a helpful assistant that transforms text according to user instructions. Do not modify any content within [[MATH_BLOCK_*]] or [[MATH_INLINE_*]] tokens as they contain special mathematical notation.";
   
   // Check if instructions contain keywords about shortening
   const requestsShorterOutput = instructions.toLowerCase().includes('shorter') || 
@@ -38,18 +43,26 @@ export async function processTextWithOpenAI(options: ProcessTextOptions): Promis
   }
   
   try {
+    // Use the protected text with math formulas replaced by tokens
+    const userPromptWithProtectedMath = userPrompt.replace(text, processedText);
+    
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
         { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt }
+        { role: "user", content: userPromptWithProtectedMath }
       ],
       max_tokens: maxTokens,
       temperature: 0.7,
     });
     
-    return response.choices[0].message.content || "";
-  } catch (error) {
+    const processedContent = response.choices[0].message.content || "";
+    
+    // Restore math formulas in the processed text
+    const finalResult = restoreMathFormulas(processedContent, mathBlocks);
+    
+    return finalResult;
+  } catch (error: any) {
     console.error("OpenAI processing error:", error);
     throw new Error(`Failed to process text with OpenAI: ${error.message}`);
   }
