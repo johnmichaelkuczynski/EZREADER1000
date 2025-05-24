@@ -409,8 +409,8 @@ export default function Home() {
         onCopyToClipboard={copyToClipboard}
         onExportPDF={exportAsPDF}
         onExportDOCX={exportAsDOCX}
-        onSendEmail={(params) => {
-          return sendEmailWithDocument(
+        onSendEmail={async (params) => {
+          await sendEmailWithDocument(
             params.to,
             params.subject,
             params.message,

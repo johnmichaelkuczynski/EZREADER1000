@@ -104,14 +104,14 @@ export function useFileOperations() {
     text: string,
     originalText: string,
     transformedText: string
-  ) => {
+  ): Promise<void> => {
     if (!to || !subject || !transformedText) {
       toast({
         title: "Missing information",
         description: "Email address, subject, and transformed text are required.",
         variant: "destructive"
       });
-      return false;
+      return;
     }
     
     try {
@@ -130,15 +130,14 @@ export function useFileOperations() {
         description: `Document sent to ${to}`,
       });
       
-      return true;
-    } catch (error) {
+      // Success, no return value needed
+    } catch (error: any) {
       console.error('Error sending email:', error);
       toast({
         title: "Email failed",
-        description: error.message,
+        description: error instanceof Error ? error.message : "Failed to send email",
         variant: "destructive"
       });
-      return false;
     } finally {
       setIsSendingEmail(false);
     }
