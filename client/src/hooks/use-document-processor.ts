@@ -897,7 +897,7 @@ export function useDocumentProcessor() {
         variant: "destructive"
       });
     }
-  }, [documentMap, dialogueChunks, toast, llmProvider, setSpecialContent, setShowSpecialContent, processText]);
+  }, [documentMap, inputText, toast, llmProvider, setSpecialContent, setShowSpecialContent, processText, setDialogueChunks, setDocumentMap]);
   
   return {
     inputText,
