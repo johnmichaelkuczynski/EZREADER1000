@@ -60,8 +60,17 @@ export function ChunkSelector({
   
   // Filter chunks based on search term
   const filteredChunks = useMemo(() => {
-    if (!searchTerm.trim()) return chunks;
-    return chunks.map((chunk, index) => ({ chunk, index }))
+    if (!chunks || chunks.length === 0) return [];
+    if (!searchTerm || !searchTerm.trim()) {
+      // Return properly formatted chunks when no search term
+      return chunks.map((chunk, index) => ({ 
+        chunk: chunk || '', 
+        originalIndex: index 
+      }));
+    }
+    
+    // Filter chunks based on search term
+    return chunks.map((chunk, index) => ({ chunk: chunk || '', index }))
       .filter(item => item.chunk.toLowerCase().includes(searchTerm.toLowerCase()))
       .map(item => ({ chunk: item.chunk, originalIndex: item.index }));
   }, [chunks, searchTerm]);
@@ -75,12 +84,24 @@ export function ChunkSelector({
     return filteredChunks.slice(start, start + pageSize);
   }, [filteredChunks, currentPage, pageSize]);
   
-  // Calculate statistics for chunks
+  // Calculate statistics for chunks safely
   const chunkStats = useMemo(() => {
-    const totalWords = chunks.reduce((sum, chunk) => sum + getWordCount(chunk), 0);
+    if (!chunks || chunks.length === 0) {
+      return {
+        totalChunks: 0,
+        totalWords: 0,
+        avgWordsPerChunk: 0,
+        minWords: 0,
+        maxWords: 0
+      };
+    }
+    
+    const totalWords = chunks.reduce((sum, chunk) => sum + getWordCount(chunk || ''), 0);
     const avgWordsPerChunk = Math.round(totalWords / chunks.length);
-    const minWords = Math.min(...chunks.map(getWordCount));
-    const maxWords = Math.max(...chunks.map(getWordCount));
+    
+    const wordCounts = chunks.map(chunk => getWordCount(chunk || ''));
+    const minWords = wordCounts.length ? Math.min(...wordCounts) : 0;
+    const maxWords = wordCounts.length ? Math.max(...wordCounts) : 0;
     
     return {
       totalChunks: chunks.length,
@@ -110,11 +131,20 @@ export function ChunkSelector({
         // Select all chunks in the range
         const start = Math.min(rangeStart, originalIndex);
         const end = Math.max(rangeStart, originalIndex);
-        const newSelection = [...new Set([
-          ...selectedChunks,
-          ...Array.from({ length: end - start + 1 }, (_, i) => start + i)
-        ])];
-        setSelectedChunks(newSelection);
+        
+        // Create array of indices in the range
+        const rangeIndices = [];
+        for (let i = start; i <= end; i++) {
+          rangeIndices.push(i);
+        }
+        
+        // Combine existing selection with new range indices (avoiding duplicates)
+        const allIndices = [...selectedChunks, ...rangeIndices];
+        const uniqueIndices = allIndices.filter((value, index, self) => 
+          self.indexOf(value) === index
+        );
+        
+        setSelectedChunks(uniqueIndices);
         setRangeStart(null); // Reset range start
       }
     }
@@ -133,15 +163,20 @@ export function ChunkSelector({
   };
 
   const selectAllVisible = () => {
-    setSelectedChunks(prev => [
-      ...prev,
-      ...currentChunks.map(item => item.originalIndex)
-    ]);
+    setSelectedChunks(prev => {
+      // Create array of all visible chunk indices
+      const visibleIndices = currentChunks.map(item => item.originalIndex);
+      // Add all visible indices to previous selection (avoid duplicates)
+      return Array.from(new Set([...prev, ...visibleIndices]));
+    });
   };
 
   const deselectAllVisible = () => {
-    const visibleIndices = new Set(currentChunks.map(item => item.originalIndex));
-    setSelectedChunks(prev => prev.filter(index => !visibleIndices.has(index)));
+    // Convert visible indices to a regular array for filtering
+    const visibleIndices = currentChunks.map(item => item.originalIndex);
+    setSelectedChunks(prev => 
+      prev.filter(index => !visibleIndices.includes(index))
+    );
   };
   
   // Select chunks by pattern (e.g. every Nth chunk, first/last N chunks)

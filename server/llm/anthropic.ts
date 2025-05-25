@@ -2,6 +2,72 @@ import Anthropic from '@anthropic-ai/sdk';
 import { ProcessTextOptions } from './openai';
 import { protectMathFormulas, restoreMathFormulas } from "../utils/math-formula-protection";
 
+// Utility function to estimate token count for Anthropic models
+function estimateTokenCount(text: string): number {
+  // Anthropic typically counts tokens at ~4 characters per token
+  return Math.ceil(text.length / 4);
+}
+
+// Utility function to split very large text into smaller chunks
+function splitIntoChunks(text: string, maxChunkTokens: number = 50000): string[] {
+  const chunks: string[] = [];
+  const paragraphs = text.split(/\n\s*\n/);
+  let currentChunk = '';
+  let currentTokenCount = 0;
+  
+  for (const paragraph of paragraphs) {
+    const paragraphTokens = estimateTokenCount(paragraph);
+    
+    // If this paragraph alone exceeds the chunk size, split it further
+    if (paragraphTokens > maxChunkTokens) {
+      // Add current chunk if not empty
+      if (currentChunk) {
+        chunks.push(currentChunk);
+        currentChunk = '';
+        currentTokenCount = 0;
+      }
+      
+      // Split large paragraph into sentences
+      const sentences = paragraph.split(/(?<=[.!?])\s+/);
+      let sentenceChunk = '';
+      let sentenceTokenCount = 0;
+      
+      for (const sentence of sentences) {
+        const sentenceTokens = estimateTokenCount(sentence);
+        
+        if (sentenceTokenCount + sentenceTokens > maxChunkTokens && sentenceChunk) {
+          chunks.push(sentenceChunk);
+          sentenceChunk = sentence;
+          sentenceTokenCount = sentenceTokens;
+        } else {
+          sentenceChunk += (sentenceChunk ? ' ' : '') + sentence;
+          sentenceTokenCount += sentenceTokens;
+        }
+      }
+      
+      if (sentenceChunk) {
+        chunks.push(sentenceChunk);
+      }
+    } 
+    // Normal paragraph handling
+    else if (currentTokenCount + paragraphTokens > maxChunkTokens) {
+      chunks.push(currentChunk);
+      currentChunk = paragraph;
+      currentTokenCount = paragraphTokens;
+    } else {
+      currentChunk += (currentChunk ? '\n\n' : '') + paragraph;
+      currentTokenCount += paragraphTokens;
+    }
+  }
+  
+  // Add the final chunk if not empty
+  if (currentChunk) {
+    chunks.push(currentChunk);
+  }
+  
+  return chunks;
+}
+
 // the newest Anthropic model is "claude-3-7-sonnet-20250219" which was released February 24, 2025
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -10,6 +76,17 @@ const anthropic = new Anthropic({
 export async function processTextWithAnthropic(options: ProcessTextOptions): Promise<string> {
   const { text, instructions, contentSource, useContentSource, maxTokens = 4000 } = options;
   
+  // Estimate token count to check for large documents
+  const estimatedTokens = estimateTokenCount(text);
+  const MAX_INPUT_TOKENS = 190000; // Anthropic's limit is 200k, leaving some buffer for system and instruction tokens
+  
+  // Handle extremely large documents with special processing
+  if (estimatedTokens > MAX_INPUT_TOKENS) {
+    console.log(`Document exceeds token limit (${estimatedTokens} tokens). Using document summarization approach.`);
+    return await processLargeTextWithAnthropic(options);
+  }
+  
+  // Standard processing for normal-sized documents
   // Protect math formulas before processing
   const { processedText, mathBlocks } = protectMathFormulas(text);
   
