@@ -8,6 +8,77 @@ function estimateTokenCount(text: string): number {
   return Math.ceil(text.length / 4);
 }
 
+// Process extremely large text by chunking and summarizing sections
+async function processLargeTextWithAnthropic(options: ProcessTextOptions): Promise<string> {
+  const { text, instructions, contentSource, useContentSource, maxTokens = 4000 } = options;
+  
+  console.log("Processing extremely large document with specialized approach");
+  
+  // Step 1: Split the text into manageable chunks
+  const MAX_CHUNK_TOKENS = 50000; // Keep well below Claude's context limit
+  const chunks = splitIntoChunks(text, MAX_CHUNK_TOKENS);
+  console.log(`Split large document into ${chunks.length} chunks for processing`);
+  
+  // Step 2: Create a representative sample of the document
+  // Include the beginning, end, and some evenly distributed middle sections
+  let representativeText = '';
+  
+  // Always include the first chunk (introduction)
+  representativeText += chunks[0] + "\n\n--- SECTION BREAK ---\n\n";
+  
+  // For very large documents, include some evenly distributed middle sections
+  if (chunks.length > 4) {
+    const numMiddleChunks = Math.min(3, Math.floor(chunks.length / 2));
+    const step = Math.floor((chunks.length - 2) / (numMiddleChunks + 1));
+    
+    for (let i = 1; i <= numMiddleChunks; i++) {
+      const index = Math.min(chunks.length - 2, i * step);
+      representativeText += chunks[index] + "\n\n--- SECTION BREAK ---\n\n";
+    }
+  }
+  
+  // Always include the last chunk (conclusion)
+  representativeText += chunks[chunks.length - 1];
+  
+  // Step 3: Process the representative text with modified instructions
+  const enhancedInstructions = `NOTE: This is a very large document (${estimateTokenCount(text)} estimated tokens) that has been sampled to include the beginning, end, and some middle sections. The document is separated by "--- SECTION BREAK ---" markers.\n\nOriginal instructions: ${instructions}\n\nPlease process this representative sample of the document according to the instructions. Since this is only a sample of a much larger document, focus on maintaining the overall intent, style, and key points.`;
+  
+  try {
+    // Process the representative text
+    const { processedText, mathBlocks } = protectMathFormulas(representativeText);
+    
+    let systemPrompt = "You are processing a very large document that has been sampled. Do not modify any content within [[MATH_BLOCK_*]] or [[MATH_INLINE_*]] tokens as they contain special mathematical notation.";
+    
+    const message = await anthropic.messages.create({
+      model: "claude-3-7-sonnet-20250219",
+      system: systemPrompt,
+      max_tokens: maxTokens * 2, // Allow more output tokens for comprehensive processing
+      messages: [
+        { role: 'user', content: `${enhancedInstructions}\n\nText to transform:\n${processedText}` }
+      ],
+    });
+    
+    // Get the response content
+    let responseContent = '';
+    
+    // Handle different response types from Anthropic API
+    if (message.content && message.content.length > 0) {
+      const contentBlock = message.content[0];
+      if ('text' in contentBlock) {
+        responseContent = contentBlock.text;
+      }
+    }
+    
+    // Restore math formulas in the processed text
+    const finalResult = restoreMathFormulas(responseContent, mathBlocks);
+    
+    return finalResult;
+  } catch (error: any) {
+    console.error("Anthropic large document processing error:", error);
+    throw new Error(`Failed to process large text with Anthropic: ${error.message}`);
+  }
+}
+
 // Utility function to split very large text into smaller chunks
 function splitIntoChunks(text: string, maxChunkTokens: number = 50000): string[] {
   const chunks: string[] = [];

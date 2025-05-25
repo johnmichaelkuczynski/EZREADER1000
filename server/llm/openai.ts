@@ -5,6 +5,72 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+// Utility function to estimate token count for OpenAI models
+function estimateTokenCount(text: string): number {
+  // OpenAI typically counts tokens at roughly 4 characters per token for English text
+  return Math.ceil(text.length / 4);
+}
+
+// Utility function to split very large text into smaller chunks
+function splitIntoChunks(text: string, maxChunkTokens: number = 32000): string[] {
+  const chunks: string[] = [];
+  const paragraphs = text.split(/\n\s*\n/);
+  let currentChunk = '';
+  let currentTokenCount = 0;
+  
+  for (const paragraph of paragraphs) {
+    const paragraphTokens = estimateTokenCount(paragraph);
+    
+    // If this paragraph alone exceeds the chunk size, split it further
+    if (paragraphTokens > maxChunkTokens) {
+      // Add current chunk if not empty
+      if (currentChunk) {
+        chunks.push(currentChunk);
+        currentChunk = '';
+        currentTokenCount = 0;
+      }
+      
+      // Split large paragraph into sentences
+      const sentences = paragraph.split(/(?<=[.!?])\s+/);
+      let sentenceChunk = '';
+      let sentenceTokenCount = 0;
+      
+      for (const sentence of sentences) {
+        const sentenceTokens = estimateTokenCount(sentence);
+        
+        if (sentenceTokenCount + sentenceTokens > maxChunkTokens && sentenceChunk) {
+          chunks.push(sentenceChunk);
+          sentenceChunk = sentence;
+          sentenceTokenCount = sentenceTokens;
+        } else {
+          sentenceChunk += (sentenceChunk ? ' ' : '') + sentence;
+          sentenceTokenCount += sentenceTokens;
+        }
+      }
+      
+      if (sentenceChunk) {
+        chunks.push(sentenceChunk);
+      }
+    } 
+    // Normal paragraph handling
+    else if (currentTokenCount + paragraphTokens > maxChunkTokens) {
+      chunks.push(currentChunk);
+      currentChunk = paragraph;
+      currentTokenCount = paragraphTokens;
+    } else {
+      currentChunk += (currentChunk ? '\n\n' : '') + paragraph;
+      currentTokenCount += paragraphTokens;
+    }
+  }
+  
+  // Add the final chunk if not empty
+  if (currentChunk) {
+    chunks.push(currentChunk);
+  }
+  
+  return chunks;
+}
+
 export interface ProcessTextOptions {
   text: string;
   instructions: string;
@@ -15,9 +81,83 @@ export interface ProcessTextOptions {
 
 import { protectMathFormulas, restoreMathFormulas } from "../utils/math-formula-protection";
 
+// Process extremely large text by chunking and sampling
+async function processLargeTextWithOpenAI(options: ProcessTextOptions): Promise<string> {
+  const { text, instructions, contentSource, useContentSource, maxTokens = 4000 } = options;
+  
+  console.log("Processing extremely large document with specialized OpenAI approach");
+  
+  // Step 1: Split the text into manageable chunks
+  const MAX_CHUNK_TOKENS = 32000; // Well below GPT-4o's context limit
+  const chunks = splitIntoChunks(text, MAX_CHUNK_TOKENS);
+  console.log(`Split large document into ${chunks.length} chunks for processing`);
+  
+  // Step 2: Create a representative sample of the document
+  // Include the beginning, end, and some evenly distributed middle sections
+  let representativeText = '';
+  
+  // Always include the first chunk (introduction)
+  representativeText += chunks[0] + "\n\n--- SECTION BREAK ---\n\n";
+  
+  // For very large documents, include some evenly distributed middle sections
+  if (chunks.length > 4) {
+    const numMiddleChunks = Math.min(3, Math.floor(chunks.length / 2));
+    const step = Math.floor((chunks.length - 2) / (numMiddleChunks + 1));
+    
+    for (let i = 1; i <= numMiddleChunks; i++) {
+      const index = Math.min(chunks.length - 2, i * step);
+      representativeText += chunks[index] + "\n\n--- SECTION BREAK ---\n\n";
+    }
+  }
+  
+  // Always include the last chunk (conclusion)
+  representativeText += chunks[chunks.length - 1];
+  
+  // Step 3: Process the representative text with modified instructions
+  const enhancedInstructions = `NOTE: This is a very large document (${estimateTokenCount(text)} estimated tokens) that has been sampled to include the beginning, end, and some middle sections. The document is separated by "--- SECTION BREAK ---" markers.\n\nOriginal instructions: ${instructions}\n\nPlease process this representative sample of the document according to the instructions. Since this is only a sample of a much larger document, focus on maintaining the overall intent, style, and key points.`;
+  
+  try {
+    // Process the representative text
+    const { processedText, mathBlocks } = protectMathFormulas(representativeText);
+    
+    let systemPrompt = "You are processing a very large document that has been sampled. Do not modify any content within [[MATH_BLOCK_*]] or [[MATH_INLINE_*]] tokens as they contain special mathematical notation.";
+    
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: `${enhancedInstructions}\n\nText to transform:\n${processedText}` }
+      ],
+      max_tokens: maxTokens * 2, // Allow more output tokens for comprehensive processing
+      temperature: 0.7,
+    });
+    
+    const processedContent = response.choices[0].message.content || "";
+    
+    // Restore math formulas in the processed text
+    const finalResult = restoreMathFormulas(processedContent, mathBlocks);
+    
+    return finalResult;
+  } catch (error: any) {
+    console.error("OpenAI large document processing error:", error);
+    throw new Error(`Failed to process large text with OpenAI: ${error.message}`);
+  }
+}
+
 export async function processTextWithOpenAI(options: ProcessTextOptions): Promise<string> {
   const { text, instructions, contentSource, useContentSource, maxTokens = 4000 } = options;
   
+  // Estimate token count to check for large documents
+  const estimatedTokens = estimateTokenCount(text);
+  const MAX_INPUT_TOKENS = 100000; // GPT-4o's limit is 128k, leaving buffer for system and instruction tokens
+  
+  // Handle extremely large documents with special processing
+  if (estimatedTokens > MAX_INPUT_TOKENS) {
+    console.log(`Document exceeds OpenAI token limit (${estimatedTokens} tokens). Using document summarization approach.`);
+    return await processLargeTextWithOpenAI(options);
+  }
+  
+  // Standard processing for normal-sized documents
   // Protect math formulas before processing
   const { processedText, mathBlocks } = protectMathFormulas(text);
   
