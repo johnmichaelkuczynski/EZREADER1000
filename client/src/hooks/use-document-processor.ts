@@ -620,14 +620,42 @@ export function useDocumentProcessor() {
         return;
       }
       
-      // For very large documents, recommend using chunks only if synthesis mode is not enabled
-      if (dialogueChunks.length > 5 && !command.toLowerCase().includes("chunk") && !enableSynthesisMode) {
-        setDialogueMessages(prev => prev.map(msg => 
-          msg.id === assistantMessageId
-            ? { ...msg, content: `This is a large document (${textToProcess.length} characters, approximately ${Math.round(textToProcess.length/5)} tokens). I've divided it into ${dialogueChunks.length} chunks.\n\nFor better results, please try:\n1. Asking about a specific chunk: "summarize chunk 3"\n2. Type "show chunks" to see information about all chunks\n3. Ask a more specific question about the document\n4. Or enable Full Document Synthesis Mode in the toolbar to analyze the entire document at once` }
-            : msg
-        ));
-        return;
+      // For very large documents, check if Full Document Synthesis Mode is enabled
+      if (dialogueChunks.length > 5 && !command.toLowerCase().includes("chunk")) {
+        // If synthesis mode is enabled, process the entire document
+        if (enableSynthesisMode) {
+          try {
+            // Update the assistant message to inform the user
+            setDialogueMessages(prev => prev.map(msg => 
+              msg.id === assistantMessageId
+                ? { ...msg, content: `Processing your query using Full Document Synthesis Mode. This will analyze the entire document at once...` }
+                : msg
+            ));
+            
+            // Process global question with the entire document
+            await processGlobalQuestion(command);
+            
+            // Update status after processing
+            setDialogueMessages(prev => prev.map(msg => 
+              msg.id === assistantMessageId
+                ? { ...msg, content: `I've processed your request using Full Document Synthesis Mode. The results are shown in the popup window.` }
+                : msg
+            ));
+            
+            return;
+          } catch (error) {
+            console.error('Error using Full Document Synthesis Mode:', error);
+            // If there's an error, fall back to normal processing
+          }
+        } else {
+          // If synthesis mode is not enabled, recommend using chunks
+          setDialogueMessages(prev => prev.map(msg => 
+            msg.id === assistantMessageId
+              ? { ...msg, content: `This is a large document (${textToProcess.length} characters, approximately ${Math.round(textToProcess.length/5)} tokens). I've divided it into ${dialogueChunks.length} chunks.\n\nFor better results, please try:\n1. Asking about a specific chunk: "summarize chunk 3"\n2. Type "show chunks" to see information about all chunks\n3. Ask a more specific question about the document\n4. Or enable Full Document Synthesis Mode in the toolbar to analyze the entire document at once` }
+              : msg
+          ));
+          return;
+        }
       }
       
       // Special handling for "rewrite chunk" commands
