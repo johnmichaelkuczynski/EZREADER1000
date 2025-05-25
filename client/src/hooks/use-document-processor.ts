@@ -560,15 +560,8 @@ export function useDocumentProcessor() {
       // Construct a prompt that provides context and handles the specific request
       let prompt = "";
       
-      // Check if Full Document Synthesis Mode is enabled for global document queries
-      if (enableSynthesisMode && 
-          (command.toLowerCase().includes("summarize") || 
-           command.toLowerCase().includes("table of contents") || 
-           command.toLowerCase().includes("overview") ||
-           command.toLowerCase().includes("explain") ||
-           command.toLowerCase().includes("whole document") ||
-           command.toLowerCase().includes("full document") ||
-           command.toLowerCase().includes("entire document"))) {
+      // Check if Full Document Synthesis Mode is enabled for any question about the document
+      if (enableSynthesisMode) {
           
         // If we don't have document summaries yet, let's create them on-demand
         if (documentMap.length === 0 && dialogueChunks.length > 0) {
