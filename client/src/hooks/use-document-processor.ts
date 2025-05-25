@@ -711,19 +711,51 @@ export function useDocumentProcessor() {
         prompt = "You are having a conversation about a document. Answer the following query about it as helpfully as possible: '" + command + "'. Here's the document: " + textToProcess;
       }
       
-      // For large documents, only process the first few chunks to avoid token limits
+      // For large documents, use intelligent chunking to process more content
       let textToSend = textToProcess;
       
       // Check if document is very large (more than 10,000 characters)
       if (textToProcess.length > 10000) {
-        // Use only the first 1-3 chunks depending on size
-        const numChunksToUse = textToProcess.length > 30000 ? 1 : 
-                              textToProcess.length > 20000 ? 2 : 3;
-        
-        textToSend = dialogueChunks.slice(0, numChunksToUse).join("\n\n");
-        
-        // Add a note that we're using a limited portion of the text
-        prompt = prompt.replace("Here's the document:", "Note: This document is very large, so I'm only analyzing the beginning portion. Here's the excerpt:");
+        // For extremely large documents, use a more sophisticated approach
+        if (textToProcess.length > 50000) {
+          // For very large documents, select representative chunks instead of just the beginning
+          // This includes: first chunk (introduction), some middle chunks (content), and last chunk (conclusion)
+          if (dialogueChunks.length >= 5) {
+            // Take first chunk, a few from the middle, and the last chunk
+            const firstChunk = dialogueChunks[0];
+            const lastChunk = dialogueChunks[dialogueChunks.length - 1];
+            
+            // Select evenly spaced chunks from the middle to get representative content
+            const middleChunksCount = Math.min(5, Math.floor(dialogueChunks.length / 2));
+            const middleChunks = [];
+            
+            for (let i = 1; i <= middleChunksCount; i++) {
+              const index = Math.floor(i * dialogueChunks.length / (middleChunksCount + 1));
+              if (index > 0 && index < dialogueChunks.length - 1) {
+                middleChunks.push(dialogueChunks[index]);
+              }
+            }
+            
+            textToSend = [firstChunk, ...middleChunks, lastChunk].join("\n\n--- SECTION BREAK ---\n\n");
+            
+            // Add a note that we're using representative sections
+            prompt = prompt.replace("Here's the document:", "Note: This document is very large, so I'm analyzing representative sections from the beginning, middle, and end. Here's the compilation:");
+          } else {
+            // If we don't have enough chunks, use a proportion of available chunks
+            const numChunksToUse = Math.max(Math.floor(dialogueChunks.length * 0.4), 3);
+            textToSend = dialogueChunks.slice(0, numChunksToUse).join("\n\n");
+            prompt = prompt.replace("Here's the document:", "Note: This document is very large, so I'm analyzing a subset of the content. Here's the excerpt:");
+          }
+        } else {
+          // For moderately large documents, use more chunks than before based on size
+          const numChunksToUse = textToProcess.length > 30000 ? 3 : 
+                               textToProcess.length > 20000 ? 4 : 5;
+          
+          textToSend = dialogueChunks.slice(0, numChunksToUse).join("\n\n");
+          
+          // Add a note that we're using a portion of the text
+          prompt = prompt.replace("Here's the document:", "Note: This document is large, so I'm analyzing the beginning portion. Here's the excerpt:");
+        }
       }
       
       // Process using the appropriate LLM through the API
