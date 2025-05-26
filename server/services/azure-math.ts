@@ -5,7 +5,7 @@ import { OpenAI } from 'openai';
 
 const azureOpenAI = new OpenAI({
   apiKey: process.env.AZURE_OPENAI_KEY,
-  baseURL: `${process.env.AZURE_OPENAI_ENDPOINT}/openai/deployments/gpt-4o/`,
+  baseURL: `${process.env.AZURE_OPENAI_ENDPOINT}/openai/deployments/gpt-4/`,
   defaultQuery: { 'api-version': '2024-02-15-preview' },
   defaultHeaders: {
     'api-key': process.env.AZURE_OPENAI_KEY,
@@ -25,7 +25,7 @@ export async function processMathPDFWithAzure(pdfBuffer: Buffer): Promise<string
     const base64Pdf = pdfBuffer.toString('base64');
     
     const response = await azureOpenAI.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-4',
       messages: [
         {
           role: 'system',
@@ -81,7 +81,7 @@ export async function processMathImageWithAzure(imageBuffer: Buffer, mimeType: s
     const base64Image = imageBuffer.toString('base64');
     
     const response = await azureOpenAI.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-4',
       messages: [
         {
           role: 'system',
@@ -135,7 +135,7 @@ export async function enhanceMathFormatting(text: string): Promise<string> {
 
   try {
     const response = await azureOpenAI.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-4',
       messages: [
         {
           role: 'system',

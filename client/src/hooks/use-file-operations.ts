@@ -37,7 +37,7 @@ export function useFileOperations() {
   }, [toast]);
   
   // Export text as PDF using browser print dialog - perfect for math rendering
-  const exportAsPDF = useCallback((text: string, filename = 'document.pdf') => {
+  const exportAsPDF = useCallback(async (text: string, filename = 'document.pdf') => {
     if (!text) {
       toast({
         title: "Nothing to export",
@@ -48,6 +48,13 @@ export function useFileOperations() {
     }
     
     try {
+      // Wait for MathJax to finish rendering before printing
+      if (window.MathJax && window.MathJax.typesetPromise) {
+        await window.MathJax.typesetPromise();
+        // Give a small delay to ensure all math is fully rendered
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      
       // Use browser's print dialog for perfect math rendering
       window.print();
       toast({
