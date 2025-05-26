@@ -19,8 +19,10 @@ import {
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Trash2, Copy, Download, Bot, Mail } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { restoreMathTokens } from '@/lib/math-restore';
+import { useMathJax } from '@/hooks/use-mathjax';
 
 interface OutputEditorProps {
   text: string;
@@ -54,6 +56,18 @@ export function OutputEditor({
   const [emailSubject, setEmailSubject] = useState('EZ Reader - Transformed Document');
   const [emailMessage, setEmailMessage] = useState('Here is the transformed document you requested.');
   const [wordCount, setWordCount] = useState(0);
+  const { containerRef, renderMathInContainer } = useMathJax();
+  const previousTextRef = useRef<string>('');
+
+  // Trigger MathJax rendering when text changes
+  useEffect(() => {
+    if (text && text !== previousTextRef.current) {
+      previousTextRef.current = text;
+      setTimeout(() => {
+        renderMathInContainer();
+      }, 100);
+    }
+  }, [text, renderMathInContainer]);
   
   // Calculate word count whenever text changes
   useEffect(() => {
@@ -182,15 +196,38 @@ export function OutputEditor({
       
       <CardContent className="p-0">
         <div className="editor overflow-y-auto p-0">
-          <Textarea
-              className="min-h-[600px] h-full rounded-none border-0 resize-none focus-visible:ring-0"
-              placeholder="Processed text will appear here..."
-              value={text}
-              onChange={(e) => onTextChange(e.target.value)}
-            />
-          {false && (
+          {text ? (
+            <div className="relative">
+              <div 
+                ref={containerRef}
+                className="math-content tex2jax_process output-container min-h-[600px] p-6"
+                style={{
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word',
+                  lineHeight: '1.6',
+                  fontFamily: 'Georgia, serif'
+                }}
+                dangerouslySetInnerHTML={{ 
+                  __html: restoreMathTokens(text).replace(/\n/g, '<br/>') 
+                }}
+              />
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="absolute top-2 right-2"
+                onClick={() => {
+                  const editableText = text.replace(/<br\/?>/g, '\n');
+                  const newText = prompt('Edit the text:', editableText);
+                  if (newText !== null) {
+                    onTextChange(newText);
+                  }
+                }}
+              >
+                Edit
+              </Button>
+            </div>
+          ) : (
             <div className="flex flex-col items-center justify-center h-full min-h-[300px] text-center p-6">
-              <FileIcon className="h-10 w-10 text-slate-300 mb-3" />
               <p className="text-slate-500">Processed text will appear here</p>
               <p className="text-xs text-slate-400 mt-2">Your content will be processed according to your instructions</p>
             </div>
