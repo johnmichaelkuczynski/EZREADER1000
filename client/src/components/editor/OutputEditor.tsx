@@ -31,6 +31,8 @@ interface OutputEditorProps {
   onCopy: (text: string) => void;
   onExportPDF: (text: string) => void;
   onExportDOCX: (text: string) => void;
+  onExportHTML: (text: string) => void;
+  onExportLaTeX: (text: string) => void;
   onDetectAI: (text: string) => Promise<void>;
   onSendEmail: (to: string, subject: string, message: string, originalText: string, transformedText: string) => Promise<boolean>;
   isDetecting: boolean;
@@ -45,6 +47,8 @@ export function OutputEditor({
   onCopy,
   onExportPDF,
   onExportDOCX,
+  onExportHTML,
+  onExportLaTeX,
   onDetectAI,
   onSendEmail,
   isDetecting,
@@ -154,6 +158,12 @@ export function OutputEditor({
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onExportDOCX(text)}>
                 Export as DOCX
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onExportHTML(text)}>
+                Export as HTML
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onExportLaTeX(text)}>
+                Export as LaTeX
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

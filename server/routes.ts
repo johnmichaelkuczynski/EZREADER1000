@@ -343,7 +343,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Send email with processed text
-  // New export routes that capture the fully rendered DOM
+  // Enhanced PDF export using print dialog approach
   app.post('/api/export-pdf', async (req: Request, res: Response) => {
     try {
       const { content, filename = 'document' } = req.body;
@@ -352,17 +352,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Content is required' });
       }
       
-      const { exportToPDFWithPuppeteer } = await import('./services/export-service');
-      const pdfBuffer = await exportToPDFWithPuppeteer({
-        content,
-        filename,
-        format: 'pdf',
-        waitForMath: true
-      });
+      // Return HTML content for client-side PDF generation via print dialog
+      const { exportToHTML } = await import('./services/export-service');
+      const htmlContent = await exportToHTML(content, filename);
       
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}.pdf"`);
-      res.send(pdfBuffer);
+      res.json({ 
+        htmlContent,
+        filename: `${filename}.pdf`,
+        message: 'Use browser print dialog to save as PDF'
+      });
     } catch (error: any) {
       console.error('PDF export error:', error);
       res.status(500).json({ error: 'Failed to export PDF' });
