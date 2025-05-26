@@ -74,13 +74,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           throw new Error('Invalid LLM provider');
       }
       
-      // Enhance math formatting with Azure OpenAI
+      // Azure math enhancement temporarily disabled - need correct model deployment names
       let finalText = processedText;
-      try {
-        finalText = await enhanceMathFormatting(processedText);
-      } catch (error) {
-        console.log('Azure math enhancement not available, using original text');
-      }
       
       // Strip markdown from the processed text to improve readability
       const cleanedText = stripMarkdown(finalText);

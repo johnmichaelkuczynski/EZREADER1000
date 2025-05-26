@@ -161,7 +161,7 @@ export async function processTextWithAnthropic(options: ProcessTextOptions): Pro
   // Protect math formulas before processing
   const { processedText, mathBlocks } = protectMathFormulas(text);
   
-  let systemPrompt = "You are an assistant that transforms text according to user instructions. Do not modify any content within [[MATH_BLOCK_*]] or [[MATH_INLINE_*]] tokens as they contain special mathematical notation.";
+  let systemPrompt = "You are an assistant that transforms text according to user instructions. Do not modify any content within [[MATH_BLOCK_*]] or [[MATH_INLINE_*]] tokens as they contain special mathematical notation. CRITICAL: When generating mathematical expressions, use clean LaTeX format (e.g., A = P(1 + r/n)^{nt}) NOT Unicode superscripts or special characters. This ensures proper PDF rendering.";
   
   // Check if instructions contain keywords about shortening
   const requestsShorterOutput = instructions.toLowerCase().includes('shorter') || 
