@@ -74,8 +74,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           throw new Error('Invalid LLM provider');
       }
       
+      // Enhance math formatting with Azure OpenAI
+      let finalText = processedText;
+      try {
+        finalText = await enhanceMathFormatting(processedText);
+      } catch (error) {
+        console.log('Azure math enhancement not available, using original text');
+      }
+      
       // Strip markdown from the processed text to improve readability
-      const cleanedText = stripMarkdown(processedText);
+      const cleanedText = stripMarkdown(finalText);
       res.json({ result: cleanedText });
     } catch (error: unknown) {
       if (error instanceof z.ZodError) {
@@ -134,8 +142,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           throw new Error('Invalid LLM provider');
       }
       
+      // Enhance math formatting with Azure OpenAI
+      let finalText = processedText;
+      try {
+        finalText = await enhanceMathFormatting(processedText);
+      } catch (error) {
+        console.log('Azure math enhancement not available for chunk, using original text');
+      }
+      
       // Strip markdown from the processed chunk text
-      const cleanedText = stripMarkdown(processedText);
+      const cleanedText = stripMarkdown(finalText);
       
       res.json({ 
         result: cleanedText,

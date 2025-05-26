@@ -52,8 +52,12 @@ export function restoreMathFormulas(text: string, mathBlocks: Map<string, string
   
   // Replace all placeholder tokens with their original math formulas
   mathBlocks.forEach((formula, token) => {
-    restoredText = restoredText.replace(token, formula);
+    restoredText = restoredText.replace(new RegExp(escapeRegExp(token), 'g'), formula);
   });
   
   return restoredText;
+}
+
+function escapeRegExp(string: string): string {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
