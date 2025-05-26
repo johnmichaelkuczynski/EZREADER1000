@@ -393,9 +393,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         @media print {
+            @page {
+                margin: 0.5in;
+                size: letter;
+                /* Remove all headers and footers */
+                @top-left { content: none; }
+                @top-center { content: none; }
+                @top-right { content: none; }
+                @bottom-left { content: none; }
+                @bottom-center { content: none; }
+                @bottom-right { content: none; }
+            }
+            
             body {
                 margin: 0;
                 padding: 20px;
+                /* Remove any browser-generated content */
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            /* Hide any potential browser UI elements */
+            * {
+                -webkit-box-shadow: none !important;
+                box-shadow: none !important;
             }
         }
     </style>
