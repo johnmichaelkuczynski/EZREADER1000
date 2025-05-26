@@ -48,6 +48,43 @@
     margin: 1in;
   }
   
+  /* Ensure MathJax elements render properly in PDF */
+  .MathJax_Display, .MathJax {
+    color: black !important;
+    background: transparent !important;
+    margin: 0.5em 0 !important;
+  }
+  
+  /* Hide UI elements during print */
+  nav, .sidebar, .toolbar, .actions-bar, button, .button {
+    display: none !important;
+  }
+  
+  /* Show only the main content area */
+  .output-editor, .math-content {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+  
+  /* Math formatting for print */
+  mjx-container {
+    margin: 0.25em 0 !important;
+    color: black !important;
+  }
+  
+  /* Ensure text content prints cleanly */
+  .card, .card-content {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
   .output-container {
     max-height: none !important;
     overflow: visible !important;
