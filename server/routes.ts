@@ -18,7 +18,7 @@ import { detectAIWithGPTZero } from "./services/gptzero";
 import { searchOnline, fetchWebContent } from "./services/google";
 import { sendDocumentEmail } from "./services/sendgrid";
 import { extractTextFromPDF } from "./services/pdf-processor";
-import { extractMathFromPDF, extractMathFromImage } from "./services/mathpix";
+import { processMathPDFWithAzure, processMathImageWithAzure, enhanceMathFormatting } from "./services/azure-math";
 
 // Configure multer storage
 const upload = multer({
@@ -253,35 +253,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // MathPix PDF processing endpoint
+  // Azure OpenAI PDF processing endpoint
   app.post('/api/process-math-pdf', upload.single('pdf'), async (req: Request, res: Response) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No PDF file provided" });
       }
 
-      console.log('Processing PDF with MathPix:', req.file.originalname, 'Size:', req.file.size);
+      console.log('Processing PDF with Azure OpenAI:', req.file.originalname, 'Size:', req.file.size);
       
-      const extractedText = await extractMathFromPDF(req.file.buffer);
+      const extractedText = await processMathPDFWithAzure(req.file.buffer);
       
       if (!extractedText || extractedText.trim().length === 0) {
-        return res.status(400).json({ error: "Could not extract text from PDF using MathPix" });
+        return res.status(400).json({ error: "Could not extract text from PDF using Azure OpenAI" });
       }
 
-      console.log('MathPix extracted text length:', extractedText.length);
+      console.log('Azure OpenAI extracted text length:', extractedText.length);
       
       res.json({ 
         text: extractedText,
         filename: req.file.originalname,
-        source: 'mathpix'
+        source: 'azure-openai'
       });
     } catch (error: any) {
-      console.error('MathPix PDF processing error:', error);
-      res.status(500).json({ error: error.message || "Failed to process PDF with MathPix" });
+      console.error('Azure OpenAI PDF processing error:', error);
+      res.status(500).json({ error: error.message || "Failed to process PDF with Azure OpenAI" });
     }
   });
 
-  // MathPix image processing endpoint
+  // Azure OpenAI image processing endpoint
   app.post('/api/process-math-image', upload.single('image'), async (req: Request, res: Response) => {
     try {
       if (!req.file) {
@@ -293,24 +293,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Unsupported image format. Please use JPG, PNG, GIF, or BMP." });
       }
 
-      console.log('Processing image with MathPix:', req.file.originalname, 'Type:', req.file.mimetype, 'Size:', req.file.size);
+      console.log('Processing image with Azure OpenAI:', req.file.originalname, 'Type:', req.file.mimetype, 'Size:', req.file.size);
       
-      const extractedText = await extractMathFromImage(req.file.buffer, req.file.mimetype);
+      const extractedText = await processMathImageWithAzure(req.file.buffer, req.file.mimetype);
       
       if (!extractedText || extractedText.trim().length === 0) {
-        return res.status(400).json({ error: "Could not extract text from image using MathPix" });
+        return res.status(400).json({ error: "Could not extract text from image using Azure OpenAI" });
       }
 
-      console.log('MathPix extracted text length:', extractedText.length);
+      console.log('Azure OpenAI extracted text length:', extractedText.length);
       
       res.json({ 
         text: extractedText,
         filename: req.file.originalname,
-        source: 'mathpix'
+        source: 'azure-openai'
       });
     } catch (error: any) {
-      console.error('MathPix image processing error:', error);
-      res.status(500).json({ error: error.message || "Failed to process image with MathPix" });
+      console.error('Azure OpenAI image processing error:', error);
+      res.status(500).json({ error: error.message || "Failed to process image with Azure OpenAI" });
+    }
+  });
+
+  // Math formatting enhancement endpoint
+  app.post('/api/enhance-math', async (req: Request, res: Response) => {
+    try {
+      const { text } = req.body;
+      
+      if (!text) {
+        return res.status(400).json({ error: "No text provided" });
+      }
+
+      const enhancedText = await enhanceMathFormatting(text);
+      
+      res.json({ 
+        text: enhancedText,
+        source: 'azure-math-enhanced'
+      });
+    } catch (error: any) {
+      console.error('Math enhancement error:', error);
+      res.status(500).json({ error: error.message || "Failed to enhance math formatting" });
     }
   });
 

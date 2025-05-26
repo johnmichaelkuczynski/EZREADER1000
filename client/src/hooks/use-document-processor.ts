@@ -416,20 +416,20 @@ export function useDocumentProcessor() {
       
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to process PDF with MathPix');
+        throw new Error(errorData.error || 'Failed to process PDF with Azure OpenAI');
       }
       
       const data = await response.json();
       setInputText(data.text);
       toast({ 
         title: "Math PDF Processed", 
-        description: `Successfully extracted math content from ${file.name} using MathPix` 
+        description: `Successfully extracted math content from ${file.name} using Azure OpenAI` 
       });
     } catch (error: any) {
-      console.error('MathPix PDF processing error:', error);
+      console.error('Azure OpenAI PDF processing error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       toast({ 
-        title: "MathPix Processing Failed", 
+        title: "Azure Processing Failed", 
         description: errorMessage,
         variant: "destructive" 
       });
@@ -448,25 +448,53 @@ export function useDocumentProcessor() {
       
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to process image with MathPix');
+        throw new Error(errorData.error || 'Failed to process image with Azure OpenAI');
       }
       
       const data = await response.json();
       setInputText(data.text);
       toast({ 
         title: "Math Image Processed", 
-        description: `Successfully extracted math content from ${file.name} using MathPix` 
+        description: `Successfully extracted math content from ${file.name} using Azure OpenAI` 
       });
     } catch (error: any) {
-      console.error('MathPix image processing error:', error);
+      console.error('Azure OpenAI image processing error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       toast({ 
-        title: "MathPix Processing Failed", 
+        title: "Azure Processing Failed", 
         description: errorMessage,
         variant: "destructive" 
       });
     }
   }, [toast, setInputText]);
+
+  const enhanceMathFormatting = useCallback(async (text: string) => {
+    try {
+      const response = await fetch('/api/enhance-math', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to enhance math formatting');
+      }
+      
+      const data = await response.json();
+      return data.text;
+    } catch (error: any) {
+      console.error('Math enhancement error:', error);
+      toast({ 
+        title: "Enhancement Failed", 
+        description: error.message,
+        variant: "destructive" 
+      });
+      return text; // Return original text if enhancement fails
+    }
+  }, [toast]);
   
   // Detect AI in text
   const detectAIText = useCallback(async (text: string, isInput: boolean) => {
@@ -1014,6 +1042,7 @@ export function useDocumentProcessor() {
     handleAudioTranscription,
     handleMathPDFUpload,
     handleMathImageUpload,
+    enhanceMathFormatting,
     isInputDetecting,
     isOutputDetecting,
     inputAIResult,
