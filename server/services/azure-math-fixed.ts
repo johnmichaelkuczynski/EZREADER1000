@@ -25,7 +25,7 @@ export async function processMathPDFWithAzure(pdfBuffer: Buffer): Promise<string
     const base64Pdf = pdfBuffer.toString('base64');
     
     const response = await azureOpenAI.chat.completions.create({
-      model: 'gpt-4',
+      model: 'gpt-35-turbo',
       messages: [
         {
           role: 'system',
@@ -35,19 +35,16 @@ CRITICAL MATH FORMATTING RULES:
 - Use LaTeX format for ALL mathematical expressions
 - Inline math: wrap in \\( and \\) 
 - Display math: wrap in \\[ and \\]
-- Preserve exact mathematical symbols, fractions, integrals, etc.
-- Example: The fraction 22/7 should become \\(\\frac{22}{7}\\)
-- Example: π should become \\(\\pi\\)
-- Example: Integration should use \\(\\int\\), summation \\(\\sum\\), etc.
-
-Extract the complete document with all text and properly formatted LaTeX math.`
+- Preserve exact mathematical symbols, formulas, and equations
+- Include ALL text content along with the mathematical expressions
+- Maintain document structure and formatting`
         },
         {
           role: 'user',
           content: [
             {
               type: 'text',
-              text: 'Extract all text and mathematical content from this PDF document. Format all math expressions in proper LaTeX notation.'
+              text: 'Extract all text and mathematical content from this PDF document. Ensure all mathematical expressions are properly formatted in LaTeX notation.'
             },
             {
               type: 'image_url',
@@ -62,10 +59,10 @@ Extract the complete document with all text and properly formatted LaTeX math.`
       temperature: 0.1
     });
 
-    return response.choices[0].message.content || '';
-  } catch (error: any) {
+    return response.choices[0]?.message?.content || '';
+  } catch (error) {
     console.error('Azure OpenAI PDF processing error:', error);
-    throw new Error(`Failed to process PDF with Azure OpenAI: ${error.message}`);
+    throw new Error('Failed to process PDF with Azure OpenAI');
   }
 }
 
@@ -81,7 +78,7 @@ export async function processMathImageWithAzure(imageBuffer: Buffer, mimeType: s
     const base64Image = imageBuffer.toString('base64');
     
     const response = await azureOpenAI.chat.completions.create({
-      model: 'gpt-4',
+      model: 'gpt-35-turbo',
       messages: [
         {
           role: 'system',
@@ -91,19 +88,16 @@ CRITICAL MATH FORMATTING RULES:
 - Use LaTeX format for ALL mathematical expressions
 - Inline math: wrap in \\( and \\)
 - Display math: wrap in \\[ and \\]
-- Preserve exact mathematical symbols, fractions, integrals, etc.
-- Example: The fraction 22/7 should become \\(\\frac{22}{7}\\)
-- Example: π should become \\(\\pi\\)
-- Example: Integration should use \\(\\int\\), summation \\(\\sum\\), etc.
-
-Extract all content with properly formatted LaTeX math.`
+- Preserve exact mathematical symbols, formulas, and equations
+- Include ALL text content along with the mathematical expressions
+- Maintain document structure and formatting`
         },
         {
           role: 'user',
           content: [
             {
               type: 'text',
-              text: 'Extract all text and mathematical content from this image. Format all math expressions in proper LaTeX notation.'
+              text: 'Extract all text and mathematical content from this image. Ensure all mathematical expressions are properly formatted in LaTeX notation.'
             },
             {
               type: 'image_url',
@@ -118,10 +112,10 @@ Extract all content with properly formatted LaTeX math.`
       temperature: 0.1
     });
 
-    return response.choices[0].message.content || '';
-  } catch (error: any) {
+    return response.choices[0]?.message?.content || '';
+  } catch (error) {
     console.error('Azure OpenAI image processing error:', error);
-    throw new Error(`Failed to process image with Azure OpenAI: ${error.message}`);
+    throw new Error('Failed to process image with Azure OpenAI');
   }
 }
 
@@ -135,36 +129,37 @@ export async function enhanceMathFormatting(text: string): Promise<string> {
 
   try {
     const response = await azureOpenAI.chat.completions.create({
-      model: 'gpt-4',
+      model: 'gpt-35-turbo',
       messages: [
         {
           role: 'system',
           content: `You are an expert at formatting mathematical text. Your job is to take text with mathematical content and ensure ALL mathematical expressions are properly formatted in LaTeX.
 
 CRITICAL FORMATTING RULES:
-- Convert ALL mathematical expressions to proper LaTeX format
+- Convert all mathematical expressions to proper LaTeX format
 - Inline math: wrap in \\( and \\)
 - Display math: wrap in \\[ and \\]
-- Fractions: \\(\\frac{numerator}{denominator}\\)
-- Greek letters: \\(\\pi\\), \\(\\alpha\\), \\(\\beta\\), etc.
-- Integrals: \\(\\int\\), summations: \\(\\sum\\)
-- Subscripts: \\(x_1\\), superscripts: \\(x^2\\)
-- Functions: \\(\\sin\\), \\(\\cos\\), \\(\\log\\), etc.
+- Preserve all text content exactly as provided
+- Only enhance the mathematical formatting, do not change the content
+- Ensure fractions use \\frac{numerator}{denominator}
+- Ensure superscripts use ^ and subscripts use _
+- Preserve mathematical symbols like π, ∞, ∑, ∫, etc.
 
-Return the EXACT same text but with all mathematical expressions properly formatted in LaTeX. Do not change any other content.`
+Return the text with enhanced mathematical formatting but preserve all original content.`
         },
         {
           role: 'user',
-          content: `Please format all mathematical expressions in this text using proper LaTeX notation:\n\n${text}`
+          content: `Please enhance the mathematical formatting in this text while preserving all content:\n\n${text}`
         }
       ],
       max_tokens: 4000,
       temperature: 0.1
     });
 
-    return response.choices[0].message.content || text;
-  } catch (error: any) {
+    return response.choices[0]?.message?.content || text;
+  } catch (error) {
     console.error('Azure OpenAI math formatting error:', error);
-    return text; // Return original text if enhancement fails
+    // Return original text if formatting fails
+    return text;
   }
 }
