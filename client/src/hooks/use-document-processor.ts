@@ -403,6 +403,70 @@ export function useDocumentProcessor() {
       });
     }
   }, [toast]);
+
+  const handleMathPDFUpload = useCallback(async (file: File) => {
+    try {
+      const formData = new FormData();
+      formData.append('pdf', file);
+      
+      const response = await fetch('/api/process-math-pdf', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to process PDF with MathPix');
+      }
+      
+      const data = await response.json();
+      setInputText(data.text);
+      toast({ 
+        title: "Math PDF Processed", 
+        description: `Successfully extracted math content from ${file.name} using MathPix` 
+      });
+    } catch (error: any) {
+      console.error('MathPix PDF processing error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      toast({ 
+        title: "MathPix Processing Failed", 
+        description: errorMessage,
+        variant: "destructive" 
+      });
+    }
+  }, [toast, setInputText]);
+
+  const handleMathImageUpload = useCallback(async (file: File) => {
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      const response = await fetch('/api/process-math-image', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to process image with MathPix');
+      }
+      
+      const data = await response.json();
+      setInputText(data.text);
+      toast({ 
+        title: "Math Image Processed", 
+        description: `Successfully extracted math content from ${file.name} using MathPix` 
+      });
+    } catch (error: any) {
+      console.error('MathPix image processing error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      toast({ 
+        title: "MathPix Processing Failed", 
+        description: errorMessage,
+        variant: "destructive" 
+      });
+    }
+  }, [toast, setInputText]);
   
   // Detect AI in text
   const detectAIText = useCallback(async (text: string, isInput: boolean) => {
@@ -948,6 +1012,8 @@ export function useDocumentProcessor() {
     handleContentSourceFileUpload,
     handleMultipleContentSourceFileUpload,
     handleAudioTranscription,
+    handleMathPDFUpload,
+    handleMathImageUpload,
     isInputDetecting,
     isOutputDetecting,
     inputAIResult,
