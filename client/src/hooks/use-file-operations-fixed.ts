@@ -65,7 +65,7 @@ export function useFileOperations() {
     }
   }, [toast]);
   
-  // Export text as DOCX
+  // Export text as DOCX - skip math content as requested
   const exportAsDOCX = useCallback(async (text: string, filename = 'document.docx') => {
     if (!text) {
       toast({
@@ -98,17 +98,17 @@ export function useFileOperations() {
   }, [toast]);
   
   // Send email with document
-  const sendEmailWithDocument = useCallback(async (
-    to: string,
-    subject: string,
-    message: string,
-    originalText: string,
+  const sendDocumentEmail = useCallback(async (
+    to: string, 
+    subject: string, 
+    message: string, 
+    originalText: string, 
     transformedText: string
-  ): Promise<boolean> => {
+  ) => {
     if (!to || !subject || !transformedText) {
       toast({
         title: "Missing information",
-        description: "Email address, subject, and transformed text are required.",
+        description: "Please fill in all required fields.",
         variant: "destructive"
       });
       return false;
@@ -117,7 +117,7 @@ export function useFileOperations() {
     try {
       setIsSendingEmail(true);
       
-      await sendEmail({
+      const success = await sendEmail({
         to,
         subject,
         text: message,
@@ -125,12 +125,15 @@ export function useFileOperations() {
         transformedText
       });
       
-      toast({
-        title: "Email sent successfully",
-        description: `Document sent to ${to}`,
-      });
-      
-      return true as boolean; // Success
+      if (success) {
+        toast({
+          title: "Email sent",
+          description: `Document sent successfully to ${to}`,
+        });
+        return true;
+      } else {
+        throw new Error('Email sending failed');
+      }
     } catch (err) {
       const error = err as Error;
       console.error('Error sending email:', error);
@@ -143,7 +146,6 @@ export function useFileOperations() {
     } finally {
       setIsSendingEmail(false);
     }
-    return true;
   }, [toast]);
   
   return {
@@ -152,6 +154,6 @@ export function useFileOperations() {
     copyToClipboard,
     exportAsPDF,
     exportAsDOCX,
-    sendEmailWithDocument
+    sendDocumentEmail
   };
 }
