@@ -36,7 +36,7 @@ export function useFileOperations() {
     }
   }, [toast]);
   
-  // Export text as PDF using Puppeteer - captures exactly what you see
+  // Export text as PDF using print dialog - captures exactly what you see
   const exportAsPDF = useCallback(async (text: string, filename = 'document') => {
     if (!text) {
       toast({
@@ -65,20 +65,28 @@ export function useFileOperations() {
         throw new Error('Export failed');
       }
       
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${filename.replace('.pdf', '')}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      const data = await response.json();
       
-      toast({
-        title: "PDF Export Complete",
-        description: "Your document has been exported with perfect math rendering!",
-      });
+      // Open the HTML content in a new window for printing
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(data.htmlContent);
+        printWindow.document.close();
+        
+        // Wait for content to load, then trigger print dialog
+        printWindow.onload = () => {
+          setTimeout(() => {
+            printWindow.print();
+          }, 500);
+        };
+        
+        toast({
+          title: "Print Dialog Opened",
+          description: "Use 'Save as PDF' in the print dialog to download with perfect math formatting!",
+        });
+      } else {
+        throw new Error('Popup blocked - please allow popups and try again');
+      }
     } catch (err) {
       const error = err as Error;
       console.error('Error exporting PDF:', error);
@@ -173,12 +181,126 @@ export function useFileOperations() {
     return true;
   }, [toast]);
   
+  // Export as HTML with embedded MathJax
+  const exportAsHTML = useCallback(async (text: string, filename = 'document') => {
+    if (!text) {
+      toast({
+        title: "Nothing to export",
+        description: "There is no text to export as HTML.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      setIsExporting(true);
+      
+      const response = await fetch('/api/export-html', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: text,
+          filename: filename.replace('.html', '')
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Export failed');
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${filename.replace('.html', '')}.html`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({
+        title: "HTML Export Complete",
+        description: "Your document has been exported as HTML with math rendering!",
+      });
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error exporting HTML:', error);
+      toast({
+        title: "Export failed",
+        description: error.message || "Failed to export HTML",
+        variant: "destructive"
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  }, [toast]);
+
+  // Export as LaTeX format
+  const exportAsLaTeX = useCallback(async (text: string, filename = 'document') => {
+    if (!text) {
+      toast({
+        title: "Nothing to export",
+        description: "There is no text to export as LaTeX.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      setIsExporting(true);
+      
+      const response = await fetch('/api/export-latex', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: text,
+          filename: filename.replace('.tex', '')
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Export failed');
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${filename.replace('.tex', '')}.tex`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({
+        title: "LaTeX Export Complete",
+        description: "Your document has been exported as LaTeX format!",
+      });
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error exporting LaTeX:', error);
+      toast({
+        title: "Export failed",
+        description: error.message || "Failed to export LaTeX",
+        variant: "destructive"
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  }, [toast]);
+
   return {
     isExporting,
     isSendingEmail,
     copyToClipboard,
     exportAsPDF,
     exportAsDOCX,
+    exportAsHTML,
+    exportAsLaTeX,
     sendEmailWithDocument
   };
 }

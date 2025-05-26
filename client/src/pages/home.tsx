@@ -82,6 +82,8 @@ export default function Home() {
     copyToClipboard,
     exportAsPDF,
     exportAsDOCX,
+    exportAsHTML,
+    exportAsLaTeX,
     sendEmailWithDocument
   } = useFileOperations();
 
@@ -335,6 +337,8 @@ export default function Home() {
                 onCopy={copyToClipboard}
                 onExportPDF={exportAsPDF}
                 onExportDOCX={exportAsDOCX}
+                onExportHTML={exportAsHTML}
+                onExportLaTeX={exportAsLaTeX}
                 onDetectAI={(text) => {
                   detectAIText(text, false);
                   return Promise.resolve();
