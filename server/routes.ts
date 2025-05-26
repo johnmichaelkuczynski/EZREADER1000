@@ -268,7 +268,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('Processing PDF with Azure OpenAI:', req.file.originalname, 'Size:', req.file.size);
       
-      const extractedText = await processMathPDFWithAzure(req.file.buffer);
+      // Temporarily using standard PDF extraction until Azure model is configured
+      const extractedText = await extractTextFromPDF(req.file.buffer);
       
       if (!extractedText || extractedText.trim().length === 0) {
         return res.status(400).json({ error: "Could not extract text from PDF using Azure OpenAI" });
@@ -342,6 +343,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Send email with processed text
+  // New export routes that capture the fully rendered DOM
+  app.post('/api/export-pdf', async (req: Request, res: Response) => {
+    try {
+      const { content, filename = 'document' } = req.body;
+      
+      if (!content) {
+        return res.status(400).json({ error: 'Content is required' });
+      }
+      
+      const { exportToPDFWithPuppeteer } = await import('./services/export-service');
+      const pdfBuffer = await exportToPDFWithPuppeteer({
+        content,
+        filename,
+        format: 'pdf',
+        waitForMath: true
+      });
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}.pdf"`);
+      res.send(pdfBuffer);
+    } catch (error: any) {
+      console.error('PDF export error:', error);
+      res.status(500).json({ error: 'Failed to export PDF' });
+    }
+  });
+
+  app.post('/api/export-html', async (req: Request, res: Response) => {
+    try {
+      const { content, filename = 'document' } = req.body;
+      
+      if (!content) {
+        return res.status(400).json({ error: 'Content is required' });
+      }
+      
+      const { exportToHTML } = await import('./services/export-service');
+      const htmlContent = await exportToHTML(content, filename);
+      
+      res.setHeader('Content-Type', 'text/html');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}.html"`);
+      res.send(htmlContent);
+    } catch (error: any) {
+      console.error('HTML export error:', error);
+      res.status(500).json({ error: 'Failed to export HTML' });
+    }
+  });
+
+  app.post('/api/export-latex', async (req: Request, res: Response) => {
+    try {
+      const { content, filename = 'document' } = req.body;
+      
+      if (!content) {
+        return res.status(400).json({ error: 'Content is required' });
+      }
+      
+      const { exportToLaTeX } = await import('./services/export-service');
+      const latexContent = await exportToLaTeX(content, filename);
+      
+      res.setHeader('Content-Type', 'text/plain');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}.tex"`);
+      res.send(latexContent);
+    } catch (error: any) {
+      console.error('LaTeX export error:', error);
+      res.status(500).json({ error: 'Failed to export LaTeX' });
+    }
+  });
+
   app.post('/api/send-email', async (req: Request, res: Response) => {
     try {
       const { to, subject, text } = sendEmailSchema.parse(req.body);

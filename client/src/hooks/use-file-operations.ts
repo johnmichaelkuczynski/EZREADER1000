@@ -36,8 +36,8 @@ export function useFileOperations() {
     }
   }, [toast]);
   
-  // Export text as PDF using browser print dialog - perfect for math rendering
-  const exportAsPDF = useCallback(async (text: string, filename = 'document.pdf') => {
+  // Export text as PDF using Puppeteer - captures exactly what you see
+  const exportAsPDF = useCallback(async (text: string, filename = 'document') => {
     if (!text) {
       toast({
         title: "Nothing to export",
@@ -48,27 +48,47 @@ export function useFileOperations() {
     }
     
     try {
-      // Wait for MathJax to finish rendering before printing
-      if (window.MathJax && window.MathJax.typesetPromise) {
-        await window.MathJax.typesetPromise();
-        // Give a small delay to ensure all math is fully rendered
-        await new Promise(resolve => setTimeout(resolve, 500));
+      setIsExporting(true);
+      
+      const response = await fetch('/api/export-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: text,
+          filename: filename.replace('.pdf', '')
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Export failed');
       }
       
-      // Use browser's print dialog for perfect math rendering
-      window.print();
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${filename.replace('.pdf', '')}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
       toast({
-        title: "Print Dialog Opened",
-        description: "Use 'Save as PDF' in the print dialog to download your document with perfect math formatting.",
+        title: "PDF Export Complete",
+        description: "Your document has been exported with perfect math rendering!",
       });
     } catch (err) {
       const error = err as Error;
-      console.error('Error opening print dialog:', error);
+      console.error('Error exporting PDF:', error);
       toast({
-        title: "Print failed",
-        description: error.message || "Failed to open print dialog",
+        title: "Export failed",
+        description: error.message || "Failed to export PDF",
         variant: "destructive"
       });
+    } finally {
+      setIsExporting(false);
     }
   }, [toast]);
   
