@@ -396,13 +396,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             @page {
                 margin: 0.5in;
                 size: letter;
-                /* Remove all headers and footers */
-                @top-left { content: none; }
-                @top-center { content: none; }
-                @top-right { content: none; }
-                @bottom-left { content: none; }
-                @bottom-center { content: none; }
-                @bottom-right { content: none; }
+                /* Remove all headers and footers except page number */
+                @top-left { content: ""; }
+                @top-center { content: ""; }
+                @top-right { content: ""; }
+                @bottom-left { content: ""; }
+                @bottom-center { content: counter(page); }
+                @bottom-right { content: ""; }
             }
             
             body {
