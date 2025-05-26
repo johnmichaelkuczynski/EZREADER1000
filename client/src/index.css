@@ -32,6 +32,47 @@
   --chart-5: 32.1 94.6% 43.7%;
 }
 
+/* Math document rendering styles */
+.math-content {
+  font-family: 'Georgia', serif;
+  line-height: 1.6;
+}
+
+/* Print styles for math documents */
+@media print {
+  html, body {
+    height: auto !important;
+    overflow: visible !important;
+    font-family: 'Georgia', serif;
+    line-height: 1.6;
+    margin: 1in;
+  }
+  
+  .output-container {
+    max-height: none !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  .math-content {
+    color: black !important;
+    background: white !important;
+  }
+  
+  /* Hide non-essential elements during print */
+  nav, .sidebar, .toolbar, .no-print {
+    display: none !important;
+  }
+  
+  /* Ensure math formulas are properly sized for print */
+  mjx-container {
+    display: inline-block !important;
+  }
+}
+
 .dark {
   --background: 222 47% 11%;
   --foreground: 210 40% 98%;
