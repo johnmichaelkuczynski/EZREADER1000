@@ -18,6 +18,7 @@ import { detectAIWithGPTZero } from "./services/gptzero";
 import { searchOnline, fetchWebContent } from "./services/google";
 import { sendDocumentEmail } from "./services/sendgrid";
 import { extractTextFromPDF } from "./services/pdf-processor";
+import { extractMathFromPDF, extractMathFromImage } from "./services/mathpix";
 
 // Configure multer storage
 const upload = multer({
@@ -249,6 +250,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: unknown) {
       console.error('Error processing PDF file:', error);
       res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to process PDF file' });
+    }
+  });
+
+  // MathPix PDF processing endpoint
+  app.post('/api/process-math-pdf', upload.single('pdf'), async (req: Request, res: Response) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No PDF file provided" });
+      }
+
+      console.log('Processing PDF with MathPix:', req.file.originalname, 'Size:', req.file.size);
+      
+      const extractedText = await extractMathFromPDF(req.file.buffer);
+      
+      if (!extractedText || extractedText.trim().length === 0) {
+        return res.status(400).json({ error: "Could not extract text from PDF using MathPix" });
+      }
+
+      console.log('MathPix extracted text length:', extractedText.length);
+      
+      res.json({ 
+        text: extractedText,
+        filename: req.file.originalname,
+        source: 'mathpix'
+      });
+    } catch (error: any) {
+      console.error('MathPix PDF processing error:', error);
+      res.status(500).json({ error: error.message || "Failed to process PDF with MathPix" });
+    }
+  });
+
+  // MathPix image processing endpoint
+  app.post('/api/process-math-image', upload.single('image'), async (req: Request, res: Response) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No image file provided" });
+      }
+
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/bmp'];
+      if (!allowedTypes.includes(req.file.mimetype)) {
+        return res.status(400).json({ error: "Unsupported image format. Please use JPG, PNG, GIF, or BMP." });
+      }
+
+      console.log('Processing image with MathPix:', req.file.originalname, 'Type:', req.file.mimetype, 'Size:', req.file.size);
+      
+      const extractedText = await extractMathFromImage(req.file.buffer, req.file.mimetype);
+      
+      if (!extractedText || extractedText.trim().length === 0) {
+        return res.status(400).json({ error: "Could not extract text from image using MathPix" });
+      }
+
+      console.log('MathPix extracted text length:', extractedText.length);
+      
+      res.json({ 
+        text: extractedText,
+        filename: req.file.originalname,
+        source: 'mathpix'
+      });
+    } catch (error: any) {
+      console.error('MathPix image processing error:', error);
+      res.status(500).json({ error: error.message || "Failed to process image with MathPix" });
     }
   });
 
