@@ -1,0 +1,87 @@
+"This app needs to fully support math documents. It must process math, display it cleanly, and export it properly. Here’s how to do that — step by step, no improvisation."
+
+1. 🔐 SET UP MATHPIX CREDENTIALS
+Go to Replit Secrets tab
+
+Add:
+
+MATHPIX_APP_ID = your MathPix app ID
+
+MATHPIX_APP_KEY = your MathPix key
+
+These are required for all OCR API calls.
+
+2. 📤 SEND DOCUMENTS TO MATHPIX
+▶️ For image files:
+Send to https://api.mathpix.com/v3/text
+
+Include in the POST:
+
+json
+Copy
+Edit
+{
+  "src": "BASE64_OR_URL",
+  "formats": ["text", "data"],
+  "data_options": { "include_latex": true }
+}
+▶️ For PDF files:
+Send to https://api.mathpix.com/v3/pdf (POST)
+
+Wait for pdf_id
+
+Poll https://api.mathpix.com/v3/pdf/{pdf_id} until status = "completed"
+
+✅ Use latex_styled and text fields from the response.
+
+3. 🖥️ DISPLAY RESULTS IN THE APP
+✅ Use MathJax v3 to render math
+Accept all standard LaTeX:
+
+Inline: \( a^2 + b^2 = c^2 \)
+
+Block: \[ \int_a^b f(x)\,dx \]
+
+✅ Inject OCR output into DOM
+Wrap math segments in span or div with math class
+
+Run MathJax.typesetPromise() after inserting content
+
+Ensure no validation/sanitization blocks rendering
+
+4. 📄 EXPORT TO PDF (WITH FULL MATH)
+DO NOT:
+Export raw HTML
+
+Skip MathJax rendering
+
+Cut off after 4 pages
+
+Strip styles
+
+DO:
+Wait for MathJax.typesetPromise() to finish
+
+Export the visible DOM, not the unrendered source
+
+Use window.print() or html2pdf.js on the fully rendered .output-container
+
+Apply this in your @media print:
+css
+Copy
+Edit
+@media print {
+  html, body {
+    height: auto !important;
+    overflow: visible !important;
+    font-family: 'Georgia', serif;
+    line-height: 1.6;
+    margin: 1in;
+  }
+  .output-container {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+}
+🔁 FINAL INSTRUCTION
+"This app must fully support processing, displaying, and exporting math. Math must be extracted from PDF/image, rendered visibly, and exported cleanly. No placeholders. No cutoff. No raw LaTeX. If the math looks right in-app, it must look identical in the PDF. No exceptions.
