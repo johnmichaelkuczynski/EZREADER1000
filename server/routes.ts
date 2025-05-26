@@ -343,7 +343,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Send email with processed text
-  // Enhanced PDF export using print dialog approach
+  // Simple PDF export using print dialog approach
   app.post('/api/export-pdf', async (req: Request, res: Response) => {
     try {
       const { content, filename = 'document' } = req.body;
@@ -353,8 +353,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Return HTML content for client-side PDF generation via print dialog
-      const { exportToHTML } = await import('./services/export-service');
-      const htmlContent = await exportToHTML(content, filename);
+      const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>${filename}</title>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['\\\\(', '\\\\)']],
+                displayMath: [['\\\\[', '\\\\]']],
+                processEscapes: true,
+                processEnvironments: true
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+            }
+        };
+    </script>
+    <style>
+        body {
+            font-family: 'Georgia', serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .math-content {
+            font-size: 16px;
+        }
+        
+        mjx-container {
+            margin: 0.5em 0;
+        }
+        
+        @media print {
+            body {
+                margin: 0;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="math-content">
+        ${content.replace(/\n/g, '<br>')}
+    </div>
+    
+    <script>
+        // Wait for MathJax to finish rendering
+        window.addEventListener('load', function() {
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                window.MathJax.typesetPromise().then(function() {
+                    document.body.setAttribute('data-math-ready', 'true');
+                    // Auto-trigger print dialog
+                    setTimeout(() => window.print(), 1000);
+                });
+            } else {
+                document.body.setAttribute('data-math-ready', 'true');
+                setTimeout(() => window.print(), 1000);
+            }
+        });
+    </script>
+</body>
+</html>`;
       
       res.json({ 
         htmlContent,
