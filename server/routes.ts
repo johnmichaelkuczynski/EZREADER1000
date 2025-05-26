@@ -442,7 +442,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Content is required' });
       }
       
-      const { exportToHTML } = await import('./services/export-service');
+      const { exportToHTML } = await import('./services/export-service-simple');
       const htmlContent = await exportToHTML(content, filename);
       
       res.setHeader('Content-Type', 'text/html');
@@ -462,7 +462,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Content is required' });
       }
       
-      const { exportToLaTeX } = await import('./services/export-service');
+      const { exportToLaTeX } = await import('./services/export-service-simple');
       const latexContent = await exportToLaTeX(content, filename);
       
       res.setHeader('Content-Type', 'text/plain');
