@@ -30,7 +30,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface ChunkSelectorProps {
   chunks: string[];
-  onProcessSelected: (selectedIndices: number[]) => void;
+  onProcessSelected: (selectedIndices: number[], mode: 'rewrite' | 'add' | 'both', additionalChunks?: number) => void;
   onCancel: () => void;
 }
 
@@ -57,6 +57,8 @@ export function ChunkSelector({
   const [pageSize, setPageSize] = useState(10);
   const [selectionMode, setSelectionMode] = useState<'individual' | 'range'>('individual');
   const [rangeStart, setRangeStart] = useState<number | null>(null);
+  const [processingMode, setProcessingMode] = useState<'rewrite' | 'add' | 'both'>('rewrite');
+  const [additionalChunks, setAdditionalChunks] = useState<number>(1);
   
   // Filter chunks based on search term
   const filteredChunks = useMemo(() => {
@@ -226,10 +228,14 @@ export function ChunkSelector({
   };
 
   const handleProcessSelected = () => {
-    if (selectedChunks.length === 0) {
-      return; // Don't process if nothing is selected
+    if (processingMode === 'add' || (processingMode === 'both' && selectedChunks.length === 0)) {
+      // For add mode, we don't need selected chunks
+      onProcessSelected(selectedChunks, processingMode, additionalChunks);
+    } else if (selectedChunks.length === 0) {
+      return; // Don't process if nothing is selected for rewrite mode
+    } else {
+      onProcessSelected(selectedChunks, processingMode, additionalChunks);
     }
-    onProcessSelected(selectedChunks);
   };
 
   // Pagination controls
@@ -242,7 +248,7 @@ export function ChunkSelector({
     <Card className="w-full max-w-4xl mx-auto mt-4">
       <CardHeader className="border-b">
         <div className="flex items-center justify-between">
-          <CardTitle>Select Chunks to Process</CardTitle>
+          <CardTitle>Choose Processing Mode</CardTitle>
           <div className="flex space-x-2">
             <Select
               value={selectionMode}
@@ -257,6 +263,77 @@ export function ChunkSelector({
               </SelectContent>
             </Select>
           </div>
+        </div>
+        
+        {/* Processing Mode Selection */}
+        <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <h4 className="text-sm font-medium mb-3">What would you like to do?</h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div 
+              className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                processingMode === 'rewrite' 
+                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' 
+                  : 'border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
+              onClick={() => setProcessingMode('rewrite')}
+            >
+              <div className="font-medium text-sm">Rewrite Existing</div>
+              <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                Modify selected chunks with new instructions
+              </div>
+            </div>
+            
+            <div 
+              className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                processingMode === 'add' 
+                  ? 'border-green-500 bg-green-50 dark:bg-green-900/20' 
+                  : 'border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
+              onClick={() => setProcessingMode('add')}
+            >
+              <div className="font-medium text-sm">Add New Content</div>
+              <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                Generate new chunks to expand the document
+              </div>
+            </div>
+            
+            <div 
+              className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                processingMode === 'both' 
+                  ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20' 
+                  : 'border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
+              onClick={() => setProcessingMode('both')}
+            >
+              <div className="font-medium text-sm">Rewrite + Add</div>
+              <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                Modify selected chunks AND add new content
+              </div>
+            </div>
+          </div>
+          
+          {/* Show additional chunks input when in add or both mode */}
+          {(processingMode === 'add' || processingMode === 'both') && (
+            <div className="mt-3 flex items-center space-x-3">
+              <label className="text-sm font-medium">Number of new chunks to add:</label>
+              <Select
+                value={additionalChunks.toString()}
+                onValueChange={(value) => setAdditionalChunks(parseInt(value))}
+              >
+                <SelectTrigger className="w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1</SelectItem>
+                  <SelectItem value="2">2</SelectItem>
+                  <SelectItem value="3">3</SelectItem>
+                  <SelectItem value="4">4</SelectItem>
+                  <SelectItem value="5">5</SelectItem>
+                  <SelectItem value="10">10</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
       </CardHeader>
       <CardContent className="p-4">
@@ -485,9 +562,19 @@ export function ChunkSelector({
         
         <div className="flex justify-between mt-4 gap-2">
           <div>
-            <span className="text-sm font-medium">
-              {selectedChunks.length} chunk{selectedChunks.length !== 1 ? 's' : ''} selected
-            </span>
+            {processingMode === 'add' ? (
+              <span className="text-sm font-medium text-green-600 dark:text-green-400">
+                Will add {additionalChunks} new chunk{additionalChunks !== 1 ? 's' : ''}
+              </span>
+            ) : processingMode === 'both' ? (
+              <span className="text-sm font-medium text-purple-600 dark:text-purple-400">
+                {selectedChunks.length} chunk{selectedChunks.length !== 1 ? 's' : ''} selected + {additionalChunks} new
+              </span>
+            ) : (
+              <span className="text-sm font-medium">
+                {selectedChunks.length} chunk{selectedChunks.length !== 1 ? 's' : ''} selected
+              </span>
+            )}
           </div>
           <div className="flex gap-2">
             <Button 
@@ -498,9 +585,18 @@ export function ChunkSelector({
             </Button>
             <Button 
               onClick={handleProcessSelected}
-              disabled={selectedChunks.length === 0}
+              disabled={
+                processingMode === 'rewrite' && selectedChunks.length === 0 ||
+                processingMode === 'both' && selectedChunks.length === 0
+              }
+              className={
+                processingMode === 'add' ? 'bg-green-600 hover:bg-green-700' :
+                processingMode === 'both' ? 'bg-purple-600 hover:bg-purple-700' : ''
+              }
             >
-              Process Selected Chunks
+              {processingMode === 'add' ? `Add ${additionalChunks} New Chunks` :
+               processingMode === 'both' ? `Rewrite + Add ${additionalChunks}` :
+               'Process Selected Chunks'}
             </Button>
           </div>
         </div>

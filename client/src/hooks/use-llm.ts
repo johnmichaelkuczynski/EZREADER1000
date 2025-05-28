@@ -85,37 +85,74 @@ export function useLLM() {
     }
   };
   
-  // Process only selected chunks
+  // Process chunks with different modes: rewrite, add, or both
   const processSelectedChunks = async (
     selectedIndices: number[],
+    mode: 'rewrite' | 'add' | 'both',
+    additionalChunks: number = 0,
     instructions: string,
     contentSource?: string,
     useContentSource = false,
     onChunkProcessed?: (currentResult: string, currentChunk: number, totalChunks: number) => void
   ): Promise<string> => {
     try {
-      if (selectedIndices.length === 0 || documentChunks.length === 0) {
-        throw new Error('No chunks selected for processing');
-      }
-
-      // Create a new array with only the selected chunks
-      const selectedChunks = selectedIndices.map(index => documentChunks[index]);
-      
       // Hide the chunk selector
       setShowChunkSelector(false);
       
-      // Process only the selected chunks
-      return await processMultipleChunks(
-        selectedChunks, 
-        instructions, 
-        contentSource, 
-        useContentSource, 
-        // Modify the callback to report progress in terms of selected chunks
-        onChunkProcessed ? 
-          (result, current, total) => 
-            onChunkProcessed(result, current, total) : 
-          undefined
-      );
+      if (mode === 'add') {
+        // Add mode: generate new chunks based on existing content
+        return await processAddChunks(
+          additionalChunks,
+          instructions,
+          contentSource,
+          useContentSource,
+          onChunkProcessed
+        );
+      } else if (mode === 'rewrite') {
+        // Rewrite mode: process only selected chunks (existing behavior)
+        if (selectedIndices.length === 0 || documentChunks.length === 0) {
+          throw new Error('No chunks selected for processing');
+        }
+        const selectedChunks = selectedIndices.map(index => documentChunks[index]);
+        return await processMultipleChunks(
+          selectedChunks, 
+          instructions, 
+          contentSource, 
+          useContentSource, 
+          onChunkProcessed
+        );
+      } else if (mode === 'both') {
+        // Both mode: rewrite selected chunks AND add new chunks
+        let result = '';
+        
+        // First, rewrite selected chunks if any
+        if (selectedIndices.length > 0) {
+          const selectedChunks = selectedIndices.map(index => documentChunks[index]);
+          result = await processMultipleChunks(
+            selectedChunks, 
+            instructions, 
+            contentSource, 
+            useContentSource, 
+            onChunkProcessed
+          );
+        }
+        
+        // Then, add new chunks
+        if (additionalChunks > 0) {
+          const addedContent = await processAddChunks(
+            additionalChunks,
+            instructions,
+            contentSource,
+            useContentSource,
+            onChunkProcessed
+          );
+          result = result ? result + '\n\n' + addedContent : addedContent;
+        }
+        
+        return result;
+      }
+      
+      throw new Error('Invalid processing mode');
     } catch (error) {
       setProcessing({
         isProcessing: false,
@@ -126,6 +163,58 @@ export function useLLM() {
       
       throw error;
     }
+  };
+
+  // New function to handle adding chunks
+  const processAddChunks = async (
+    additionalChunks: number,
+    instructions: string,
+    contentSource?: string,
+    useContentSource = false,
+    onChunkProcessed?: (currentResult: string, currentChunk: number, totalChunks: number) => void
+  ): Promise<string> => {
+    const existingContent = documentChunks.join('\n\n');
+    
+    // Enhanced instructions for adding new content
+    const addInstructions = `Based on the existing document content below, ${instructions}
+
+Generate ${additionalChunks} new chunk${additionalChunks > 1 ? 's' : ''} of content that expands and complements the existing material. Each new chunk should be substantial and add meaningful value to the document.
+
+Existing document content:
+${existingContent}
+
+Please generate ${additionalChunks} new chunk${additionalChunks > 1 ? 's' : ''} that follow${additionalChunks === 1 ? 's' : ''} logically from this content.`;
+
+    setProcessing({
+      isProcessing: true,
+      currentChunk: 0,
+      totalChunks: additionalChunks,
+      progress: 0
+    });
+
+    // Use the regular text processing API to generate new content
+    const request: ProcessTextRequest = {
+      inputText: existingContent,
+      instructions: addInstructions,
+      contentSource,
+      llmProvider,
+      useContentSource,
+    };
+
+    const result = await processText(request);
+    
+    setProcessing({
+      isProcessing: false,
+      currentChunk: additionalChunks,
+      totalChunks: additionalChunks,
+      progress: 100
+    });
+
+    if (onChunkProcessed) {
+      onChunkProcessed(result, additionalChunks, additionalChunks);
+    }
+
+    return result;
   };
   
   // Process text in multiple chunks
