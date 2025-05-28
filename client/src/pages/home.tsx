@@ -422,15 +422,7 @@ export default function Home() {
             {/* Dialogue Box - For discussing text and special commands */}
             <DialogueBox
               messages={dialogueMessages}
-              onSendMessage={(content) => {
-                const newMessage = {
-                  id: crypto.randomUUID(),
-                  role: 'user' as const,
-                  content
-                };
-                setDialogueMessages(prev => [...prev, newMessage]);
-                processDocument(content);
-              }}
+              onSendMessage={processSpecialCommand}
               onProcessSpecialCommand={processSpecialCommand}
               onReset={resetAll}
               inputText={inputText}
