@@ -358,7 +358,7 @@ export default function Home() {
                 onProcessSelected={async (selectedIndices: number[], mode: 'rewrite' | 'add' | 'both', additionalChunks?: number) => {
                   // Handle the new processing modes
                   try {
-                    await processSelectedChunks(
+                    const result = await processSelectedChunks(
                       selectedIndices,
                       mode,
                       additionalChunks || 0,
@@ -374,6 +374,16 @@ export default function Home() {
                         ));
                       }
                     );
+                    
+                    // Set the final result to the output
+                    setOutputText(result);
+                    
+                    // Update the final message
+                    setMessages(prev => prev.map(msg => 
+                      msg.role === 'assistant' && msg.id === prev[prev.length - 1]?.id
+                        ? { ...msg, content: `Processing complete! ${mode === 'add' ? 'New content added' : mode === 'both' ? 'Content rewritten and expanded' : 'Content rewritten'} successfully.` }
+                        : msg
+                    ));
                   } catch (error) {
                     console.error('Error processing chunks:', error);
                   }
