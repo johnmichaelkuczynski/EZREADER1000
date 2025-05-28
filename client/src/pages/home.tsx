@@ -69,6 +69,7 @@ export default function Home() {
     documentChunks,
     showChunkSelector,
     setShowChunkSelector,
+    processSelectedChunks,
     // Full Document Synthesis Mode
     enableSynthesisMode,
     setEnableSynthesisMode,
@@ -354,24 +355,28 @@ export default function Home() {
             {showChunkSelector && documentChunks.length > 0 && (
               <ChunkSelector
                 chunks={documentChunks}
-                onProcessSelected={async (selectedIndices, mode, additionalChunks) => {
+                onProcessSelected={async (selectedIndices: number[], mode: 'rewrite' | 'add' | 'both', additionalChunks?: number) => {
                   // Handle the new processing modes
-                  await processSelectedChunks(
-                    selectedIndices,
-                    mode,
-                    additionalChunks || 0,
-                    messages.length > 0 ? messages[messages.length - 1].content : '',
-                    contentSource,
-                    useContentSource,
-                    (currentResult, currentChunk, totalChunks) => {
-                      setOutputText(currentResult);
-                      setMessages(prev => prev.map(msg => 
-                        msg.role === 'assistant' && msg.id === prev[prev.length - 1]?.id
-                          ? { ...msg, content: `Processing: Completed chunk ${currentChunk} of ${totalChunks} (${Math.round((currentChunk/totalChunks) * 100)}%)` }
-                          : msg
-                      ));
-                    }
-                  );
+                  try {
+                    await processSelectedChunks(
+                      selectedIndices,
+                      mode,
+                      additionalChunks || 0,
+                      messages.length > 0 ? messages[messages.length - 1].content : '',
+                      contentSource,
+                      useContentSource,
+                      (currentResult: string, currentChunk: number, totalChunks: number) => {
+                        setOutputText(currentResult);
+                        setMessages(prev => prev.map(msg => 
+                          msg.role === 'assistant' && msg.id === prev[prev.length - 1]?.id
+                            ? { ...msg, content: `Processing: Completed chunk ${currentChunk} of ${totalChunks} (${Math.round((currentChunk/totalChunks) * 100)}%)` }
+                            : msg
+                        ));
+                      }
+                    );
+                  } catch (error) {
+                    console.error('Error processing chunks:', error);
+                  }
                 }}
                 onCancel={() => setShowChunkSelector(false)}
               />

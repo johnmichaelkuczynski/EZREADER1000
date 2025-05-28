@@ -1064,6 +1064,7 @@ export function useDocumentProcessor() {
     documentChunks,
     showChunkSelector,
     setShowChunkSelector,
+    processSelectedChunks,
     // Full Document Synthesis Mode
     enableSynthesisMode,
     setEnableSynthesisMode,
