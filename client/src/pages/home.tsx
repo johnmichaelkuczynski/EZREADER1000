@@ -354,7 +354,25 @@ export default function Home() {
             {showChunkSelector && documentChunks.length > 0 && (
               <ChunkSelector
                 chunks={documentChunks}
-                onProcessSelected={processSelectedDocumentChunks}
+                onProcessSelected={async (selectedIndices, mode, additionalChunks) => {
+                  // Handle the new processing modes
+                  await processSelectedChunks(
+                    selectedIndices,
+                    mode,
+                    additionalChunks || 0,
+                    messages.length > 0 ? messages[messages.length - 1].content : '',
+                    contentSource,
+                    useContentSource,
+                    (currentResult, currentChunk, totalChunks) => {
+                      setOutputText(currentResult);
+                      setMessages(prev => prev.map(msg => 
+                        msg.role === 'assistant' && msg.id === prev[prev.length - 1]?.id
+                          ? { ...msg, content: `Processing: Completed chunk ${currentChunk} of ${totalChunks} (${Math.round((currentChunk/totalChunks) * 100)}%)` }
+                          : msg
+                      ));
+                    }
+                  );
+                }}
                 onCancel={() => setShowChunkSelector(false)}
               />
             )}

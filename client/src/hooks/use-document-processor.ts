@@ -249,9 +249,11 @@ export function useDocumentProcessor() {
         content: `Processing ${selectedIndices.length} selected chunk(s)...`
       }]);
       
-      // Process only the selected chunks
+      // Process only the selected chunks (using 'rewrite' mode for backwards compatibility)
       const result = await processSelectedChunks(
         selectedIndices,
+        'rewrite',
+        0,
         savedInstructions,
         contentSource,
         useContentSource,
