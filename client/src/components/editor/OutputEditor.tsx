@@ -233,22 +233,27 @@ export function OutputEditor({
             </TabsContent>
           </Tabs>
         ) : (
-          <div className="editor overflow-y-auto p-0">
+          <div className="editor overflow-y-auto p-0 relative">
             {text ? (
-              <Textarea
-                className="min-h-[600px] h-full rounded-none border-0 resize-none focus-visible:ring-0"
-                placeholder="Processed text appears here..."
-                value={text}
-                onChange={(e) => onTextChange(e.target.value)}
-                style={{
-                  whiteSpace: 'pre-wrap',
-                  fontFamily: 'Georgia, serif'
-                }}
-              />
+              <>
+                <Textarea
+                  className="min-h-[600px] h-full rounded-none border-0 resize-none focus-visible:ring-0 pr-16"
+                  placeholder="Processed text appears here... Click to edit directly"
+                  value={text}
+                  onChange={(e) => onTextChange(e.target.value)}
+                  style={{
+                    whiteSpace: 'pre-wrap',
+                    fontFamily: 'Georgia, serif'
+                  }}
+                />
+                <div className="absolute top-4 right-4 text-xs text-gray-400 bg-white/80 px-2 py-1 rounded shadow-sm">
+                  Click to edit
+                </div>
+              </>
             ) : (
               <div className="flex flex-col items-center justify-center h-full min-h-[600px] text-center p-6">
                 <p className="text-slate-500">Processed text will appear here</p>
-                <p className="text-xs text-slate-400 mt-2">Your content will be processed according to your instructions</p>
+                <p className="text-xs text-slate-400 mt-2">Your content will be processed and ready for editing</p>
               </div>
             )}
           </div>
