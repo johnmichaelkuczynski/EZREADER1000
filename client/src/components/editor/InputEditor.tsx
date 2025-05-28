@@ -3,9 +3,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useDropzone } from 'react-dropzone';
-import { FileText, Trash2, Copy, Upload, Bot } from 'lucide-react';
+import { FileText, Trash2, Copy, Upload, Bot, Eye, EyeOff } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { MathRenderer } from './MathRenderer';
 
 interface InputEditorProps {
   text: string;
@@ -30,6 +32,7 @@ export function InputEditor({
 }: InputEditorProps) {
   const [isDragActive, setIsDragActive] = useState(false);
   const [wordCount, setWordCount] = useState(0);
+  const [showMathPreview, setShowMathPreview] = useState(false);
   
   // Calculate word count whenever text changes
   useEffect(() => {
@@ -147,40 +150,76 @@ export function InputEditor({
               <TooltipContent>AI Detect</TooltipContent>
             </Tooltip>
           </TooltipProvider>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className={`p-1 transition-colors ${showMathPreview ? 'text-blue-600 hover:text-blue-700' : 'text-slate-400 hover:text-slate-600'}`}
+                  onClick={() => setShowMathPreview(!showMathPreview)}
+                >
+                  {showMathPreview ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Math Preview</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
       
       <CardContent className="p-0">
-        <div 
-          {...getRootProps()}
-          className={`editor overflow-y-auto p-0 ${isDragActive ? 'border-2 border-dashed border-blue-300' : ''}`}
-        >
-          <input {...getInputProps()} />
-          <Textarea
-              className="min-h-[600px] h-full rounded-none border-0 resize-none focus-visible:ring-0"
-              placeholder="Type or paste your text here..."
-              value={text}
-              onChange={(e) => onTextChange(e.target.value)}
-            />
-          {false && (
-            <div 
-              className={`border-2 border-dashed border-slate-200 rounded-lg h-full min-h-[300px] flex flex-col items-center justify-center p-6 text-center cursor-pointer ${
-                isDragActive ? 'drag-active' : ''
-              }`}
-            >
-              <input {...getInputProps()} />
-              <FileText className="h-10 w-10 text-slate-300 mb-3" />
-              <p className="text-slate-500 mb-2">Drag & drop a file, paste text, or type here</p>
-              <p className="text-xs text-slate-400">Supports Word, PDF, and plain text up to 400,000 words</p>
-              <Button 
-                className="mt-4 bg-slate-100 hover:bg-slate-200 text-slate-700"
-                onClick={() => inputFileRef.current?.click()}
+        {showMathPreview ? (
+          <Tabs defaultValue="edit" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mx-4 mt-4 mb-0">
+              <TabsTrigger value="edit">Edit</TabsTrigger>
+              <TabsTrigger value="preview">Math Preview</TabsTrigger>
+            </TabsList>
+            <TabsContent value="edit" className="mt-0">
+              <div 
+                {...getRootProps()}
+                className={`editor overflow-y-auto p-0 ${isDragActive ? 'border-2 border-dashed border-blue-300' : ''}`}
               >
-                Browse Files
-              </Button>
-            </div>
-          )}
-        </div>
+                <input {...getInputProps()} />
+                <Textarea
+                    className="min-h-[600px] h-full rounded-none border-0 resize-none focus-visible:ring-0"
+                    placeholder="Enter your text with LaTeX math here... Examples: $x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$ or $$\\sum_{i=1}^{n} x_i$$"
+                    value={text}
+                    onChange={(e) => onTextChange(e.target.value)}
+                  />
+              </div>
+            </TabsContent>
+            <TabsContent value="preview" className="mt-0">
+              <div className="min-h-[600px] border border-gray-200 rounded-none">
+                {text.trim() ? (
+                  <MathRenderer content={text} className="min-h-[600px]" />
+                ) : (
+                  <div className="flex items-center justify-center h-[600px] text-gray-500">
+                    <div className="text-center">
+                      <Eye className="mx-auto h-12 w-12 mb-4 text-gray-400" />
+                      <p className="text-lg mb-2">Enter text with LaTeX math to see preview</p>
+                      <p className="text-sm text-gray-400">Supports: $inline$, $$display$$, \\(inline\\), \\[display\\]</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
+        ) : (
+          <div 
+            {...getRootProps()}
+            className={`editor overflow-y-auto p-0 ${isDragActive ? 'border-2 border-dashed border-blue-300' : ''}`}
+          >
+            <input {...getInputProps()} />
+            <Textarea
+                className="min-h-[600px] h-full rounded-none border-0 resize-none focus-visible:ring-0"
+                placeholder="Type or paste your text here..."
+                value={text}
+                onChange={(e) => onTextChange(e.target.value)}
+              />
+          </div>
+        )}
       </CardContent>
     </Card>
   );
