@@ -100,14 +100,18 @@ export function useLLM() {
       setShowChunkSelector(false);
       
       if (mode === 'add') {
-        // Add mode: generate new chunks based on existing content
-        return await processAddChunks(
+        // Add mode: keep all existing chunks and add new ones
+        const addedContent = await processAddChunks(
           additionalChunks,
           instructions,
           contentSource,
           useContentSource,
           onChunkProcessed
         );
+        
+        // Combine existing document with new content
+        const existingContent = documentChunks.join('\n\n');
+        return existingContent + '\n\n' + addedContent;
       } else if (mode === 'rewrite') {
         // Rewrite mode: process only selected chunks (existing behavior)
         if (selectedIndices.length === 0 || documentChunks.length === 0) {
@@ -122,22 +126,34 @@ export function useLLM() {
           onChunkProcessed
         );
       } else if (mode === 'both') {
-        // Both mode: rewrite selected chunks AND add new chunks
-        let result = '';
+        // Both mode: rewrite selected chunks AND add new chunks to the full document
+        let finalChunks = [...documentChunks];
         
         // First, rewrite selected chunks if any
         if (selectedIndices.length > 0) {
           const selectedChunks = selectedIndices.map(index => documentChunks[index]);
-          result = await processMultipleChunks(
+          const rewrittenContent = await processMultipleChunks(
             selectedChunks, 
             instructions, 
             contentSource, 
             useContentSource, 
             onChunkProcessed
           );
+          
+          // Parse the rewritten content back into chunks and replace the selected ones
+          const rewrittenChunks = rewrittenContent.split('\n\n').filter(chunk => chunk.trim());
+          let rewrittenIndex = 0;
+          
+          // Replace the selected chunks with rewritten versions
+          selectedIndices.forEach(originalIndex => {
+            if (rewrittenIndex < rewrittenChunks.length) {
+              finalChunks[originalIndex] = rewrittenChunks[rewrittenIndex];
+              rewrittenIndex++;
+            }
+          });
         }
         
-        // Then, add new chunks
+        // Then, add new chunks at the end
         if (additionalChunks > 0) {
           const addedContent = await processAddChunks(
             additionalChunks,
@@ -146,10 +162,14 @@ export function useLLM() {
             useContentSource,
             onChunkProcessed
           );
-          result = result ? result + '\n\n' + addedContent : addedContent;
+          
+          // Split added content into chunks and append them
+          const newChunks = addedContent.split('\n\n').filter(chunk => chunk.trim());
+          finalChunks.push(...newChunks);
         }
         
-        return result;
+        // Return the complete document with all chunks
+        return finalChunks.join('\n\n');
       }
       
       throw new Error('Invalid processing mode');
