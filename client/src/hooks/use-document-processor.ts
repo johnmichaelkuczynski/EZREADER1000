@@ -618,15 +618,6 @@ export function useDocumentProcessor() {
   
   // Process commands in the dialogue box - similar to a ChatGPT conversation
   const processSpecialCommand = useCallback(async (command: string) => {
-    if (!inputText && !outputText) {
-      toast({
-        title: "No content to process",
-        description: "Please enter or generate some text first.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
     try {
       // Add the user's message to the dialogue chat (not the rewrite instructions)
       const userMessageId = uuidv4();
@@ -644,12 +635,11 @@ export function useDocumentProcessor() {
         content: `Thinking about your request...`
       }]);
       
-      // Determine which text to use (prefer output if available)
-      const textToProcess = outputText || inputText;
+      // Determine which text to use (prefer output if available, but allow empty for general conversation)
+      const textToProcess = outputText || inputText || "";
       
-      // Always create chunks for the document for dialogue processing
-      // This ensures we can handle large documents without hitting token limits
-      const dialogueChunks = chunkText(textToProcess, 300); // Use smaller chunks (300 words) for dialogue
+      // Create chunks for the document if there's content available
+      const dialogueChunks = textToProcess ? chunkText(textToProcess, 300) : []; // Use smaller chunks (300 words) for dialogue
       
       // Construct a prompt that provides context and handles the specific request
       let prompt = "";
@@ -785,7 +775,10 @@ export function useDocumentProcessor() {
       }
       
       // Create an appropriate prompt based on the user's request
-      if (command.toLowerCase().includes("table of contents") || command.toLowerCase().includes("toc")) {
+      if (!textToProcess) {
+        // No document content - handle as general conversation
+        prompt = "You are a helpful AI assistant. Answer the following question or request: " + command;
+      } else if (command.toLowerCase().includes("table of contents") || command.toLowerCase().includes("toc")) {
         prompt = "You are analyzing a document. Create a detailed table of contents for it, including section numbers, titles, and brief descriptions for each section. Format it clearly with proper indentation for subsections. Here's the document: " + textToProcess;
       } 
       else if (command.toLowerCase().includes("bibliography") || command.toLowerCase().includes("references")) {
@@ -801,8 +794,12 @@ export function useDocumentProcessor() {
         prompt = "You are analyzing a document. Suggest an appropriate title and section headings based on the content. Explain your reasoning briefly. Here's the document: " + textToProcess;
       }
       else {
-        // For general queries about the document
-        prompt = "You are having a conversation about a document. Answer the following query about it as helpfully as possible: '" + command + "'. Here's the document: " + textToProcess;
+        // For general queries - check if we have document content to reference
+        if (textToProcess) {
+          prompt = "You are having a conversation about a document. Answer the following query about it as helpfully as possible: '" + command + "'. Here's the document: " + textToProcess;
+        } else {
+          prompt = "You are a helpful AI assistant. The user is asking: " + command;
+        }
       }
       
       // For large documents, use intelligent chunking to process more content
