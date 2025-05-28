@@ -79,7 +79,7 @@ export interface ProcessTextOptions {
   maxTokens?: number;
 }
 
-import { protectMathFormulas, restoreMathFormulas } from "../utils/math-formula-protection";
+import { protectMathFormulas, restoreMathFormulas, protectMathAndStructure, restoreMathAndFormatting, splitIntoSemanticBlocks, reconstructFromBlocks } from "../utils/math-formula-protection";
 
 // Process extremely large text by chunking and sampling
 async function processLargeTextWithOpenAI(options: ProcessTextOptions): Promise<string> {
@@ -157,11 +157,18 @@ export async function processTextWithOpenAI(options: ProcessTextOptions): Promis
     return await processLargeTextWithOpenAI(options);
   }
   
-  // Standard processing for normal-sized documents
-  // Protect math formulas before processing
-  const { processedText, mathBlocks } = protectMathFormulas(text);
+  // STEP 1: PRE-PROCESSING - Protect math formulas and split into semantic blocks
+  const { processedText, mathBlocks, semanticBlocks } = protectMathAndStructure(text);
   
-  let systemPrompt = "You are a helpful assistant that transforms text according to user instructions. Do not modify any content within [[MATH_BLOCK_*]] or [[MATH_INLINE_*]] tokens as they contain special mathematical notation. CRITICAL: When generating mathematical expressions, use clean LaTeX format (e.g., A = P(1 + r/n)^{nt}) NOT Unicode superscripts or special characters. This ensures proper PDF rendering.";
+  let systemPrompt = `You are a helpful assistant that transforms text according to user instructions. Follow these CRITICAL formatting rules:
+
+1. MATH PROTECTION: Never modify content within __MATH_BLOCK_### tokens - these contain LaTeX math expressions
+2. BLOCK STRUCTURE: Process each paragraph/section as a complete semantic unit, maintaining:
+   - Paragraph breaks (double newlines)
+   - List structure (bullet points, numbering)
+   - Heading format
+3. FORMATTING: Use clean LaTeX format for any new math (e.g., A = P(1 + r/n)^{nt}) NOT Unicode superscripts
+4. OUTPUT: Ensure output is markdown-compatible with proper spacing between paragraphs`;
   
   // Check if instructions contain keywords about shortening
   const requestsShorterOutput = instructions.toLowerCase().includes('shorter') || 
@@ -175,7 +182,17 @@ export async function processTextWithOpenAI(options: ProcessTextOptions): Promis
     systemPrompt += " IMPORTANT: Unless explicitly requested otherwise, your rewrite MUST be longer than the original text. Add more examples, explanations, or details to make the content more comprehensive.";
   }
   
-  let userPrompt = `Instructions: ${instructions}\n\nText to transform:\n${text}`;
+  // STEP 2: BLOCK-LEVEL REWRITING - Process semantic blocks to preserve structure
+  let userPrompt = `Instructions: ${instructions}
+
+IMPORTANT: The text below is organized into semantic blocks. Rewrite each block as a complete unit while preserving:
+- Paragraph structure and spacing
+- List formatting (bullets, numbers)
+- Mathematical expressions (never modify __MATH_BLOCK_### tokens)
+- Overall document flow
+
+Text to transform:
+${processedText}`;
   
   if (useContentSource && contentSource) {
     systemPrompt += " Use the provided content source for additional context or information.";
@@ -183,14 +200,11 @@ export async function processTextWithOpenAI(options: ProcessTextOptions): Promis
   }
   
   try {
-    // Use the protected text with math formulas replaced by tokens
-    const userPromptWithProtectedMath = userPrompt.replace(text, processedText);
-    
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
         { role: "system", content: systemPrompt },
-        { role: "user", content: userPromptWithProtectedMath }
+        { role: "user", content: userPrompt }
       ],
       max_tokens: maxTokens,
       temperature: 0.7,
@@ -198,8 +212,8 @@ export async function processTextWithOpenAI(options: ProcessTextOptions): Promis
     
     const processedContent = response.choices[0].message.content || "";
     
-    // Restore math formulas in the processed text
-    const finalResult = restoreMathFormulas(processedContent, mathBlocks);
+    // STEP 3: POST-PROCESSING - Restore math formulas and normalize formatting
+    const finalResult = restoreMathAndFormatting(processedContent, mathBlocks);
     
     return finalResult;
   } catch (error: any) {
