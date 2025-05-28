@@ -10,31 +10,46 @@ export function MathRenderer({ content, className = "" }: MathRendererProps) {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    const loadKaTeX = () => {
-      // Load KaTeX CSS
-      if (!document.querySelector('link[href*="katex.min.css"]')) {
-        const cssLink = document.createElement('link');
-        cssLink.rel = 'stylesheet';
-        cssLink.href = 'https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css';
-        document.head.appendChild(cssLink);
-      }
+    const loadKaTeX = async () => {
+      try {
+        // Load KaTeX CSS
+        if (!document.querySelector('link[href*="katex.min.css"]')) {
+          const cssLink = document.createElement('link');
+          cssLink.rel = 'stylesheet';
+          cssLink.href = 'https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css';
+          cssLink.integrity = 'sha384-GvrOXuhMATgEsSwCs4smul74iXGOixntILdUW9XmUC6+HX0sLNAK3q71HotJqlAn';
+          cssLink.crossOrigin = 'anonymous';
+          document.head.appendChild(cssLink);
+        }
 
-      // Load KaTeX JS
-      if (!window.katex) {
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js';
-        script.onload = () => {
+        // Load KaTeX JS
+        if (!window.katex) {
+          await new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js';
+            script.integrity = 'sha384-cpW21h6RZv/phavutF+AuVYrr+dA8xD9zs6FwLpaCct6O9ctzYFfFr4dgmgccOTx';
+            script.crossOrigin = 'anonymous';
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
+          });
+
           // Load auto-render extension
-          const autoRenderScript = document.createElement('script');
-          autoRenderScript.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js';
-          autoRenderScript.onload = () => {
-            setIsReady(true);
-          };
-          document.head.appendChild(autoRenderScript);
-        };
-        document.head.appendChild(script);
-      } else {
+          await new Promise((resolve, reject) => {
+            const autoRenderScript = document.createElement('script');
+            autoRenderScript.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js';
+            autoRenderScript.integrity = 'sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05';
+            autoRenderScript.crossOrigin = 'anonymous';
+            autoRenderScript.onload = resolve;
+            autoRenderScript.onerror = reject;
+            document.head.appendChild(autoRenderScript);
+          });
+        }
+        
         setIsReady(true);
+      } catch (error) {
+        console.error('Failed to load KaTeX:', error);
+        setIsReady(true); // Still show content even if math rendering fails
       }
     };
 

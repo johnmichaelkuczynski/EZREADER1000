@@ -18,11 +18,11 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Trash2, Copy, Download, Bot, Mail } from 'lucide-react';
+import { Trash2, Copy, Download, Bot, Mail, Eye, EyeOff } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { restoreMathTokens } from '@/lib/math-restore';
-import { useMathJax } from '@/hooks/use-mathjax';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { MathRenderer } from './MathRenderer';
 
 interface OutputEditorProps {
   text: string;
@@ -60,18 +60,7 @@ export function OutputEditor({
   const [emailSubject, setEmailSubject] = useState('EZ Reader - Transformed Document');
   const [emailMessage, setEmailMessage] = useState('Here is the transformed document you requested.');
   const [wordCount, setWordCount] = useState(0);
-  const { containerRef, renderMathInContainer } = useMathJax();
-  const previousTextRef = useRef<string>('');
-
-  // Trigger MathJax rendering when text changes
-  useEffect(() => {
-    if (text && text !== previousTextRef.current) {
-      previousTextRef.current = text;
-      setTimeout(() => {
-        renderMathInContainer();
-      }, 100);
-    }
-  }, [text, renderMathInContainer]);
+  const [showMathPreview, setShowMathPreview] = useState(false);
   
   // Calculate word count whenever text changes
   useEffect(() => {
@@ -191,6 +180,22 @@ export function OutputEditor({
                 <Button 
                   variant="ghost" 
                   size="icon" 
+                  className={`p-1 transition-colors ${showMathPreview ? 'text-blue-600 hover:text-blue-700' : 'text-slate-400 hover:text-slate-600'}`}
+                  onClick={() => setShowMathPreview(!showMathPreview)}
+                >
+                  {showMathPreview ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Math Preview</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
                   className="p-1 text-slate-400 hover:text-slate-600 transition-colors"
                   onClick={() => text ? setEmailDialogOpen(true) : null}
                   disabled={!text}
@@ -205,44 +210,49 @@ export function OutputEditor({
       </div>
       
       <CardContent className="p-0">
-        <div className="editor overflow-y-auto p-0">
-          {text ? (
-            <div className="relative">
-              <div 
-                ref={containerRef}
-                className="math-content tex2jax_process output-container min-h-[600px] p-6"
+        {showMathPreview && text ? (
+          <Tabs defaultValue="edit" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mx-4 mt-4 mb-0">
+              <TabsTrigger value="edit">Edit</TabsTrigger>
+              <TabsTrigger value="preview">Math Preview</TabsTrigger>
+            </TabsList>
+            <TabsContent value="edit" className="mt-0">
+              <div className="editor overflow-y-auto p-0">
+                <Textarea
+                  className="min-h-[600px] h-full rounded-none border-0 resize-none focus-visible:ring-0"
+                  placeholder="Processed text appears here..."
+                  value={text}
+                  onChange={(e) => onTextChange(e.target.value)}
+                />
+              </div>
+            </TabsContent>
+            <TabsContent value="preview" className="mt-0">
+              <div className="min-h-[600px] border border-gray-200 rounded-none">
+                <MathRenderer content={text} className="min-h-[600px]" />
+              </div>
+            </TabsContent>
+          </Tabs>
+        ) : (
+          <div className="editor overflow-y-auto p-0">
+            {text ? (
+              <Textarea
+                className="min-h-[600px] h-full rounded-none border-0 resize-none focus-visible:ring-0"
+                placeholder="Processed text appears here..."
+                value={text}
+                onChange={(e) => onTextChange(e.target.value)}
                 style={{
                   whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word',
-                  lineHeight: '1.6',
                   fontFamily: 'Georgia, serif'
                 }}
-                dangerouslySetInnerHTML={{ 
-                  __html: restoreMathTokens(text).replace(/\n/g, '<br/>') 
-                }}
               />
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="absolute top-2 right-2"
-                onClick={() => {
-                  const editableText = text.replace(/<br\/?>/g, '\n');
-                  const newText = prompt('Edit the text:', editableText);
-                  if (newText !== null) {
-                    onTextChange(newText);
-                  }
-                }}
-              >
-                Edit
-              </Button>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-full min-h-[300px] text-center p-6">
-              <p className="text-slate-500">Processed text will appear here</p>
-              <p className="text-xs text-slate-400 mt-2">Your content will be processed according to your instructions</p>
-            </div>
-          )}
-        </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full min-h-[600px] text-center p-6">
+                <p className="text-slate-500">Processed text will appear here</p>
+                <p className="text-xs text-slate-400 mt-2">Your content will be processed according to your instructions</p>
+              </div>
+            )}
+          </div>
+        )}
       </CardContent>
       
       {/* Email Dialog */}
