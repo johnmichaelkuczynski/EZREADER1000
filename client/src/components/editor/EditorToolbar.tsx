@@ -38,6 +38,7 @@ interface EditorToolbarProps {
   setRewriteInstructions: (instructions: string) => void;
   examMode: boolean;
   setExamMode: (enabled: boolean) => void;
+  onClearAll?: () => void;
 }
 
 export function EditorToolbar({
@@ -55,7 +56,8 @@ export function EditorToolbar({
   rewriteInstructions,
   setRewriteInstructions,
   examMode,
-  setExamMode
+  setExamMode,
+  onClearAll
 }: EditorToolbarProps) {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [instructionName, setInstructionName] = useState('');

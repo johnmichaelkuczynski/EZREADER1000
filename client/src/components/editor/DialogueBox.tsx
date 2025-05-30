@@ -40,7 +40,8 @@ export function DialogueBox({
   enableSynthesisMode = false,
   documentMap = [],
   onProcessGlobalQuestion,
-  onSendToInput
+  onSendToInput,
+  onClearMessages
 }: DialogueBoxProps) {
   const [inputValue, setInputValue] = useState('');
   const [isRecording, setIsRecording] = useState(false);
@@ -231,7 +232,9 @@ export function DialogueBox({
                   variant="destructive" 
                   size="sm" 
                   onClick={() => {
-                    setDialogueMessages([]);
+                    if (onClearMessages) {
+                      onClearMessages();
+                    }
                   }}
                   disabled={isProcessing}
                 >

@@ -500,6 +500,9 @@ export default function Home() {
               onSendToInput={(content) => {
                 setInputText(content);
               }}
+              onClearMessages={() => {
+                setDialogueMessages([]);
+              }}
             />
           </div>
         </div>
