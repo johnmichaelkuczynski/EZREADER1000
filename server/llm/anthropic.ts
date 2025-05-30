@@ -10,7 +10,7 @@ function estimateTokenCount(text: string): number {
 
 // Process extremely large text by chunking and summarizing sections
 async function processLargeTextWithAnthropic(options: ProcessTextOptions): Promise<string> {
-  const { text, instructions, contentSource, useContentSource, maxTokens = 4000 } = options;
+  const { text, instructions, contentSource, styleSource, useContentSource, useStyleSource, maxTokens = 4000 } = options;
   
   console.log("Processing extremely large document with specialized approach");
   
@@ -145,7 +145,7 @@ const anthropic = new Anthropic({
 });
 
 export async function processTextWithAnthropic(options: ProcessTextOptions): Promise<string> {
-  const { text, instructions, contentSource, useContentSource, maxTokens = 4000, examMode = false } = options;
+  const { text, instructions, contentSource, styleSource, useContentSource, useStyleSource, maxTokens = 4000, examMode = false } = options;
   
   // Estimate token count to check for large documents
   const estimatedTokens = estimateTokenCount(text);

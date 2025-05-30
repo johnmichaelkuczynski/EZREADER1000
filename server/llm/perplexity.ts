@@ -71,7 +71,7 @@ function splitIntoChunks(text: string, maxChunkTokens: number = 30000): string[]
 
 // Process extremely large text by chunking and sampling for Perplexity
 async function processLargeTextWithPerplexity(options: ProcessTextOptions): Promise<string> {
-  const { text, instructions, contentSource, useContentSource, maxTokens = 4000 } = options;
+  const { text, instructions, contentSource, styleSource, useContentSource, useStyleSource, maxTokens = 4000 } = options;
   
   console.log("Processing extremely large document with specialized Perplexity approach");
   

@@ -148,7 +148,7 @@ async function processLargeTextWithOpenAI(options: ProcessTextOptions): Promise<
 }
 
 export async function processTextWithOpenAI(options: ProcessTextOptions): Promise<string> {
-  const { text, instructions, contentSource, useContentSource, maxTokens = 4000, examMode = false } = options;
+  const { text, instructions, contentSource, styleSource, useContentSource, useStyleSource, maxTokens = 4000, examMode = false } = options;
   
   // For pure passthrough dialogue (no instructions), send user input directly
   if (!instructions || instructions.trim() === "") {

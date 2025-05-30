@@ -85,7 +85,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             text: data.inputText,
             instructions: data.instructions,
             contentSource: data.contentSource,
+            styleSource: data.styleSource,
             useContentSource: data.useContentSource,
+            useStyleSource: data.useStyleSource,
             examMode: data.examMode
           });
           break;
@@ -94,7 +96,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             text: data.inputText,
             instructions: data.instructions,
             contentSource: data.contentSource,
+            styleSource: data.styleSource,
             useContentSource: data.useContentSource,
+            useStyleSource: data.useStyleSource,
             examMode: data.examMode
           });
           break;
