@@ -10,10 +10,13 @@ export interface Message {
 export interface ProcessTextRequest {
   inputText: string;
   contentSource?: string;
+  styleSource?: string;
   instructions: string;
   llmProvider: LLMProvider;
   useContentSource: boolean;
+  useStyleSource?: boolean;
   reprocessOutput?: boolean;
+  examMode?: boolean;
 }
 
 export interface ProcessChunkRequest extends ProcessTextRequest {

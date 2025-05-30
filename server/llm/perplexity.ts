@@ -152,7 +152,7 @@ async function processLargeTextWithPerplexity(options: ProcessTextOptions): Prom
 }
 
 export async function processTextWithPerplexity(options: ProcessTextOptions): Promise<string> {
-  const { text, instructions, contentSource, useContentSource, maxTokens = 4000, examMode = false } = options;
+  const { text, instructions, contentSource, styleSource, useContentSource, useStyleSource, maxTokens = 4000, examMode = false } = options;
   
   // Estimate token count to check for large documents
   const estimatedTokens = estimateTokenCount(text);
