@@ -438,8 +438,29 @@ export function useDocumentProcessor() {
 
 
   const processSelectedDocumentChunks = useCallback((instructions: string) => {
-    // Chunk the document for selection
-    const chunks = inputText.split('\n\n').filter(chunk => chunk.trim().length > 0);
+    // Chunk the document for selection - split into proper chunks with good size
+    const text = inputText.trim();
+    if (!text) return;
+    
+    // Split by paragraphs first, then group into reasonable chunks
+    const paragraphs = text.split('\n\n').filter(p => p.trim().length > 0);
+    const chunks = [];
+    let currentChunk = '';
+    
+    for (const paragraph of paragraphs) {
+      if (currentChunk.length + paragraph.length > 2000 && currentChunk.length > 0) {
+        chunks.push(currentChunk.trim());
+        currentChunk = paragraph;
+      } else {
+        currentChunk += (currentChunk ? '\n\n' : '') + paragraph;
+      }
+    }
+    
+    if (currentChunk.trim()) {
+      chunks.push(currentChunk.trim());
+    }
+    
+    console.log('Created chunks:', chunks.length, 'chunks with lengths:', chunks.map(c => c.length));
     setDocumentChunks(chunks);
     setShowChunkSelector(true);
     setRewriteInstructions(instructions);
@@ -452,6 +473,7 @@ export function useDocumentProcessor() {
     additionalChunks: number = 0
   ) => {
     try {
+      console.log('Processing chunks:', { selectedIndices, mode, additionalChunks, documentChunks: documentChunks.length });
       setShowChunkSelector(false);
       setProcessing(true);
       
@@ -459,42 +481,87 @@ export function useDocumentProcessor() {
       
       if (mode === 'rewrite' && selectedIndices.length > 0) {
         // Rewrite selected chunks only
+        console.log('Rewrite mode: processing', selectedIndices.length, 'chunks');
         const selectedText = selectedIndices.map(i => documentChunks[i]).join('\n\n');
-        result = await processText({
-          inputText: selectedText,
-          instructions: rewriteInstructions,
-          contentSource,
-          useContentSource,
-          llmProvider
-        });
-      } else if (mode === 'add') {
-        // Add new chunks to existing document
-        const existingText = documentChunks.join('\n\n');
-        const addPrompt = `${rewriteInstructions}\n\nGenerate ${additionalChunks} additional section(s) that complement this document:\n\n${existingText}`;
         
-        const newContent = await processText({
-          inputText: addPrompt,
-          instructions: `Generate ${additionalChunks} new section(s) based on the provided document`,
-          contentSource,
-          useContentSource,
-          llmProvider
-        });
-        
-        result = existingText + '\n\n' + newContent;
-      } else if (mode === 'both') {
-        // Rewrite selected chunks AND add new ones
-        let finalContent = [...documentChunks];
-        
-        // First rewrite selected chunks
-        if (selectedIndices.length > 0) {
-          const selectedText = selectedIndices.map(i => documentChunks[i]).join('\n\n');
-          const rewrittenText = await processText({
+        // Use the API directly instead of the processText function
+        const response = await fetch('/api/process-text', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
             inputText: selectedText,
             instructions: rewriteInstructions,
             contentSource,
             useContentSource,
             llmProvider
+          }),
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        result = data.result;
+        
+      } else if (mode === 'add') {
+        // Add new chunks to existing document
+        console.log('Add mode: generating', additionalChunks, 'new chunks');
+        const existingText = documentChunks.join('\n\n');
+        const addPrompt = `${rewriteInstructions}\n\nGenerate ${additionalChunks} additional section(s) that complement this document:\n\n${existingText}`;
+        
+        const response = await fetch('/api/process-text', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            inputText: addPrompt,
+            instructions: `Generate ${additionalChunks} new section(s) based on the provided document`,
+            contentSource,
+            useContentSource,
+            llmProvider
+          }),
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        result = existingText + '\n\n' + data.result;
+        
+      } else if (mode === 'both') {
+        // Rewrite selected chunks AND add new ones
+        console.log('Both mode: rewriting', selectedIndices.length, 'chunks and adding', additionalChunks, 'new chunks');
+        let finalContent = [...documentChunks];
+        
+        // First rewrite selected chunks
+        if (selectedIndices.length > 0) {
+          const selectedText = selectedIndices.map(i => documentChunks[i]).join('\n\n');
+          
+          const rewriteResponse = await fetch('/api/process-text', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              inputText: selectedText,
+              instructions: rewriteInstructions,
+              contentSource,
+              useContentSource,
+              llmProvider
+            }),
           });
+          
+          if (!rewriteResponse.ok) {
+            throw new Error(`HTTP error! status: ${rewriteResponse.status}`);
+          }
+          
+          const rewriteData = await rewriteResponse.json();
+          const rewrittenText = rewriteData.result;
           
           // Replace selected chunks with rewritten versions
           const rewrittenChunks = rewrittenText.split('\n\n').filter((chunk: string) => chunk.trim());
@@ -510,21 +577,38 @@ export function useDocumentProcessor() {
           const currentText = finalContent.join('\n\n');
           const addPrompt = `${rewriteInstructions}\n\nGenerate ${additionalChunks} additional section(s) that complement this document:\n\n${currentText}`;
           
-          const newContent = await processText({
-            inputText: addPrompt,
-            instructions: `Generate ${additionalChunks} new section(s) based on the provided document`,
-            contentSource,
-            useContentSource,
-            llmProvider
+          const addResponse = await fetch('/api/process-text', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              inputText: addPrompt,
+              instructions: `Generate ${additionalChunks} new section(s) based on the provided document`,
+              contentSource,
+              useContentSource,
+              llmProvider
+            }),
           });
           
-          finalContent.push(...newContent.split('\n\n').filter((chunk: string) => chunk.trim()));
+          if (!addResponse.ok) {
+            throw new Error(`HTTP error! status: ${addResponse.status}`);
+          }
+          
+          const addData = await addResponse.json();
+          finalContent.push(...addData.result.split('\n\n').filter((chunk: string) => chunk.trim()));
         }
         
         result = finalContent.join('\n\n');
       }
       
+      console.log('Chunk processing completed, result length:', result.length);
       setOutputText(result);
+      
+      toast({
+        title: "Chunk processing completed",
+        description: `Successfully processed ${selectedIndices.length} chunks in ${mode} mode`,
+      });
       
     } catch (error: any) {
       console.error('Error processing chunks:', error);
@@ -536,7 +620,7 @@ export function useDocumentProcessor() {
     } finally {
       setProcessing(false);
     }
-  }, [documentChunks, rewriteInstructions, contentSource, useContentSource, llmProvider, processText, toast]);
+  }, [documentChunks, rewriteInstructions, contentSource, useContentSource, llmProvider, toast]);
 
   const cancelProcessing = useCallback(() => {
     setProcessing(false);
