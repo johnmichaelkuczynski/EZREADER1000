@@ -78,6 +78,18 @@ export function useDocumentProcessor() {
       return;
     }
 
+    // Check if document needs chunking (over 40,000 characters)
+    if (inputText.length > 40000) {
+      // Split into chunks and show chunk selector
+      const chunks = inputText.split(/\n\n+/).filter(chunk => chunk.trim().length > 0);
+      if (chunks.length > 1) {
+        setDocumentChunks(chunks);
+        setShowChunkSelector(true);
+        setRewriteInstructions(instructions);
+        return;
+      }
+    }
+
     setProcessing(true);
     
     try {
