@@ -52,6 +52,9 @@ export function useDocumentProcessor() {
   // Document synthesis mode
   const [enableSynthesisMode, setEnableSynthesisMode] = useState(false);
   const [documentMap, setDocumentMap] = useState<string[]>([]);
+  
+  // Rewrite instructions for chunking
+  const [rewriteInstructions, setRewriteInstructions] = useState('');
 
   // Core text processing function
   const processText = useCallback(async (options: {
@@ -432,38 +435,108 @@ export function useDocumentProcessor() {
     setShowSpecialContent(false);
   }, []);
 
-  // Chunk processing
-  const processSelectedChunks = useCallback(async (selectedIndexes: number[], instructions: string) => {
-    const selectedText = selectedIndexes.map(i => documentChunks[i]).join('\n\n');
-    
-    try {
-      const result = await processText({
-        inputText: selectedText,
-        instructions,
-        contentSource,
-        useContentSource,
-        llmProvider
-      });
-      
-      setOutputText(result);
-      setShowChunkSelector(false);
-      
-    } catch (error: any) {
-      console.error('Error processing selected chunks:', error);
-      toast({
-        title: "Processing failed",
-        description: error?.message || 'Failed to process selected chunks',
-        variant: "destructive"
-      });
-    }
-  }, [documentChunks, contentSource, useContentSource, llmProvider, processText, toast]);
+
 
   const processSelectedDocumentChunks = useCallback((instructions: string) => {
     // Chunk the document for selection
     const chunks = inputText.split('\n\n').filter(chunk => chunk.trim().length > 0);
     setDocumentChunks(chunks);
     setShowChunkSelector(true);
+    setRewriteInstructions(instructions);
   }, [inputText]);
+
+  // Process selected chunks with advanced options (rewrite, add, both)
+  const processSelectedChunks = useCallback(async (
+    selectedIndices: number[],
+    mode: 'rewrite' | 'add' | 'both',
+    additionalChunks: number = 0
+  ) => {
+    try {
+      setShowChunkSelector(false);
+      setProcessing(true);
+      
+      let result = '';
+      
+      if (mode === 'rewrite' && selectedIndices.length > 0) {
+        // Rewrite selected chunks only
+        const selectedText = selectedIndices.map(i => documentChunks[i]).join('\n\n');
+        result = await processText({
+          inputText: selectedText,
+          instructions: rewriteInstructions,
+          contentSource,
+          useContentSource,
+          llmProvider
+        });
+      } else if (mode === 'add') {
+        // Add new chunks to existing document
+        const existingText = documentChunks.join('\n\n');
+        const addPrompt = `${rewriteInstructions}\n\nGenerate ${additionalChunks} additional section(s) that complement this document:\n\n${existingText}`;
+        
+        const newContent = await processText({
+          inputText: addPrompt,
+          instructions: `Generate ${additionalChunks} new section(s) based on the provided document`,
+          contentSource,
+          useContentSource,
+          llmProvider
+        });
+        
+        result = existingText + '\n\n' + newContent;
+      } else if (mode === 'both') {
+        // Rewrite selected chunks AND add new ones
+        let finalContent = [...documentChunks];
+        
+        // First rewrite selected chunks
+        if (selectedIndices.length > 0) {
+          const selectedText = selectedIndices.map(i => documentChunks[i]).join('\n\n');
+          const rewrittenText = await processText({
+            inputText: selectedText,
+            instructions: rewriteInstructions,
+            contentSource,
+            useContentSource,
+            llmProvider
+          });
+          
+          // Replace selected chunks with rewritten versions
+          const rewrittenChunks = rewrittenText.split('\n\n').filter((chunk: string) => chunk.trim());
+          selectedIndices.forEach((originalIndex, idx) => {
+            if (idx < rewrittenChunks.length) {
+              finalContent[originalIndex] = rewrittenChunks[idx];
+            }
+          });
+        }
+        
+        // Then add new chunks
+        if (additionalChunks > 0) {
+          const currentText = finalContent.join('\n\n');
+          const addPrompt = `${rewriteInstructions}\n\nGenerate ${additionalChunks} additional section(s) that complement this document:\n\n${currentText}`;
+          
+          const newContent = await processText({
+            inputText: addPrompt,
+            instructions: `Generate ${additionalChunks} new section(s) based on the provided document`,
+            contentSource,
+            useContentSource,
+            llmProvider
+          });
+          
+          finalContent.push(...newContent.split('\n\n').filter((chunk: string) => chunk.trim()));
+        }
+        
+        result = finalContent.join('\n\n');
+      }
+      
+      setOutputText(result);
+      
+    } catch (error: any) {
+      console.error('Error processing chunks:', error);
+      toast({
+        title: "Processing failed",
+        description: error?.message || 'Failed to process selected chunks',
+        variant: "destructive"
+      });
+    } finally {
+      setProcessing(false);
+    }
+  }, [documentChunks, rewriteInstructions, contentSource, useContentSource, llmProvider, processText, toast]);
 
   const cancelProcessing = useCallback(() => {
     setProcessing(false);

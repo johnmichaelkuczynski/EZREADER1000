@@ -26,8 +26,8 @@ export async function processChunk(data: ProcessChunkRequest): Promise<{
 }
 
 // Detect if text was AI-generated
-export async function detectAI(text: string): Promise<AIDetectionResult> {
-  const response = await apiRequest("POST", "/api/detect-ai", { text });
+export async function detectAI(text: string, llmProvider: string = "openai"): Promise<AIDetectionResult> {
+  const response = await apiRequest("POST", "/api/detect-ai", { text, llmProvider });
   return await response.json();
 }
 
