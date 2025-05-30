@@ -515,12 +515,18 @@ export function useDocumentProcessor() {
             const data = await response.json();
             const processedChunk = data.result;
             
+            console.log('Processed chunk result:', processedChunk ? processedChunk.substring(0, 200) + '...' : 'EMPTY');
+            
             // Replace the processing message with the actual result
             setOutputText(prev => {
+              console.log('Previous output text:', prev ? prev.substring(0, 100) + '...' : 'EMPTY');
               const lines = prev.split('\n');
               // Remove the "Processing..." message
               const filteredLines = lines.filter(line => !line.includes('[Processing chunk'));
-              return filteredLines.join('\n') + '\n\n' + processedChunk;
+              const cleanedPrev = filteredLines.join('\n').trim();
+              const newText = cleanedPrev ? cleanedPrev + '\n\n' + processedChunk : processedChunk;
+              console.log('Setting new output text:', newText ? newText.substring(0, 200) + '...' : 'EMPTY');
+              return newText;
             });
             
             console.log(`Completed chunk ${i + 1}/${selectedIndices.length}`);
