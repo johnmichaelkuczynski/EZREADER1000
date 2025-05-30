@@ -168,22 +168,8 @@ export async function processTextWithPerplexity(options: ProcessTextOptions): Pr
   // Protect math formulas before processing
   const { processedText, mathBlocks } = protectMathFormulas(text);
   
-  // Base system prompt
-  let systemPrompt = "Transform the provided text according to the instructions. Do not modify any content within [[MATH_BLOCK_*]] or [[MATH_INLINE_*]] tokens as they contain special mathematical notation.";
-  
-  // Check if instructions contain keywords about shortening
-  const requestsShorterOutput = instructions.toLowerCase().includes('shorter') || 
-                               instructions.toLowerCase().includes('summarize') || 
-                               instructions.toLowerCase().includes('reduce') ||
-                               instructions.toLowerCase().includes('condense') ||
-                               instructions.toLowerCase().includes('brief');
-  
-  // Add the instruction about length unless user has specified they want shorter output
-  if (!requestsShorterOutput) {
-    systemPrompt += " IMPORTANT: Unless explicitly requested otherwise, your rewrite MUST be longer than the original text. Add more examples, explanations, or details to make the content more comprehensive.";
-  } else {
-    systemPrompt += " Be precise and concise as requested.";
-  }
+  // Base system prompt - follow user instructions exactly
+  let systemPrompt = "Follow user instructions exactly. Do not modify any content within [[MATH_BLOCK_*]] or [[MATH_INLINE_*]] tokens as they contain special mathematical notation. FOLLOW INSTRUCTIONS PRECISELY: If the user says 'TAKE THE EXAM AND GET A 100/100', you should answer the exam questions, not create more exam content.";
   
   // Use the protected text with math formulas replaced by tokens
   let userContent = `Instructions: ${instructions}\n\nText to transform:\n${processedText}`;
