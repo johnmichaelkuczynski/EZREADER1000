@@ -78,8 +78,8 @@ export type SavedInstructions = typeof savedInstructions.$inferSelect;
 // API schemas
 export const processTextSchema = z.object({
   inputText: z.string().min(1, "Input text is required"),
-  contentSource: z.string().optional(),
-  instructions: z.string().min(1, "Instructions are required"),
+  contentSource: z.string().optional().default(""),
+  instructions: z.string().optional().default(""),
   llmProvider: z.enum(["openai", "anthropic", "perplexity"]),
   useContentSource: z.boolean().default(false),
   reprocessOutput: z.boolean().default(false),
