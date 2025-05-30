@@ -19,6 +19,7 @@ import { searchOnline, fetchWebContent } from "./services/google";
 import { sendDocumentEmail } from "./services/sendgrid";
 import { extractTextFromPDF } from "./services/pdf-processor";
 import { processMathPDFWithAzure, processMathImageWithAzure, enhanceMathFormatting } from "./services/azure-math";
+import { extractTextFromImage } from "./services/mathpix";
 
 // Configure multer storage
 const upload = multer({
@@ -581,6 +582,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         error: error instanceof Error ? error.message : 'Failed to update API keys' 
       });
+    }
+  });
+
+  // Process image with OCR
+  app.post('/api/process-image-ocr', upload.single('image'), async (req: Request, res: Response) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No image file provided" });
+      }
+
+      const result = await extractTextFromImage(req.file.buffer, req.file.mimetype);
+      res.json({ text: result });
+    } catch (error: any) {
+      console.error('Error processing image with OCR:', error);
+      res.status(500).json({ error: error.message || "Failed to extract text from image" });
     }
   });
 

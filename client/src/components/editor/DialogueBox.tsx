@@ -3,10 +3,12 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Message } from '@/types';
-
+import { MathRenderer } from './MathRenderer';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { ChevronRight, Eraser, Mic, MicOff, RotateCcw } from 'lucide-react';
+import { ChevronRight, Eraser, Mic, MicOff, RotateCcw, Upload, ArrowDown } from 'lucide-react';
+import { useDropzone } from 'react-dropzone';
+import { useToast } from '@/hooks/use-toast';
 
 interface DialogueBoxProps {
   messages: Message[];
@@ -21,6 +23,7 @@ interface DialogueBoxProps {
   enableSynthesisMode?: boolean;
   documentMap?: string[];
   onProcessGlobalQuestion?: (query: string) => Promise<void>;
+  onSendToInput?: (content: string) => void;
 }
 
 export function DialogueBox({
@@ -35,13 +38,16 @@ export function DialogueBox({
   isProcessing,
   enableSynthesisMode = false,
   documentMap = [],
-  onProcessGlobalQuestion
+  onProcessGlobalQuestion,
+  onSendToInput
 }: DialogueBoxProps) {
   const [inputValue, setInputValue] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const audioChunks = useRef<BlobPart[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
   
   // Scroll to bottom of chat when messages change
   useEffect(() => {
