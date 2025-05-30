@@ -39,8 +39,8 @@ const getWordCount = (text: string): number => {
   return text.trim() ? text.trim().split(/\s+/).length : 0;
 };
 
-// Calculate a brief preview for text (first N characters)
-const getTextPreview = (text: string, length = 150): string => {
+// Calculate a preview for text (first N characters)
+const getTextPreview = (text: string, length = 500): string => {
   const preview = text.slice(0, length).trim();
   return preview + (text.length > length ? '...' : '');
 };

@@ -64,7 +64,7 @@ export function OutputEditor({
   
   // Calculate word count whenever text changes
   useEffect(() => {
-    const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+    const words = text && text.trim() ? text.trim().split(/\s+/).length : 0;
     setWordCount(words);
   }, [text]);
   
