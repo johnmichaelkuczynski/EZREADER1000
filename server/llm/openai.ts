@@ -75,7 +75,9 @@ export interface ProcessTextOptions {
   text: string;
   instructions: string;
   contentSource?: string;
+  styleSource?: string;
   useContentSource: boolean;
+  useStyleSource?: boolean;
   maxTokens?: number;
   examMode?: boolean;
 }
@@ -84,7 +86,7 @@ import { protectMathFormulas, restoreMathFormulas, protectMathAndStructure, rest
 
 // Process extremely large text by chunking and sampling
 async function processLargeTextWithOpenAI(options: ProcessTextOptions): Promise<string> {
-  const { text, instructions, contentSource, useContentSource, maxTokens = 4000 } = options;
+  const { text, instructions, contentSource, styleSource, useContentSource, useStyleSource, maxTokens = 4000 } = options;
   
   console.log("Processing extremely large document with specialized OpenAI approach");
   
@@ -230,6 +232,11 @@ ${processedText}`;
   if (useContentSource && contentSource) {
     systemPrompt += " Use the provided content source for additional context or information.";
     userPrompt += `\n\nAdditional content source for reference:\n${contentSource}`;
+  }
+  
+  if (useStyleSource && styleSource) {
+    systemPrompt += " Analyze the provided style source and adopt its writing style, tone, structure, and linguistic patterns in your output.";
+    userPrompt += `\n\nStyle source to analyze and emulate:\n${styleSource}`;
   }
   
   try {

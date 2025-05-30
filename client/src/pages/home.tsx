@@ -312,8 +312,13 @@ export default function Home() {
                 onClear={clearStyleSource}
                 onFileUpload={handleContentSourceFileUpload}
                 onSearchOnline={async (query: string) => {
-                  const result = await searchOnline(query);
-                  return result;
+                  try {
+                    const result = await searchOnline(query);
+                    return result.content;
+                  } catch (error) {
+                    console.error('Search failed:', error);
+                    return 'Search failed. Please try again.';
+                  }
                 }}
               />
             </div>
