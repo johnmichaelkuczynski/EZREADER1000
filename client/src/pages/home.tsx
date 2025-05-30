@@ -303,27 +303,7 @@ export default function Home() {
               onMultipleFileUpload={handleMultipleContentSourceFileUpload}
               contentSourceFileRef={contentSourceFileRef}
             />
-            
-            {/* Style Source Box - Right below Content Source */}
-            <div className="mt-6">
-              <StyleSourceBox
-                text={styleSource}
-                onTextChange={setStyleSource}
-                useStyleSource={useStyleSource}
-                onUseStyleSourceChange={setUseStyleSource}
-                onClear={clearStyleSource}
-                onFileUpload={handleContentSourceFileUpload}
-                onSearchOnline={async (query: string) => {
-                  try {
-                    const result = await searchOnline(query);
-                    return result.content;
-                  } catch (error) {
-                    console.error('Search failed:', error);
-                    return 'Search failed. Please try again.';
-                  }
-                }}
-              />
-            </div>
+
           </div>
           
           {/* Main Editor Area - Right Column on Large Screens */}
