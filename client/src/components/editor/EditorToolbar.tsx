@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useState, useEffect } from 'react';
-import { PlayIcon, SearchIcon, MicIcon, FileAudioIcon, SaveIcon } from 'lucide-react';
+import { PlayIcon, SearchIcon, MicIcon, FileAudioIcon, SaveIcon, Trash2 } from 'lucide-react';
 import { LLMProvider, SavedInstruction } from '@/types';
 import { saveInstructions, getSavedInstructions } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
@@ -277,6 +277,19 @@ export function EditorToolbar({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      {/* Clear Whole App Button */}
+      {onClearAll && (
+        <Button 
+          variant="destructive" 
+          size="sm"
+          onClick={onClearAll}
+          className="ml-2"
+        >
+          <Trash2 className="h-4 w-4 mr-1" />
+          Clear All
+        </Button>
+      )}
     </div>
   );
 }

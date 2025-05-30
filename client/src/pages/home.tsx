@@ -244,7 +244,8 @@ export default function Home() {
     const newMessage = {
       id: crypto.randomUUID(),
       role: 'user' as const,
-      content: instructions
+      content: instructions,
+      timestamp: new Date()
     };
     
     setMessages(prev => [...prev, newMessage]);
@@ -314,6 +315,7 @@ export default function Home() {
               setRewriteInstructions={setRewriteInstructions}
               examMode={examMode}
               setExamMode={setExamMode}
+              onClearAll={resetAll}
             />
             
             {/* Text Processing Section */}
