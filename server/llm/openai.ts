@@ -189,13 +189,10 @@ export async function processTextWithOpenAI(options: ProcessTextOptions): Promis
   // STEP 1: PRE-PROCESSING - Protect math formulas and split into semantic blocks
   const { processedText, mathBlocks, semanticBlocks } = protectMathAndStructure(text);
   
-  let systemPrompt = `You are a helpful assistant that transforms text according to user instructions. Follow these CRITICAL formatting rules:
+  let systemPrompt = `You are a helpful assistant that follows user instructions exactly. Follow these CRITICAL formatting rules:
 
 1. MATH PROTECTION: Never modify content within __MATH_BLOCK_### tokens - these contain LaTeX math expressions
-2. BLOCK STRUCTURE: Process each paragraph/section as a complete semantic unit, maintaining:
-   - Paragraph breaks (double newlines)
-   - List structure (bullet points, numbering)
-   - Heading format
+2. FOLLOW INSTRUCTIONS PRECISELY: If the user says "TAKE THE EXAM AND GET A 100/100", you should answer the exam questions, not create more exam content
 3. FORMATTING: Use clean LaTeX format for any new math (e.g., A = P(1 + r/n)^{nt}) NOT Unicode superscripts
 4. OUTPUT: Ensure output is markdown-compatible with proper spacing between paragraphs`;
   
@@ -206,10 +203,8 @@ export async function processTextWithOpenAI(options: ProcessTextOptions): Promis
                                instructions.toLowerCase().includes('condense') ||
                                instructions.toLowerCase().includes('brief');
   
-  // Add the instruction about length unless user has specified they want shorter output
-  if (!requestsShorterOutput) {
-    systemPrompt += " IMPORTANT: Unless explicitly requested otherwise, your rewrite MUST be longer than the original text. Add more examples, explanations, or details to make the content more comprehensive.";
-  }
+  // Remove the forced length expansion - let the user's instructions determine the output
+  // The app should be a pure passthrough that follows user instructions exactly
   
   // STEP 2: BLOCK-LEVEL REWRITING - Process semantic blocks to preserve structure
   let userPrompt = `Instructions: ${instructions}
