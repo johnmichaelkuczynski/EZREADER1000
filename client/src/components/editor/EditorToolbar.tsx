@@ -23,7 +23,7 @@ import { saveInstructions, getSavedInstructions } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
 interface EditorToolbarProps {
-  onProcess: () => void;
+  onProcess: (instructions: string) => void;
   onFindOnline: () => void;
   onVoiceInput: () => void;
   onAudioTranscription: () => void;
@@ -34,6 +34,8 @@ interface EditorToolbarProps {
   currentInstructions: string;
   enableSynthesisMode?: boolean;
   setEnableSynthesisMode?: (enabled: boolean) => void;
+  rewriteInstructions: string;
+  setRewriteInstructions: (instructions: string) => void;
 }
 
 export function EditorToolbar({
@@ -47,7 +49,9 @@ export function EditorToolbar({
   onInstructionsSelect,
   currentInstructions,
   enableSynthesisMode = false,
-  setEnableSynthesisMode
+  setEnableSynthesisMode,
+  rewriteInstructions,
+  setRewriteInstructions
 }: EditorToolbarProps) {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [instructionName, setInstructionName] = useState('');

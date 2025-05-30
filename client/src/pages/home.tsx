@@ -93,6 +93,7 @@ export default function Home() {
   const [isSearching, setIsSearching] = useState(false);
   const [voiceDialogOpen, setVoiceDialogOpen] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [rewriteInstructions, setRewriteInstructions] = useState("");
   const [audioTranscribeDialogOpen, setAudioTranscribeDialogOpen] = useState(false);
   const [audioFile, setAudioFile] = useState<File | null>(null);
   
@@ -223,20 +224,17 @@ export default function Home() {
   };
 
   // Handle processing
-  const handleProcess = () => {
-    // Get the last user message as instructions
-    const lastUserMessage = [...messages].reverse().find(msg => msg.role === 'user');
-    
-    if (!lastUserMessage) {
+  const handleProcess = (instructions: string) => {
+    if (!instructions.trim()) {
       toast({
         title: "No instructions",
-        description: "Please provide instructions in the chat box below.",
+        description: "Please provide instructions in the Rewrite Instructions field.",
         variant: "destructive"
       });
       return;
     }
     
-    processDocument(lastUserMessage.content);
+    processDocument(instructions);
   };
 
   // Select an instruction from saved instructions
@@ -311,6 +309,8 @@ export default function Home() {
               currentInstructions={messages.filter(msg => msg.role === 'user').pop()?.content || ''}
               enableSynthesisMode={enableSynthesisMode}
               setEnableSynthesisMode={setEnableSynthesisMode}
+              rewriteInstructions={rewriteInstructions}
+              setRewriteInstructions={setRewriteInstructions}
             />
             
             {/* Text Processing Section */}
