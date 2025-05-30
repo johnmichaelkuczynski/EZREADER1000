@@ -60,6 +60,7 @@ export function useDocumentProcessor() {
     contentSource: string;
     useContentSource: boolean;
     llmProvider: LLMProvider;
+    examMode?: boolean;
   }) => {
     const response = await apiRequest('POST', '/api/process-text', options);
     const data = await response.json();
@@ -67,7 +68,7 @@ export function useDocumentProcessor() {
   }, []);
 
   // Process document function
-  const processDocument = useCallback(async (instructions: string) => {
+  const processDocument = useCallback(async (instructions: string, examMode?: boolean) => {
     if (!inputText.trim()) {
       toast({
         title: "No input text",
@@ -85,7 +86,8 @@ export function useDocumentProcessor() {
         instructions,
         contentSource,
         useContentSource,
-        llmProvider
+        llmProvider,
+        examMode
       });
       
       setOutputText(result);

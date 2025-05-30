@@ -77,6 +77,7 @@ export interface ProcessTextOptions {
   contentSource?: string;
   useContentSource: boolean;
   maxTokens?: number;
+  examMode?: boolean;
 }
 
 import { protectMathFormulas, restoreMathFormulas, protectMathAndStructure, restoreMathAndFormatting, splitIntoSemanticBlocks, reconstructFromBlocks } from "../utils/math-formula-protection";
@@ -145,7 +146,7 @@ async function processLargeTextWithOpenAI(options: ProcessTextOptions): Promise<
 }
 
 export async function processTextWithOpenAI(options: ProcessTextOptions): Promise<string> {
-  const { text, instructions, contentSource, useContentSource, maxTokens = 4000 } = options;
+  const { text, instructions, contentSource, useContentSource, maxTokens = 4000, examMode = false } = options;
   
   // For pure passthrough dialogue (no instructions), send user input directly
   if (!instructions || instructions.trim() === "") {

@@ -83,6 +83,7 @@ export const processTextSchema = z.object({
   llmProvider: z.enum(["openai", "anthropic", "perplexity"]),
   useContentSource: z.boolean().default(false),
   reprocessOutput: z.boolean().default(false),
+  examMode: z.boolean().optional().default(false),
 });
 
 export const detectAiSchema = z.object({

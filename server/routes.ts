@@ -52,7 +52,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             text: data.inputText,
             instructions: data.instructions,
             contentSource: data.contentSource,
-            useContentSource: data.useContentSource
+            useContentSource: data.useContentSource,
+            examMode: data.examMode
           });
           break;
         case 'anthropic':
@@ -60,7 +61,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             text: data.inputText,
             instructions: data.instructions,
             contentSource: data.contentSource,
-            useContentSource: data.useContentSource
+            useContentSource: data.useContentSource,
+            examMode: data.examMode
           });
           break;
         case 'perplexity':
@@ -68,7 +70,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             text: data.inputText,
             instructions: data.instructions,
             contentSource: data.contentSource,
-            useContentSource: data.useContentSource
+            useContentSource: data.useContentSource,
+            examMode: data.examMode
           });
           break;
         default:
