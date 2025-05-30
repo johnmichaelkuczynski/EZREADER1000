@@ -62,9 +62,8 @@ export function DialogueBox({
     
     if (!inputValue.trim()) return;
     
-    // All commands now go through the special command processor
-    // which handles the conversation directly in the chat interface
-    onProcessSpecialCommand(inputValue);
+    // Send message directly for pure passthrough
+    onSendMessage(inputValue);
     
     setInputValue('');
   };
