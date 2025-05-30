@@ -140,16 +140,32 @@ export function EditorToolbar({
   };
   
   return (
-    <div className="flex flex-wrap justify-between items-center mb-3 gap-2">
-      <div className="flex items-center">
-        <Button 
-          className="mr-2 bg-primary hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center gap-1.5 text-sm font-medium transition-colors"
-          onClick={onProcess}
-          disabled={isProcessing}
-        >
-          <PlayIcon className="h-4 w-4" />
-          <span>{isProcessing ? 'Processing...' : 'Process Text'}</span>
-        </Button>
+    <div className="space-y-3 mb-3">
+      {/* Rewrite Instructions Input */}
+      <div className="w-full">
+        <Label htmlFor="rewrite-instructions" className="text-sm font-medium mb-2 block">
+          Rewrite Instructions
+        </Label>
+        <Input
+          id="rewrite-instructions"
+          placeholder="E.g., TAKE THE EXAM AND GET A 100/100, Simplify this text, Make it professional..."
+          value={rewriteInstructions}
+          onChange={(e) => setRewriteInstructions(e.target.value)}
+          className="w-full"
+        />
+      </div>
+      
+      {/* Main Toolbar */}
+      <div className="flex flex-wrap justify-between items-center gap-2">
+        <div className="flex items-center">
+          <Button 
+            className="mr-2 bg-primary hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center gap-1.5 text-sm font-medium transition-colors"
+            onClick={() => onProcess(rewriteInstructions)}
+            disabled={isProcessing}
+          >
+            <PlayIcon className="h-4 w-4" />
+            <span>{isProcessing ? 'Processing...' : 'Process Text'}</span>
+          </Button>
         
         <div className="flex bg-slate-100 rounded-md p-1">
           <Button 
