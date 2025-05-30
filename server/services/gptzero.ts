@@ -49,13 +49,13 @@ export async function detectAIWithGPTZero(text: string): Promise<{
     // Build detailed result
     const burstiness = data.documents[0]?.overall_burstiness || 0;
     const paragraphAnalysis = data.documents[0]?.paragraphs?.map((p, i) => 
-      `Paragraph ${i+1}: ${Math.round(p.generated_prob * 100)}% AI probability, Perplexity: ${p.perplexity.toFixed(2)}, Burstiness: ${p.burstiness.toFixed(2)}`
+      `Paragraph ${i+1}: ${Math.round((p.generated_prob || 0) * 100)}% AI probability, Perplexity: ${p.perplexity?.toFixed(2) || 'N/A'}, Burstiness: ${p.burstiness?.toFixed(2) || 'N/A'}`
     ).join("\n") || "No paragraph analysis available";
     
     return {
       isAI: data.isGenerated,
       confidence,
-      details: `Overall AI probability: ${Math.round(confidence * 100)}%\nOverall burstiness: ${burstiness.toFixed(2)}\n\n${paragraphAnalysis}`
+      details: `Overall AI probability: ${Math.round(confidence * 100)}%\nOverall burstiness: ${burstiness?.toFixed(2) || 'N/A'}\n\n${paragraphAnalysis}`
     };
   } catch (error) {
     console.error("GPTZero detection error:", error);

@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 
@@ -716,6 +716,33 @@ export function useDocumentProcessor() {
   const processGlobalQuestion = useCallback(async (query: string) => {
     // Simplified implementation
   }, []);
+
+  // Automatic AI detection with debouncing
+  useEffect(() => {
+    if (!inputText.trim() || inputText.length < 50) {
+      setInputAIResult(null);
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      detectAIText(inputText, 'input');
+    }, 2000); // 2 second debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [inputText, detectAIText]);
+
+  useEffect(() => {
+    if (!outputText.trim() || outputText.length < 50) {
+      setOutputAIResult(null);
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      detectAIText(outputText, 'output');
+    }, 2000); // 2 second debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [outputText, detectAIText]);
 
   return {
     // Core state
