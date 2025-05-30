@@ -6,7 +6,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Message } from '@/types';
-import { Trash2, Mic, Send } from 'lucide-react';
+import { Trash2, Mic, Send, ArrowDown } from 'lucide-react';
+import { MathRenderer } from './MathRenderer';
 
 interface ChatInterfaceProps {
   messages: Message[];
@@ -14,6 +15,7 @@ interface ChatInterfaceProps {
   onClearChat: () => void;
   reprocessOutput: boolean;
   onReprocessOutputChange: (value: boolean) => void;
+  onSendToInput?: (content: string) => void;
 }
 
 export function ChatInterface({
@@ -21,7 +23,8 @@ export function ChatInterface({
   onSendMessage,
   onClearChat,
   reprocessOutput,
-  onReprocessOutputChange
+  onReprocessOutputChange,
+  onSendToInput
 }: ChatInterfaceProps) {
   const [inputValue, setInputValue] = useState('');
   const [isRecording, setIsRecording] = useState(false);
@@ -135,9 +138,23 @@ export function ChatInterface({
               message.role === 'user' 
                 ? 'bg-primary text-white' 
                 : 'bg-slate-100 text-slate-800'
-              } rounded-lg p-3 max-w-[85%]`}
+              } rounded-lg p-3 max-w-[85%] group relative`}
             >
-              <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+              <div className="text-sm whitespace-pre-wrap" dangerouslySetInnerHTML={{
+                __html: message.content
+                  .replace(/\$\$(.*?)\$\$/g, '<span class="math-display">$$$$1$$</span>')
+                  .replace(/\$(.*?)\$/g, '<span class="math-inline">$$$1$</span>')
+              }} />
+              {message.role === 'assistant' && onSendToInput && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity p-1 h-6 w-6"
+                  onClick={() => onSendToInput(message.content)}
+                >
+                  <ArrowDown className="h-3 w-3" />
+                </Button>
+              )}
             </div>
             
             {message.role === 'user' && (

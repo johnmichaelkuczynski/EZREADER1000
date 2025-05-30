@@ -417,6 +417,9 @@ export default function Home() {
               onClearChat={clearChat}
               reprocessOutput={reprocessOutput}
               onReprocessOutputChange={setReprocessOutput}
+              onSendToInput={(content) => {
+                setInputText(content);
+              }}
             />
             
             {/* Dialogue Box - For discussing text and special commands */}
