@@ -176,12 +176,17 @@ export function useDocumentProcessor() {
       const formData = new FormData();
       formData.append('pdf', file);
       
-      const response = await apiRequest('/api/process-pdf', {
+      const response = await fetch('/api/process-pdf', {
         method: 'POST',
         body: formData
       });
       
-      setInputText(response.text);
+      if (!response.ok) {
+        throw new Error(`Upload failed: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      setInputText(data.text);
       
       toast({
         title: "File uploaded successfully",

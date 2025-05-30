@@ -425,14 +425,72 @@ export default function Home() {
             {/* Dialogue Box - For discussing text and special commands */}
             <DialogueBox
               messages={dialogueMessages}
-              onSendMessage={processDialogueCommand}
-              onProcessSpecialCommand={processDialogueCommand}
+              onSendMessage={async (userInput: string) => {
+                if (!userInput.trim()) return;
+
+                // Add user message
+                const userMessage = {
+                  id: Date.now().toString() + '_user',
+                  role: 'user' as const,
+                  content: userInput,
+                  timestamp: new Date()
+                };
+
+                // Add assistant placeholder
+                const assistantMessageId = Date.now().toString() + '_assistant';
+                const assistantMessage = {
+                  id: assistantMessageId,
+                  role: 'assistant' as const,
+                  content: 'Processing...',
+                  timestamp: new Date()
+                };
+
+                setDialogueMessages(prev => [...prev, userMessage, assistantMessage]);
+
+                try {
+                  // Direct API call for passthrough
+                  const response = await fetch('/api/process-text', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      inputText: userInput,
+                      instructions: "",
+                      contentSource: "",
+                      useContentSource: false,
+                      llmProvider
+                    })
+                  });
+
+                  if (!response.ok) {
+                    throw new Error(`API Error: ${response.statusText}`);
+                  }
+
+                  const data = await response.json();
+                  
+                  // Update assistant message with response
+                  setDialogueMessages(prev => prev.map(msg => 
+                    msg.id === assistantMessageId
+                      ? { ...msg, content: data.result }
+                      : msg
+                  ));
+
+                } catch (error: any) {
+                  console.error('Error processing dialogue:', error);
+                  
+                  setDialogueMessages(prev => prev.map(msg => 
+                    msg.id === assistantMessageId
+                      ? { ...msg, content: `Sorry, I encountered an error: ${error?.message || 'Unknown error'}` }
+                      : msg
+                  ));
+                }
+              }}
+              onProcessSpecialCommand={() => {}}
               onReset={resetAll}
               inputText={inputText}
               outputText={outputText}
               contentSource={contentSource}
               instructions={messages.filter(msg => msg.role === 'user').pop()?.content || ''}
-              isProcessing={processing.isProcessing}
+              isProcessing={false}
               enableSynthesisMode={enableSynthesisMode}
               documentMap={documentMap}
               onProcessGlobalQuestion={processGlobalQuestion}
