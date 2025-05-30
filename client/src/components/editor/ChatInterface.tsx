@@ -140,20 +140,23 @@ export function ChatInterface({
                 : 'bg-slate-100 text-slate-800'
               } rounded-lg p-3 max-w-[85%] group relative`}
             >
-              <div className="text-sm whitespace-pre-wrap" dangerouslySetInnerHTML={{
-                __html: message.content
-                  .replace(/\$\$(.*?)\$\$/g, '<span class="math-display">$$$$1$$</span>')
-                  .replace(/\$(.*?)\$/g, '<span class="math-inline">$$$1$</span>')
-              }} />
-              {message.role === 'assistant' && onSendToInput && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity p-1 h-6 w-6"
-                  onClick={() => onSendToInput(message.content)}
-                >
-                  <ArrowDown className="h-3 w-3" />
-                </Button>
+              {message.role === 'assistant' ? (
+                <div className="relative">
+                  <MathRenderer content={message.content} className="text-sm bg-transparent border-0 p-0" />
+                  {onSendToInput && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity p-1 h-6 w-6 bg-white/80 hover:bg-white"
+                      onClick={() => onSendToInput(message.content)}
+                      title="Send to Input Box"
+                    >
+                      <ArrowDown className="h-3 w-3" />
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <div className="text-sm whitespace-pre-wrap">{message.content}</div>
               )}
             </div>
             
