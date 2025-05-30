@@ -247,7 +247,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'No PDF file provided' });
       }
       
-      // Process the PDF file with our PDF.js processor
+      // Process the PDF file with our PDF processor
       const pdfBuffer = req.file.buffer;
       const extractedText = await extractTextFromPDF(pdfBuffer);
       
@@ -260,6 +260,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: unknown) {
       console.error('Error processing PDF file:', error);
       res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to process PDF file' });
+    }
+  });
+
+  // Process Word document - server-side DOCX extraction
+  app.post('/api/process-docx', upload.single('docx'), async (req: Request, res: Response) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No Word document provided' });
+      }
+      
+      // Import mammoth for server-side processing
+      const mammoth = require('mammoth');
+      
+      // Process the Word document
+      const result = await mammoth.extractRawText({ buffer: req.file.buffer });
+      
+      // Return the extracted text
+      res.json({ 
+        text: result.value,
+        filename: req.file.originalname,
+        size: req.file.size
+      });
+    } catch (error: unknown) {
+      console.error('Error processing Word document:', error);
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to process Word document' });
     }
   });
 

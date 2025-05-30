@@ -49,17 +49,29 @@ async function extractTextFromPDF(file: File): Promise<string> {
   }
 }
 
-// Extract text from DOCX
+// Extract text from DOCX using server-side processing
 async function extractTextFromDOCX(file: File): Promise<string> {
-  const arrayBuffer = await file.arrayBuffer();
-  
   try {
-    const result = await mammoth.extractRawText({ arrayBuffer });
-    return result.value;
+    // Use the server-side API to process the Word document
+    const formData = new FormData();
+    formData.append("docx", file);
+    
+    const response = await fetch("/api/process-docx", {
+      method: "POST",
+      body: formData,
+      credentials: "include"
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Word document processing failed: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    return result.text;
   } catch (error: unknown) {
     console.error('Error extracting text from DOCX:', error);
-    const errorMessage = error instanceof Error ? error.message : String(error || 'Unknown error');
-    throw new Error(`Failed to extract text from DOCX: ${errorMessage}`);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    throw new Error(`Failed to extract text from Word document: ${errorMessage}`);
   }
 }
 
