@@ -309,7 +309,29 @@ export function useDocumentProcessor() {
   // Handle file upload for the input editor
   const handleInputFileUpload = useCallback(async (file: File) => {
     try {
-      const text = await extractTextFromFile(file);
+      let text = '';
+      
+      if (file.type.startsWith('image/')) {
+        // Handle image OCR with Mathpix
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        const response = await fetch('/api/process-image-ocr', {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (!response.ok) {
+          throw new Error(`OCR failed: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        text = result.text;
+      } else {
+        // Handle PDF/Word documents
+        text = await extractTextFromFile(file);
+      }
+      
       setInputText(text);
       
       toast({

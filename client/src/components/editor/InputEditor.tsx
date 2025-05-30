@@ -58,7 +58,8 @@ export function InputEditor({
       'application/pdf': ['.pdf'],
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
       'application/msword': ['.doc'],
-      'text/plain': ['.txt']
+      'text/plain': ['.txt'],
+      'image/*': ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff']
     },
     noClick: true // Disable the click behavior of the dropzone
   });
@@ -126,7 +127,7 @@ export function InputEditor({
                     hidden 
                     ref={inputFileRef}
                     onChange={handleFileInputChange}
-                    accept=".pdf,.docx,.doc,.txt"
+                    accept=".pdf,.docx,.doc,.txt,.png,.jpg,.jpeg,.gif,.bmp,.tiff"
                   />
                 </Button>
               </TooltipTrigger>

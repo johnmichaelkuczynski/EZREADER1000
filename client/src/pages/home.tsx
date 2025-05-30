@@ -436,6 +436,9 @@ export default function Home() {
               enableSynthesisMode={enableSynthesisMode}
               documentMap={documentMap}
               onProcessGlobalQuestion={processGlobalQuestion}
+              onSendToInput={(content) => {
+                setInputText(content);
+              }}
             />
           </div>
         </div>

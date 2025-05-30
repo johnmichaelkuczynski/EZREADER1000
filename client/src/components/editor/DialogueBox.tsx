@@ -109,6 +109,74 @@ export function DialogueBox({
       setIsRecording(false);
     }
   };
+
+  // File upload handlers
+  const handleFileUpload = async (file: File) => {
+    try {
+      let extractedText = '';
+      
+      if (file.type.startsWith('image/')) {
+        // Handle image OCR
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        const response = await fetch('/api/process-image-ocr', {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (!response.ok) {
+          throw new Error(`OCR failed: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        extractedText = result.text;
+      } else {
+        // Handle PDF/Word documents
+        const { extractTextFromFile } = await import('@/lib/file-utils');
+        extractedText = await extractTextFromFile(file);
+      }
+      
+      // Add extracted text to the input
+      setInputValue(prev => prev + (prev ? '\n\n' : '') + extractedText);
+      
+      toast({
+        title: "File uploaded",
+        description: `Successfully extracted text from ${file.name}`,
+      });
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      toast({
+        title: "Upload failed",
+        description: error instanceof Error ? error.message : "Failed to process file",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleFileInputChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      await handleFileUpload(files[0]);
+    }
+  };
+
+  // Setup dropzone for drag and drop
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop: async (acceptedFiles) => {
+      if (acceptedFiles.length > 0) {
+        await handleFileUpload(acceptedFiles[0]);
+      }
+    },
+    accept: {
+      'application/pdf': ['.pdf'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'application/msword': ['.doc'],
+      'text/plain': ['.txt'],
+      'image/*': ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff']
+    },
+    noClick: true
+  });
   
   return (
     <Card className="w-full mt-6">
@@ -162,15 +230,32 @@ export function DialogueBox({
                     {message.role === 'user' ? 'U' : 'AI'}
                   </div>
                   <div
-                    className={`rounded-lg px-4 py-2 ${
+                    className={`rounded-lg px-4 py-2 group relative ${
                       message.role === 'user'
                         ? 'bg-primary text-primary-foreground'
                         : 'bg-muted'
                     }`}
                   >
-                    <div className="prose-sm whitespace-pre-wrap">
-                      {message.content}
-                    </div>
+                    {message.role === 'assistant' ? (
+                      <div className="relative">
+                        <MathRenderer content={message.content} className="text-sm bg-transparent border-0 p-0" />
+                        {onSendToInput && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity p-1 h-6 w-6 bg-white/80 hover:bg-white"
+                            onClick={() => onSendToInput(message.content)}
+                            title="Send to Input Box"
+                          >
+                            <ArrowDown className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="prose-sm whitespace-pre-wrap">
+                        {message.content}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -179,59 +264,77 @@ export function DialogueBox({
         </ScrollArea>
         
         {/* Input Form */}
-        <form onSubmit={handleSubmit} className="space-y-2">
-          <div className="grid gap-2">
-            <Textarea
-              placeholder="Ask a question, give special commands, or provide new instructions..."
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              className="min-h-[80px]"
-              onKeyDown={(e) => {
-                // Submit form when Enter is pressed without Shift
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSubmit(e);
-                }
-              }}
-              disabled={isProcessing}
-            />
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Button
-                type="button"
-                size="icon"
-                variant="outline"
-                onClick={isRecording ? stopRecording : startRecording}
+        <div {...getRootProps()} className={`${isDragActive ? 'border-2 border-dashed border-blue-300 bg-blue-50' : ''}`}>
+          <form onSubmit={handleSubmit} className="space-y-2">
+            <div className="grid gap-2">
+              <Textarea
+                placeholder="Ask a question, give special commands, or provide new instructions..."
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                className="min-h-[80px]"
+                onKeyDown={(e) => {
+                  // Submit form when Enter is pressed without Shift
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSubmit(e);
+                  }
+                }}
                 disabled={isProcessing}
-              >
-                {isRecording ? (
-                  <MicOff className="h-4 w-4 text-red-500" />
-                ) : (
-                  <Mic className="h-4 w-4" />
-                )}
-              </Button>
-              <Button
-                type="button"
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isProcessing}
+                >
+                  <Upload className="h-4 w-4" />
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileInputChange}
+                    accept=".pdf,.docx,.doc,.txt,.png,.jpg,.jpeg,.gif,.bmp,.tiff"
+                    className="hidden"
+                  />
+                </Button>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="outline"
+                  onClick={isRecording ? stopRecording : startRecording}
+                  disabled={isProcessing}
+                >
+                  {isRecording ? (
+                    <MicOff className="h-4 w-4 text-red-500" />
+                  ) : (
+                    <Mic className="h-4 w-4" />
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setInputValue('')}
+                  disabled={!inputValue || isProcessing}
+                >
+                  <Eraser className="h-4 w-4 mr-1" />
+                  Clear
+                </Button>
+              </div>
+              <Button 
+                type="submit" 
                 size="sm"
-                variant="outline"
-                onClick={() => setInputValue('')}
-                disabled={!inputValue || isProcessing}
+                disabled={!inputValue.trim() || isProcessing}
               >
-                <Eraser className="h-4 w-4 mr-1" />
-                Clear
+                <span>Send</span>
+                <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             </div>
-            <Button 
-              type="submit" 
-              size="sm"
-              disabled={!inputValue.trim() || isProcessing}
-            >
-              <span>Send</span>
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          </div>
-        </form>
+          </form>
+        </div>
       </CardContent>
       <CardFooter className="border-t pt-4 text-xs text-slate-500">
         <div>
