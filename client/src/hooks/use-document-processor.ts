@@ -19,6 +19,10 @@ export function useDocumentProcessor() {
   const [outputText, setOutputText] = useState('');
   const [contentSource, setContentSource] = useState('');
   const [useContentSource, setUseContentSource] = useState(false);
+  
+  // Style source state
+  const [styleSource, setStyleSource] = useState('');
+  const [useStyleSource, setUseStyleSource] = useState(false);
   const [reprocessOutput, setReprocessOutput] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [llmProvider, setLLMProvider] = useState<LLMProvider>('openai');
@@ -62,6 +66,8 @@ export function useDocumentProcessor() {
     instructions: string;
     contentSource: string;
     useContentSource: boolean;
+    styleSource?: string;
+    useStyleSource?: boolean;
     llmProvider: LLMProvider;
     examMode?: boolean;
   }) => {
@@ -101,6 +107,8 @@ export function useDocumentProcessor() {
         instructions,
         contentSource,
         useContentSource,
+        styleSource,
+        useStyleSource,
         llmProvider,
         examMode
       });
@@ -419,6 +427,11 @@ export function useDocumentProcessor() {
     setOutputAIResult(null);
   }, []);
 
+  const clearStyleSource = useCallback(() => {
+    setStyleSource('');
+    setUseStyleSource(false);
+  }, []);
+
   const clearChat = useCallback(() => {
     setMessages([]);
   }, []);
@@ -427,6 +440,7 @@ export function useDocumentProcessor() {
     setInputText('');
     setOutputText('');
     setContentSource('');
+    setStyleSource('');
     setMessages([]);
     setDialogueMessages([]);
     setInputAIResult(null);
@@ -706,6 +720,10 @@ export function useDocumentProcessor() {
     setContentSource,
     useContentSource,
     setUseContentSource,
+    styleSource,
+    setStyleSource,
+    useStyleSource,
+    setUseStyleSource,
     reprocessOutput,
     setReprocessOutput,
     messages,
