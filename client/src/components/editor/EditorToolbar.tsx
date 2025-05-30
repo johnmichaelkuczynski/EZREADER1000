@@ -62,78 +62,61 @@ export function EditorToolbar({
   
   // Load saved instructions
   useEffect(() => {
-    async function loadSavedInstructions() {
+    const loadInstructions = async () => {
+      setIsLoading(true);
       try {
-        setIsLoading(true);
         const instructions = await getSavedInstructions();
         setSavedInstructions(instructions);
-      } catch (err) {
-        const error = err as Error;
-        console.error('Error loading saved instructions:', error);
-        toast({
-          title: "Failed to load saved instructions",
-          description: error.message || "Unknown error occurred",
-          variant: "destructive"
-        });
+      } catch (error) {
+        console.error('Failed to load saved instructions:', error);
       } finally {
         setIsLoading(false);
       }
-    }
-    
-    loadSavedInstructions();
-  }, [toast]);
-  
-  // Handle saving instructions
+    };
+    loadInstructions();
+  }, []);
+
   const handleSaveInstructions = async () => {
-    if (!currentInstructions) {
+    if (!instructionName.trim() || !currentInstructions.trim()) {
       toast({
-        title: "No instructions to save",
-        description: "Please enter instructions in the chat window first.",
+        title: "Missing information",
+        description: "Please provide both a name and instructions to save.",
         variant: "destructive"
       });
       return;
     }
-    
-    if (!instructionName) {
-      toast({
-        title: "Name required",
-        description: "Please enter a name for these instructions.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
+
+    setIsSaving(true);
     try {
-      setIsSaving(true);
+      const savedInstruction = await saveInstructions({
+        name: instructionName,
+        instructions: currentInstructions
+      });
       
-      const savedInstruction = await saveInstructions(instructionName, currentInstructions);
       setSavedInstructions(prev => [...prev, savedInstruction]);
+      setInstructionName('');
+      setSaveDialogOpen(false);
       
       toast({
         title: "Instructions saved",
-        description: `"${instructionName}" has been saved.`,
+        description: "Your instructions have been saved successfully."
       });
-      
-      setSaveDialogOpen(false);
-      setInstructionName('');
-    } catch (err) {
-      const error = err as Error;
-      console.error('Error saving instructions:', error);
+    } catch (error) {
+      console.error('Failed to save instructions:', error);
       toast({
-        title: "Failed to save instructions",
-        description: error.message || "Unknown error occurred",
+        title: "Save failed",
+        description: "Failed to save instructions. Please try again.",
         variant: "destructive"
       });
     } finally {
       setIsSaving(false);
     }
   };
-  
-  // Handle selecting a saved instruction
+
   const handleSelectInstruction = (value: string) => {
-    if (value === "default") return;
+    if (value === 'default') return;
     
-    const instruction = savedInstructions.find(i => i.id.toString() === value);
+    const instruction = savedInstructions.find(inst => inst.id.toString() === value);
     if (instruction) {
       onInstructionsSelect(instruction.instructions);
     }
@@ -166,84 +149,85 @@ export function EditorToolbar({
             <PlayIcon className="h-4 w-4" />
             <span>{isProcessing ? 'Processing...' : 'Process Text'}</span>
           </Button>
-        
-        <div className="flex bg-slate-100 rounded-md p-1">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="px-3 py-1 text-xs font-medium rounded"
-            onClick={onFindOnline}
-          >
-            <SearchIcon className="h-3 w-3 mr-1" />
-            <span className="hidden sm:inline">Find Online</span>
-          </Button>
           
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="px-3 py-1 text-xs font-medium rounded"
-            onClick={onVoiceInput}
-          >
-            <MicIcon className="h-3 w-3 mr-1" />
-            <span className="hidden sm:inline">Voice</span>
-          </Button>
-          
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="px-3 py-1 text-xs font-medium rounded"
-            onClick={onAudioTranscription}
-          >
-            <FileAudioIcon className="h-3 w-3 mr-1" />
-            <span className="hidden sm:inline">Transcribe</span>
-          </Button>
-        </div>
-      </div>
-      
-      <div className="flex items-center gap-2">
-        <Select 
-          defaultValue="default"
-          onValueChange={handleSelectInstruction}
-        >
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Saved Instructions" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="default">Saved Instructions</SelectItem>
-            {!isLoading && savedInstructions.map(instruction => (
-              <SelectItem key={instruction.id} value={instruction.id.toString()}>
-                {instruction.name}
-              </SelectItem>
-            ))}
-            {isLoading && <SelectItem value="loading" disabled>Loading...</SelectItem>}
-            {!isLoading && savedInstructions.length === 0 && (
-              <SelectItem value="none" disabled>No saved instructions</SelectItem>
-            )}
-          </SelectContent>
-        </Select>
-        
-        <Button 
-          variant="outline" 
-          size="icon"
-          className="bg-slate-100 hover:bg-slate-200 p-2 rounded-md text-slate-600 transition-colors"
-          onClick={() => setSaveDialogOpen(true)}
-        >
-          <SaveIcon className="h-4 w-4" />
-        </Button>
-        
-        {/* Full Document Synthesis Mode Toggle */}
-        {setEnableSynthesisMode && (
-          <div className="flex items-center space-x-2 ml-2 bg-slate-100 p-2 rounded-md">
-            <Switch
-              id="synthesis-mode"
-              checked={enableSynthesisMode}
-              onCheckedChange={setEnableSynthesisMode}
-            />
-            <Label htmlFor="synthesis-mode" className="text-xs font-medium">
-              Full Document Synthesis Mode
-            </Label>
+          <div className="flex bg-slate-100 rounded-md p-1">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="px-3 py-1 text-xs font-medium rounded"
+              onClick={onFindOnline}
+            >
+              <SearchIcon className="h-3 w-3 mr-1" />
+              <span className="hidden sm:inline">Find Online</span>
+            </Button>
+            
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="px-3 py-1 text-xs font-medium rounded"
+              onClick={onVoiceInput}
+            >
+              <MicIcon className="h-3 w-3 mr-1" />
+              <span className="hidden sm:inline">Voice</span>
+            </Button>
+            
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="px-3 py-1 text-xs font-medium rounded"
+              onClick={onAudioTranscription}
+            >
+              <FileAudioIcon className="h-3 w-3 mr-1" />
+              <span className="hidden sm:inline">Transcribe</span>
+            </Button>
           </div>
-        )}
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <Select 
+            defaultValue="default"
+            onValueChange={handleSelectInstruction}
+          >
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Saved Instructions" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">Saved Instructions</SelectItem>
+              {!isLoading && savedInstructions.map(instruction => (
+                <SelectItem key={instruction.id} value={instruction.id.toString()}>
+                  {instruction.name}
+                </SelectItem>
+              ))}
+              {isLoading && <SelectItem value="loading" disabled>Loading...</SelectItem>}
+              {!isLoading && savedInstructions.length === 0 && (
+                <SelectItem value="none" disabled>No saved instructions</SelectItem>
+              )}
+            </SelectContent>
+          </Select>
+          
+          <Button 
+            variant="outline" 
+            size="icon"
+            className="bg-slate-100 hover:bg-slate-200 p-2 rounded-md text-slate-600 transition-colors"
+            onClick={() => setSaveDialogOpen(true)}
+          >
+            <SaveIcon className="h-4 w-4" />
+          </Button>
+          
+          {/* Full Document Synthesis Mode Toggle */}
+          {setEnableSynthesisMode && (
+            <div className="flex items-center space-x-2 ml-2 bg-slate-100 p-2 rounded-md">
+              <Switch
+                id="synthesis-mode"
+                checked={enableSynthesisMode}
+                onCheckedChange={setEnableSynthesisMode}
+              />
+              <Label htmlFor="synthesis-mode" className="text-xs font-medium">
+                Full Document Synthesis Mode
+              </Label>
+            </div>
+          )}
+        </div>
       </div>
       
       {/* Save Instructions Dialog */}
