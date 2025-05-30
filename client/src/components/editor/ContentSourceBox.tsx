@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Dialog,
@@ -20,12 +21,16 @@ import { searchOnline } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { useDropzone } from 'react-dropzone';
 
+type SourceUsageMode = 'content' | 'style' | 'both' | 'none';
+
 interface ContentSourceBoxProps {
   text: string;
   onTextChange: (text: string) => void;
   onClear: () => void;
   useContentSource: boolean;
   onUseContentSourceChange: (use: boolean) => void;
+  useStyleSource: boolean;
+  onUseStyleSourceChange: (use: boolean) => void;
   onFileUpload: (file: File) => Promise<void>;
   onMultipleFileUpload?: (files: File[]) => Promise<void>;
   contentSourceFileRef: React.RefObject<HTMLInputElement>;
@@ -37,6 +42,8 @@ export function ContentSourceBox({
   onClear,
   useContentSource,
   onUseContentSourceChange,
+  useStyleSource,
+  onUseStyleSourceChange,
   onFileUpload,
   onMultipleFileUpload,
   contentSourceFileRef
@@ -47,6 +54,36 @@ export function ContentSourceBox({
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<Array<{ title: string; url: string; snippet: string }>>([]);
   const { toast } = useToast();
+
+  // Derive current usage mode from boolean flags
+  const getCurrentUsageMode = (): SourceUsageMode => {
+    if (useContentSource && useStyleSource) return 'both';
+    if (useContentSource) return 'content';
+    if (useStyleSource) return 'style';
+    return 'none';
+  };
+
+  // Handle usage mode change
+  const handleUsageModeChange = (mode: SourceUsageMode) => {
+    switch (mode) {
+      case 'content':
+        onUseContentSourceChange(true);
+        onUseStyleSourceChange(false);
+        break;
+      case 'style':
+        onUseContentSourceChange(false);
+        onUseStyleSourceChange(true);
+        break;
+      case 'both':
+        onUseContentSourceChange(true);
+        onUseStyleSourceChange(true);
+        break;
+      case 'none':
+        onUseContentSourceChange(false);
+        onUseStyleSourceChange(false);
+        break;
+    }
+  };
   
   // Setup dropzone for file uploads
   const { getRootProps, getInputProps } = useDropzone({
@@ -275,16 +312,37 @@ export function ContentSourceBox({
         )}
         
         <div className="mt-3">
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="use-content-source"
-              checked={useContentSource}
-              onCheckedChange={(checked) => onUseContentSourceChange(!!checked)}
-            />
-            <Label htmlFor="use-content-source" className="text-sm">
-              Incorporate into output
-            </Label>
-          </div>
+          <Label className="text-sm font-medium">Usage Mode</Label>
+          <RadioGroup
+            value={getCurrentUsageMode()}
+            onValueChange={(value) => handleUsageModeChange(value as SourceUsageMode)}
+            className="mt-2"
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="none" id="none" />
+              <Label htmlFor="none" className="text-sm">
+                Don't use
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="content" id="content" />
+              <Label htmlFor="content" className="text-sm">
+                Use as content source
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="style" id="style" />
+              <Label htmlFor="style" className="text-sm">
+                Use as style source
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="both" id="both" />
+              <Label htmlFor="both" className="text-sm">
+                Use as both content and style source
+              </Label>
+            </div>
+          </RadioGroup>
         </div>
       </CardContent>
       

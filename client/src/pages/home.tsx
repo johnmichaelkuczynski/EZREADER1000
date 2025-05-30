@@ -4,7 +4,7 @@ import { Footer } from "@/components/layout/Footer";
 import { InputEditor } from "@/components/editor/InputEditor";
 import { OutputEditor } from "@/components/editor/OutputEditor";
 import { ContentSourceBox } from "@/components/editor/ContentSourceBox";
-import { StyleSourceBox } from "@/components/editor/StyleSourceBox";
+
 import { ChatInterface } from "@/components/editor/ChatInterface";
 import { DialogueBox } from "@/components/editor/DialogueBox";
 import { SpecialContentPopup } from "@/components/editor/SpecialContentPopup";
@@ -297,6 +297,8 @@ export default function Home() {
               onClear={clearContentSource}
               useContentSource={useContentSource}
               onUseContentSourceChange={setUseContentSource}
+              useStyleSource={useStyleSource}
+              onUseStyleSourceChange={setUseStyleSource}
               onFileUpload={handleContentSourceFileUpload}
               onMultipleFileUpload={handleMultipleContentSourceFileUpload}
               contentSourceFileRef={contentSourceFileRef}
