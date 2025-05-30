@@ -446,6 +446,8 @@ export function useDocumentProcessor() {
     setOutputText('');
     setContentSource('');
     setStyleSource('');
+    setUseContentSource(false);
+    setUseStyleSource(false);
     setMessages([]);
     setDialogueMessages([]);
     setInputAIResult(null);
