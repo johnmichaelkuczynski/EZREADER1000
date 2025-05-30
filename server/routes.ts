@@ -27,6 +27,28 @@ const upload = multer({
   limits: {
     fileSize: 50 * 1024 * 1024, // 50MB max file size
   },
+  fileFilter: (req, file, cb) => {
+    // Accept PDF, Word documents, text files, and images
+    const allowedTypes = [
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/msword',
+      'text/plain',
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/gif',
+      'image/bmp',
+      'image/tiff'
+    ];
+    
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      console.log('Rejected file type:', file.mimetype, 'for file:', file.originalname);
+      cb(new Error(`Unsupported file type: ${file.mimetype}`), false);
+    }
+  }
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -270,11 +292,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'No Word document provided' });
       }
       
+      console.log('Processing Word document:', req.file.originalname, 'Size:', req.file.size, 'Type:', req.file.mimetype);
+      
       // Import mammoth for server-side processing
-      const mammoth = require('mammoth');
+      const mammoth = await import('mammoth');
       
       // Process the Word document
       const result = await mammoth.extractRawText({ buffer: req.file.buffer });
+      
+      console.log('Successfully extracted text from Word document, length:', result.value.length);
       
       // Return the extracted text
       res.json({ 
