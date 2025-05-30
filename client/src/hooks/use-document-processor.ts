@@ -369,11 +369,12 @@ export function useDocumentProcessor() {
     
     try {
       const response = await apiRequest('POST', '/api/detect-ai', { text, llmProvider });
+      const result = await response.json();
       
       if (target === 'input') {
-        setInputAIResult(response);
+        setInputAIResult(result);
       } else {
-        setOutputAIResult(response);
+        setOutputAIResult(result);
       }
       
     } catch (error: any) {
