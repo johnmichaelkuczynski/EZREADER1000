@@ -26,7 +26,7 @@ export function useDocumentProcessor() {
     {
       id: uuidv4(),
       role: 'assistant',
-      content: 'I can help answer questions about your document. What would you like to know?'
+      content: 'Hello! I can help you with anything you need. Ask me questions, request content generation, or discuss any topic.'
     }
   ]);
   const [isInputDetecting, setIsInputDetecting] = useState<boolean>(false);
@@ -638,10 +638,10 @@ export function useDocumentProcessor() {
     });
   }, [clearChat, cancelProcessing, processing.isProcessing, showChunkSelector, setShowChunkSelector, setSavedInstructions, toast]);
   
-  // Process commands in the dialogue box - similar to a ChatGPT conversation
+  // Process commands in the dialogue box - pure passthrough to LLM for general AI conversation
   const processSpecialCommand = useCallback(async (command: string) => {
     try {
-      // Add the user's message to the dialogue chat (not the rewrite instructions)
+      // Add the user's message to the dialogue chat
       const userMessageId = uuidv4();
       setDialogueMessages(prev => [...prev, {
         id: userMessageId,
@@ -654,202 +654,52 @@ export function useDocumentProcessor() {
       setDialogueMessages(prev => [...prev, {
         id: assistantMessageId,
         role: 'assistant',
-        content: `Thinking about your request...`
+        content: `Processing your request...`
       }]);
       
-      // Determine which text to use (prefer output if available, but allow empty for general conversation)
+      // Pure passthrough to LLM - send user's command directly with minimal context
+      // The LLM can handle any topic, generate math content, answer questions, etc.
+      let prompt = command;
+      
+      // Optionally provide document context if user wants to reference it
       const textToProcess = outputText || inputText || "";
-      
-      // Create chunks for the document if there's content available
-      const dialogueChunks = textToProcess ? chunkText(textToProcess, 300) : []; // Use smaller chunks (300 words) for dialogue
-      
-      // Construct a prompt that provides context and handles the specific request
-      let prompt = "";
-      
-      // Check if Full Document Synthesis Mode is enabled for global document queries
-      if (enableSynthesisMode && 
-          (command.toLowerCase().includes("summarize") || 
-           command.toLowerCase().includes("table of contents") || 
-           command.toLowerCase().includes("overview") ||
-           command.toLowerCase().includes("explain") ||
-           command.toLowerCase().includes("whole document") ||
-           command.toLowerCase().includes("full document") ||
-           command.toLowerCase().includes("entire document"))) {
-          
-        // If we don't have document summaries yet, let's create them on-demand
-        if (documentMap.length === 0 && dialogueChunks.length > 0) {
-          // Create a simplified summary for each chunk
-          setDialogueMessages(prev => prev.map(msg => 
-            msg.id === assistantMessageId
-              ? { ...msg, content: `Generating summaries for all ${dialogueChunks.length} chunks. This may take a moment...` }
-              : msg
-          ));
-          
-          // Generate summaries for all chunks
-          for (let i = 0; i < dialogueChunks.length; i++) {
-            try {
-              const chunkSummary = `Section ${i+1}: Summary of chunk ${i+1}`;
-              setDocumentMap(prev => {
-                const newMap = [...prev];
-                newMap[i] = chunkSummary;
-                return newMap;
-              });
-            } catch (error) {
-              console.error(`Error creating on-demand summary for chunk ${i}:`, error);
-            }
-          }
-        }
-        
-        try {
-          // Process the global query using document summaries
-          await processGlobalQuestion(command);
-          
-          // Update the assistant message to inform the user
-          setDialogueMessages(prev => prev.map(msg => 
-            msg.id === assistantMessageId
-              ? { ...msg, content: `I've processed your request using Full Document Synthesis Mode. The results are shown in the popup window.` }
-              : msg
-          ));
-          
-          return;
-        } catch (error) {
-          console.error('Error using Full Document Synthesis Mode:', error);
-          setDialogueMessages(prev => prev.map(msg => 
-            msg.id === assistantMessageId
-              ? { ...msg, content: `I couldn't process your request using Document Synthesis Mode. Falling back to normal processing...` }
-              : msg
-          ));
-          // Continue with normal processing if synthesis mode fails
-        }
+      if (textToProcess && (
+        command.toLowerCase().includes("document") || 
+        command.toLowerCase().includes("text above") ||
+        command.toLowerCase().includes("content") ||
+        command.toLowerCase().includes("input") ||
+        command.toLowerCase().includes("output")
+      )) {
+        prompt = `${command}\n\n[Document context available: ${textToProcess.substring(0, 1000)}...]`;
       }
       
-      // Handle showing chunk information
-      if (command.toLowerCase().includes("show chunks") || command.toLowerCase().includes("list chunks")) {
-        setDialogueMessages(prev => prev.map(msg => 
-          msg.id === assistantMessageId
-            ? { ...msg, content: `I've divided the document into ${dialogueChunks.length} chunks. You can ask about a specific chunk by saying "rewrite chunk X" or "summarize chunk X" where X is a number between 1 and ${dialogueChunks.length}.` }
-            : msg
-        ));
-        return;
-      }
+      // Send directly to LLM with current provider
+      const response = await processText({
+        inputText: prompt,
+        instructions: "You are a helpful AI assistant. Respond to the user's request naturally and helpfully. If generating mathematical content, use proper LaTeX notation with $ for inline math and $$ for display math.",
+        contentSource: "",
+        useContentSource: false,
+        llmProvider
+      });
       
-      // For very large documents, recommend using chunks only if synthesis mode is not enabled
-      if (dialogueChunks.length > 5 && !command.toLowerCase().includes("chunk") && !enableSynthesisMode) {
-        setDialogueMessages(prev => prev.map(msg => 
-          msg.id === assistantMessageId
-            ? { ...msg, content: `This is a large document (${textToProcess.length} characters, approximately ${Math.round(textToProcess.length/5)} tokens). I've divided it into ${dialogueChunks.length} chunks.\n\nFor better results, please try:\n1. Asking about a specific chunk: "summarize chunk 3"\n2. Type "show chunks" to see information about all chunks\n3. Ask a more specific question about the document\n4. Or enable Full Document Synthesis Mode in the toolbar to analyze the entire document at once` }
-            : msg
-        ));
-        return;
-      }
+      // Update the assistant message with the LLM response (pure passthrough)
+      setDialogueMessages(prev => prev.map(msg => 
+        msg.id === assistantMessageId
+          ? { ...msg, content: response }
+          : msg
+      ));
       
-      // Special handling for "rewrite chunk" commands
-      if (command.toLowerCase().match(/rewrite chunk \d+/)) {
-        // Extract chunk number and any instructions
-        const chunkMatch = command.match(/rewrite chunk (\d+)/i);
-        if (chunkMatch && dialogueChunks.length > 0) {
-          const chunkIndex = parseInt(chunkMatch[1]) - 1; // Convert to 0-based index
-          
-          if (chunkIndex >= 0 && chunkIndex < dialogueChunks.length) {
-            // Use the specified chunk from our dialogue chunks
-            const chunkText = dialogueChunks[chunkIndex];
-            
-            // Extract any additional instructions after the chunk number
-            const additionalInstructions = command.substring(command.indexOf(chunkMatch[0]) + chunkMatch[0].length).trim();
-            const instructions = additionalInstructions || "Rewrite this chunk to improve clarity and flow";
-            
-            // Process just this chunk
-            const response = await processText({
-              inputText: chunkText,
-              instructions: instructions,
-              contentSource: "",
-              useContentSource: false,
-              reprocessOutput: false,
-              llmProvider
-            });
-            
-            // Update the assistant message with the processed chunk
-            setDialogueMessages(prev => prev.map(msg => 
-              msg.id === assistantMessageId
-                ? { ...msg, content: response }
-                : msg
-            ));
-            
-            return;
-          } else {
-            // Invalid chunk index
-            setDialogueMessages(prev => prev.map(msg => 
-              msg.id === assistantMessageId
-                ? { ...msg, content: `I can't find chunk ${chunkIndex + 1}. The document only has ${dialogueChunks.length} chunks. Please specify a valid chunk number between 1 and ${dialogueChunks.length}.` }
-                : msg
-            ));
-            return;
-          }
-        } else {
-          // No chunks available
-          setDialogueMessages(prev => prev.map(msg => 
-            msg.id === assistantMessageId
-              ? { ...msg, content: `I can't process chunk operations for this document. Please make sure there is text in the input or output box first.` }
-              : msg
-          ));
-          return;
-        }
-      }
+    } catch (error: any) {
+      console.error('Error processing dialogue command:', error);
       
-      // Create an appropriate prompt based on the user's request
-      if (!textToProcess) {
-        // No document content - handle as general conversation
-        prompt = "You are a helpful AI assistant. Answer the following question or request: " + command;
-      } else if (command.toLowerCase().includes("table of contents") || command.toLowerCase().includes("toc")) {
-        prompt = "You are analyzing a document. Create a detailed table of contents for it, including section numbers, titles, and brief descriptions for each section. Format it clearly with proper indentation for subsections. Here's the document: " + textToProcess;
-      } 
-      else if (command.toLowerCase().includes("bibliography") || command.toLowerCase().includes("references")) {
-        prompt = "You are analyzing a document. Extract all references and citations from it and format them as a properly formatted bibliography or reference list. If you can't find explicit references, infer what sources might have been used based on the content. Here's the document: " + textToProcess;
-      }
-      else if (command.toLowerCase().includes("summary") || command.toLowerCase().includes("summarize")) {
-        prompt = "You are analyzing a document. Provide a comprehensive summary of the key points, arguments, and conclusions. Here's the document: " + textToProcess;
-      }
-      else if (command.toLowerCase().includes("analyze") || command.toLowerCase().includes("analysis")) {
-        prompt = "You are analyzing a document. Provide a detailed analysis of its content, structure, arguments, and effectiveness. Identify strengths and weaknesses. Here's the document: " + textToProcess;
-      }
-      else if (command.toLowerCase().includes("title") || command.toLowerCase().includes("heading")) {
-        prompt = "You are analyzing a document. Suggest an appropriate title and section headings based on the content. Explain your reasoning briefly. Here's the document: " + textToProcess;
-      }
-      else {
-        // For general queries - check if we have document content to reference
-        if (textToProcess) {
-          prompt = "You are having a conversation about a document. Answer the following query about it as helpfully as possible: '" + command + "'. Here's the document: " + textToProcess;
-        } else {
-          prompt = "You are a helpful AI assistant. The user is asking: " + command;
-        }
-      }
-      
-      // For large documents, use intelligent chunking to process more content
-      let textToSend = textToProcess;
-      
-      // Check if document is very large (more than 10,000 characters)
-      if (textToProcess.length > 10000) {
-        // For extremely large documents, use a more sophisticated approach
-        if (textToProcess.length > 50000) {
-          // For very large documents, select representative chunks instead of just the beginning
-          // This includes: first chunk (introduction), some middle chunks (content), and last chunk (conclusion)
-          if (dialogueChunks.length >= 5) {
-            // Take first chunk, a few from the middle, and the last chunk
-            const firstChunk = dialogueChunks[0];
-            const lastChunk = dialogueChunks[dialogueChunks.length - 1];
-            
-            // Select evenly spaced chunks from the middle to get representative content
-            const middleChunksCount = Math.min(5, Math.floor(dialogueChunks.length / 2));
-            const middleChunks = [];
-            
-            for (let i = 1; i <= middleChunksCount; i++) {
-              const index = Math.floor(i * dialogueChunks.length / (middleChunksCount + 1));
-              if (index > 0 && index < dialogueChunks.length - 1) {
-                middleChunks.push(dialogueChunks[index]);
-              }
-            }
-            
-            textToSend = [firstChunk, ...middleChunks, lastChunk].join("\n\n--- SECTION BREAK ---\n\n");
+      // Update the assistant message with the error
+      setDialogueMessages(prev => prev.map(msg => 
+        msg.id === assistantMessageId
+          ? { ...msg, content: `Sorry, I encountered an error: ${error?.message || 'Unknown error'}` }
+          : msg
+      ));
+    }
+  }, [outputText, inputText, llmProvider, processText, setDialogueMessages]);
             
             // Add a note that we're using representative sections
             prompt = prompt.replace("Here's the document:", "Note: This document is very large, so I'm analyzing representative sections from the beginning, middle, and end. Here's the compilation:");
