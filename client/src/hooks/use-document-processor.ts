@@ -237,12 +237,13 @@ export function useDocumentProcessor() {
       const formData = new FormData();
       formData.append('pdf', file);
       
-      const response = await apiRequest('/api/process-pdf', {
+      const response = await fetch('/api/process-pdf', {
         method: 'POST',
         body: formData
       });
       
-      setContentSource(response.text);
+      const result = await response.json();
+      setContentSource(result.text);
       
       toast({
         title: "Content source uploaded",
@@ -270,12 +271,13 @@ export function useDocumentProcessor() {
       const formData = new FormData();
       formData.append('audio', file);
       
-      const response = await apiRequest('/api/transcribe', {
+      const response = await fetch('/api/transcribe', {
         method: 'POST',
         body: formData
       });
       
-      setInputText(prev => prev + '\n\n' + response.transcription);
+      const result = await response.json();
+      setInputText(prev => prev + '\n\n' + result.result);
       
       toast({
         title: "Audio transcribed",
@@ -297,12 +299,13 @@ export function useDocumentProcessor() {
       const formData = new FormData();
       formData.append('pdf', file);
       
-      const response = await apiRequest('/api/process-math-pdf', {
+      const response = await fetch('/api/process-math-pdf', {
         method: 'POST',
         body: formData
       });
       
-      setInputText(response.text);
+      const result = await response.json();
+      setInputText(result.text);
       
       toast({
         title: "Math PDF processed",
@@ -323,12 +326,13 @@ export function useDocumentProcessor() {
       const formData = new FormData();
       formData.append('image', file);
       
-      const response = await apiRequest('/api/process-math-image', {
+      const response = await fetch('/api/process-math-image', {
         method: 'POST',
         body: formData
       });
       
-      setInputText(prev => prev + '\n\n' + response.text);
+      const result = await response.json();
+      setInputText(prev => prev + '\n\n' + result.text);
       
       toast({
         title: "Math image processed",
@@ -346,12 +350,9 @@ export function useDocumentProcessor() {
 
   const enhanceMathFormatting = useCallback(async (text: string) => {
     try {
-      const response = await apiRequest('/api/enhance-math', {
-        method: 'POST',
-        body: JSON.stringify({ text })
-      });
-      
-      return response.enhancedText;
+      const response = await apiRequest('POST', '/api/enhance-math', { text });
+      const result = await response.json();
+      return result.enhancedText;
     } catch (error: any) {
       console.error('Error enhancing math formatting:', error);
       throw error;
@@ -367,10 +368,7 @@ export function useDocumentProcessor() {
     }
     
     try {
-      const response = await apiRequest('/api/detect-ai', {
-        method: 'POST',
-        body: JSON.stringify({ text, llmProvider })
-      });
+      const response = await apiRequest('POST', '/api/detect-ai', { text, llmProvider });
       
       if (target === 'input') {
         setInputAIResult(response);
