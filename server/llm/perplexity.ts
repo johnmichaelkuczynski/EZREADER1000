@@ -152,7 +152,7 @@ async function processLargeTextWithPerplexity(options: ProcessTextOptions): Prom
 }
 
 export async function processTextWithPerplexity(options: ProcessTextOptions): Promise<string> {
-  const { text, instructions, contentSource, useContentSource, maxTokens = 4000 } = options;
+  const { text, instructions, contentSource, useContentSource, maxTokens = 4000, examMode = false } = options;
   
   // Estimate token count to check for large documents
   const estimatedTokens = estimateTokenCount(text);
@@ -169,7 +169,9 @@ export async function processTextWithPerplexity(options: ProcessTextOptions): Pr
   const { processedText, mathBlocks } = protectMathFormulas(text);
   
   // Base system prompt
-  let systemPrompt = "Transform the provided text according to the instructions. Do not modify any content within [[MATH_BLOCK_*]] or [[MATH_INLINE_*]] tokens as they contain special mathematical notation.";
+  let systemPrompt = examMode 
+    ? "You are taking an exam. Answer the exam questions directly and thoroughly to achieve a perfect score. Do not modify any content within [[MATH_BLOCK_*]] or [[MATH_INLINE_*]] tokens as they contain special mathematical notation. Provide complete, accurate answers that demonstrate full understanding of the material."
+    : "Transform the provided text according to the instructions. Do not modify any content within [[MATH_BLOCK_*]] or [[MATH_INLINE_*]] tokens as they contain special mathematical notation.";
   
   // Check if instructions contain keywords about shortening
   const requestsShorterOutput = instructions.toLowerCase().includes('shorter') || 
