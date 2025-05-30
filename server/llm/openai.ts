@@ -147,6 +147,35 @@ async function processLargeTextWithOpenAI(options: ProcessTextOptions): Promise<
 export async function processTextWithOpenAI(options: ProcessTextOptions): Promise<string> {
   const { text, instructions, contentSource, useContentSource, maxTokens = 4000 } = options;
   
+  // For pure passthrough dialogue (no instructions), send user input directly
+  if (!instructions || instructions.trim() === "") {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'user',
+            content: text
+          }
+        ],
+        max_tokens: maxTokens,
+        temperature: 0.7,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.choices[0].message.content;
+  }
+  
   // Estimate token count to check for large documents
   const estimatedTokens = estimateTokenCount(text);
   const MAX_INPUT_TOKENS = 100000; // GPT-4o's limit is 128k, leaving buffer for system and instruction tokens

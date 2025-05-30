@@ -238,18 +238,20 @@ export function DialogueBox({
                     }`}
                   >
                     {message.role === 'assistant' ? (
-                      <div className="relative">
+                      <div className="space-y-3">
                         <MathRenderer content={message.content} className="text-sm bg-transparent border-0 p-0" />
                         {onSendToInput && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity p-1 h-6 w-6 bg-white/80 hover:bg-white"
-                            onClick={() => onSendToInput(message.content)}
-                            title="Send to Input Box"
-                          >
-                            <ArrowDown className="h-3 w-3" />
-                          </Button>
+                          <div className="flex justify-end">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="bg-blue-500 text-white hover:bg-blue-600 border-blue-500"
+                              onClick={() => onSendToInput(message.content)}
+                            >
+                              <ArrowDown className="h-4 w-4 mr-1" />
+                              Send to Input Box
+                            </Button>
+                          </div>
                         )}
                       </div>
                     ) : (
