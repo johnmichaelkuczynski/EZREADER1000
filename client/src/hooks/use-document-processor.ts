@@ -175,20 +175,48 @@ export function useDocumentProcessor() {
   // File upload handlers
   const handleInputFileUpload = useCallback(async (file: File) => {
     try {
-      const formData = new FormData();
-      formData.append('pdf', file);
+      let extractedText = '';
       
-      const response = await fetch('/api/process-pdf', {
-        method: 'POST',
-        body: formData
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Upload failed: ${response.statusText}`);
+      if (file.type === 'application/pdf') {
+        const formData = new FormData();
+        formData.append('pdf', file);
+        
+        const response = await fetch('/api/process-pdf', {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (!response.ok) {
+          throw new Error(`PDF processing failed: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        extractedText = result.text;
+      } else if (
+        file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+        file.type === 'application/msword'
+      ) {
+        const formData = new FormData();
+        formData.append('docx', file);
+        
+        const response = await fetch('/api/process-docx', {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Word document processing failed: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        extractedText = result.text;
+      } else if (file.type === 'text/plain') {
+        extractedText = await file.text();
+      } else {
+        throw new Error(`Unsupported file type: ${file.type}`);
       }
       
-      const data = await response.json();
-      setInputText(data.text);
+      setInputText(extractedText);
       
       toast({
         title: "File uploaded successfully",

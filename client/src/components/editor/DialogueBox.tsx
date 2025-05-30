@@ -130,10 +130,46 @@ export function DialogueBox({
         
         const result = await response.json();
         extractedText = result.text;
+      } else if (file.type === 'application/pdf') {
+        // Handle PDF documents
+        const formData = new FormData();
+        formData.append('pdf', file);
+        
+        const response = await fetch('/api/process-pdf', {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (!response.ok) {
+          throw new Error(`PDF processing failed: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        extractedText = result.text;
+      } else if (
+        file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+        file.type === 'application/msword'
+      ) {
+        // Handle Word documents
+        const formData = new FormData();
+        formData.append('docx', file);
+        
+        const response = await fetch('/api/process-docx', {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Word document processing failed: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        extractedText = result.text;
+      } else if (file.type === 'text/plain') {
+        // Handle text files
+        extractedText = await file.text();
       } else {
-        // Handle PDF/Word documents
-        const { extractTextFromFile } = await import('@/lib/file-utils');
-        extractedText = await extractTextFromFile(file);
+        throw new Error(`Unsupported file type: ${file.type}`);
       }
       
       // Add extracted text to the input
