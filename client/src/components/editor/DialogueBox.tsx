@@ -24,6 +24,7 @@ interface DialogueBoxProps {
   documentMap?: string[];
   onProcessGlobalQuestion?: (query: string) => Promise<void>;
   onSendToInput?: (content: string) => void;
+  onClearMessages?: () => void;
 }
 
 export function DialogueBox({
