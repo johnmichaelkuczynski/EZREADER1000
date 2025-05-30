@@ -96,6 +96,7 @@ export default function Home() {
   const [rewriteInstructions, setRewriteInstructions] = useState("");
   const [audioTranscribeDialogOpen, setAudioTranscribeDialogOpen] = useState(false);
   const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [examMode, setExamMode] = useState(false);
   
   const { toast } = useToast();
   const mediaRecorder = useRef<MediaRecorder | null>(null);
@@ -224,7 +225,7 @@ export default function Home() {
   };
 
   // Handle processing
-  const handleProcess = (instructions: string) => {
+  const handleProcess = (instructions: string, examMode?: boolean) => {
     if (!instructions.trim()) {
       toast({
         title: "No instructions",
@@ -234,7 +235,7 @@ export default function Home() {
       return;
     }
     
-    processDocument(instructions);
+    processDocument(instructions, examMode);
   };
 
   // Select an instruction from saved instructions
@@ -311,6 +312,8 @@ export default function Home() {
               setEnableSynthesisMode={setEnableSynthesisMode}
               rewriteInstructions={rewriteInstructions}
               setRewriteInstructions={setRewriteInstructions}
+              examMode={examMode}
+              setExamMode={setExamMode}
             />
             
             {/* Text Processing Section */}

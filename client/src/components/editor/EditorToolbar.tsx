@@ -23,7 +23,7 @@ import { saveInstructions, getSavedInstructions } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
 interface EditorToolbarProps {
-  onProcess: (instructions: string) => void;
+  onProcess: (instructions: string, examMode?: boolean) => void;
   onFindOnline: () => void;
   onVoiceInput: () => void;
   onAudioTranscription: () => void;
@@ -36,6 +36,8 @@ interface EditorToolbarProps {
   setEnableSynthesisMode?: (enabled: boolean) => void;
   rewriteInstructions: string;
   setRewriteInstructions: (instructions: string) => void;
+  examMode: boolean;
+  setExamMode: (enabled: boolean) => void;
 }
 
 export function EditorToolbar({
@@ -51,7 +53,9 @@ export function EditorToolbar({
   enableSynthesisMode = false,
   setEnableSynthesisMode,
   rewriteInstructions,
-  setRewriteInstructions
+  setRewriteInstructions,
+  examMode,
+  setExamMode
 }: EditorToolbarProps) {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [instructionName, setInstructionName] = useState('');
@@ -138,16 +142,28 @@ export function EditorToolbar({
         />
       </div>
       
+      {/* Exam Mode Toggle */}
+      <div className="flex items-center space-x-2 mb-2">
+        <Switch
+          id="exam-mode"
+          checked={examMode}
+          onCheckedChange={setExamMode}
+        />
+        <Label htmlFor="exam-mode" className="text-sm font-medium">
+          Exam Mode {examMode ? '(Take Test)' : '(Rewrite)'}
+        </Label>
+      </div>
+
       {/* Main Toolbar */}
       <div className="flex flex-wrap justify-between items-center gap-2">
         <div className="flex items-center">
           <Button 
             className="mr-2 bg-primary hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center gap-1.5 text-sm font-medium transition-colors"
-            onClick={() => onProcess(rewriteInstructions)}
+            onClick={() => onProcess(rewriteInstructions, examMode)}
             disabled={isProcessing}
           >
             <PlayIcon className="h-4 w-4" />
-            <span>{isProcessing ? 'Processing...' : 'Process Text'}</span>
+            <span>{isProcessing ? 'Processing...' : (examMode ? 'Take Test' : 'Process Text')}</span>
           </Button>
           
           <div className="flex bg-slate-100 rounded-md p-1">
