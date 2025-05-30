@@ -361,27 +361,9 @@ export default function Home() {
               <ChunkSelector
                 chunks={documentChunks}
                 onProcessSelected={async (selectedIndices: number[], mode: 'rewrite' | 'add' | 'both', additionalChunks?: number) => {
-                  // Handle the new processing modes
                   try {
-                    const result = await processSelectedChunks(
-                      selectedIndices,
-                      mode,
-                      additionalChunks || 0,
-                      messages.length > 0 ? messages[messages.length - 1].content : '',
-                      contentSource,
-                      useContentSource,
-                      (currentResult: string, currentChunk: number, totalChunks: number) => {
-                        setOutputText(currentResult);
-                        setMessages(prev => prev.map(msg => 
-                          msg.role === 'assistant' && msg.id === prev[prev.length - 1]?.id
-                            ? { ...msg, content: `Processing: Completed chunk ${currentChunk} of ${totalChunks} (${Math.round((currentChunk/totalChunks) * 100)}%)` }
-                            : msg
-                        ));
-                      }
-                    );
-                    
-                    // Set the final result to the output
-                    setOutputText(result);
+                    // Use the correct processSelectedChunks function from the hook
+                    await processSelectedChunks(selectedIndices, mode, additionalChunks || 0);
                     
                     // Update the final message
                     setMessages(prev => prev.map(msg => 
@@ -398,13 +380,10 @@ export default function Home() {
             )}
             
             {/* Processing Status Bar - shown only when processing */}
-            {processing.isProcessing && (
-              <ProcessingStatusBar
-                currentChunk={processing.currentChunk}
-                totalChunks={processing.totalChunks}
-                progress={processing.progress}
-                onCancel={cancelProcessing}
-              />
+            {processing && (
+              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="text-sm text-blue-600">Processing chunks...</div>
+              </div>
             )}
             
             {/* Chat Interface */}
