@@ -203,8 +203,10 @@ export async function processTextWithOpenAI(options: ProcessTextOptions): Promis
                                instructions.toLowerCase().includes('condense') ||
                                instructions.toLowerCase().includes('brief');
   
-  // Remove the forced length expansion - let the user's instructions determine the output
-  // The app should be a pure passthrough that follows user instructions exactly
+  // Add the instruction about length unless user has specified they want shorter output
+  if (!requestsShorterOutput) {
+    systemPrompt += " IMPORTANT: Unless explicitly requested otherwise, your rewrite MUST be longer than the original text. Add more examples, explanations, or details to make the content more comprehensive.";
+  }
   
   // STEP 2: BLOCK-LEVEL REWRITING - Process semantic blocks to preserve structure
   let userPrompt = `Instructions: ${instructions}
