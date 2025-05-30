@@ -420,7 +420,7 @@ export function useDocumentProcessor() {
   }, []);
 
   const clearChat = useCallback(() => {
-    setDialogueMessages([]);
+    setMessages([]);
   }, []);
 
   const resetAll = useCallback(() => {
