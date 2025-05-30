@@ -61,11 +61,9 @@ export function useDocumentProcessor() {
     useContentSource: boolean;
     llmProvider: LLMProvider;
   }) => {
-    const response = await apiRequest('/api/process-text', {
-      method: 'POST',
-      body: JSON.stringify(options)
-    });
-    return response.result;
+    const response = await apiRequest('POST', '/api/process-text', options);
+    const data = await response.json();
+    return data.result;
   }, []);
 
   // Process document function

@@ -425,8 +425,8 @@ export default function Home() {
             {/* Dialogue Box - For discussing text and special commands */}
             <DialogueBox
               messages={dialogueMessages}
-              onSendMessage={processSpecialCommand}
-              onProcessSpecialCommand={processSpecialCommand}
+              onSendMessage={processDialogueCommand}
+              onProcessSpecialCommand={processDialogueCommand}
               onReset={resetAll}
               inputText={inputText}
               outputText={outputText}
