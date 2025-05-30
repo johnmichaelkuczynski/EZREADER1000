@@ -304,7 +304,7 @@ export default function Home() {
               onFindOnline={() => setSearchDialogOpen(true)}
               onVoiceInput={() => setVoiceDialogOpen(true)}
               onAudioTranscription={() => setAudioTranscribeDialogOpen(true)}
-              isProcessing={processing.isProcessing}
+              isProcessing={processing}
               llmProvider={llmProvider}
               setLLMProvider={setLLMProvider}
               onInstructionsSelect={handleInstructionSelect}
@@ -328,7 +328,7 @@ export default function Home() {
                 onClear={clearInput}
                 onCopy={copyToClipboard}
                 onDetectAI={(text) => {
-                  detectAIText(text, true);
+                  detectAIText(text, "input");
                   return Promise.resolve();
                 }}
                 isDetecting={isInputDetecting}
@@ -346,7 +346,7 @@ export default function Home() {
                 onExportHTML={exportAsHTML}
                 onExportLaTeX={exportAsLaTeX}
                 onDetectAI={(text) => {
-                  detectAIText(text, false);
+                  detectAIText(text, "output");
                   return Promise.resolve();
                 }}
                 onSendEmail={sendEmailWithDocument}
@@ -414,7 +414,8 @@ export default function Home() {
                 const newMessage = {
                   id: crypto.randomUUID(),
                   role: 'user' as const,
-                  content
+                  content,
+                  timestamp: new Date()
                 };
                 setMessages(prev => [...prev, newMessage]);
                 processDocument(content);
