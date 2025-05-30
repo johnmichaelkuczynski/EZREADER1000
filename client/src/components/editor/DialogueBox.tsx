@@ -193,11 +193,13 @@ export function DialogueBox({
                 <Button 
                   variant="destructive" 
                   size="sm" 
-                  onClick={onReset}
+                  onClick={() => {
+                    setDialogueMessages([]);
+                  }}
                   disabled={isProcessing}
                 >
                   <RotateCcw className="h-4 w-4 mr-1" />
-                  Reset All
+                  Clear Chat
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
