@@ -4,6 +4,7 @@ import { Footer } from "@/components/layout/Footer";
 import { InputEditor } from "@/components/editor/InputEditor";
 import { OutputEditor } from "@/components/editor/OutputEditor";
 import { ContentSourceBox } from "@/components/editor/ContentSourceBox";
+import { StyleSourceBox } from "@/components/editor/StyleSourceBox";
 import { ChatInterface } from "@/components/editor/ChatInterface";
 import { DialogueBox } from "@/components/editor/DialogueBox";
 import { SpecialContentPopup } from "@/components/editor/SpecialContentPopup";
@@ -35,6 +36,10 @@ export default function Home() {
     setContentSource,
     useContentSource,
     setUseContentSource,
+    styleSource,
+    setStyleSource,
+    useStyleSource,
+    setUseStyleSource,
     reprocessOutput,
     setReprocessOutput,
     messages,
@@ -57,6 +62,8 @@ export default function Home() {
     detectAIText,
     clearInput,
     clearOutput,
+    clearContentSource,
+    clearStyleSource,
     clearChat,
     resetAll,
     processSpecialCommand,
@@ -287,13 +294,29 @@ export default function Home() {
             <ContentSourceBox
               text={contentSource}
               onTextChange={setContentSource}
-              onClear={() => setContentSource('')}
+              onClear={clearContentSource}
               useContentSource={useContentSource}
               onUseContentSourceChange={setUseContentSource}
               onFileUpload={handleContentSourceFileUpload}
               onMultipleFileUpload={handleMultipleContentSourceFileUpload}
               contentSourceFileRef={contentSourceFileRef}
             />
+            
+            {/* Style Source Box - Right below Content Source */}
+            <div className="mt-6">
+              <StyleSourceBox
+                text={styleSource}
+                onTextChange={setStyleSource}
+                useStyleSource={useStyleSource}
+                onUseStyleSourceChange={setUseStyleSource}
+                onClear={clearStyleSource}
+                onFileUpload={handleContentSourceFileUpload}
+                onSearchOnline={async (query: string) => {
+                  const result = await searchOnline(query);
+                  return result;
+                }}
+              />
+            </div>
           </div>
           
           {/* Main Editor Area - Right Column on Large Screens */}

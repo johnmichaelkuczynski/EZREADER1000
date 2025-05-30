@@ -79,9 +79,11 @@ export type SavedInstructions = typeof savedInstructions.$inferSelect;
 export const processTextSchema = z.object({
   inputText: z.string().min(1, "Input text is required"),
   contentSource: z.string().optional().default(""),
+  styleSource: z.string().optional().default(""),
   instructions: z.string().optional().default(""),
   llmProvider: z.enum(["openai", "anthropic", "perplexity"]),
   useContentSource: z.boolean().default(false),
+  useStyleSource: z.boolean().default(false),
   reprocessOutput: z.boolean().default(false),
   examMode: z.boolean().optional().default(false),
 });

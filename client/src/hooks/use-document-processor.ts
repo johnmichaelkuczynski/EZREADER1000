@@ -427,6 +427,11 @@ export function useDocumentProcessor() {
     setOutputAIResult(null);
   }, []);
 
+  const clearContentSource = useCallback(() => {
+    setContentSource('');
+    setUseContentSource(false);
+  }, []);
+
   const clearStyleSource = useCallback(() => {
     setStyleSource('');
     setUseStyleSource(false);
@@ -760,6 +765,8 @@ export function useDocumentProcessor() {
     // Clear functions
     clearInput,
     clearOutput,
+    clearContentSource,
+    clearStyleSource,
     clearChat,
     resetAll,
     
