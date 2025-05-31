@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { searchOnline } from "@/lib/api";
+import { searchOnline, extractTextFromImage } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Home() {
@@ -206,6 +206,29 @@ export default function Home() {
   const handleAudioFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setAudioFile(e.target.files[0]);
+    }
+  };
+
+  // Handle image upload for OCR
+  const handleImageUpload = async (file: File) => {
+    try {
+      const result = await extractTextFromImage(file);
+      
+      // Append the extracted text to current input
+      const newText = inputText ? `${inputText}\n\n${result.text}` : result.text;
+      setInputText(newText);
+      
+      toast({
+        title: "Text extracted successfully",
+        description: `Extracted text from image${result.confidence ? ` with ${Math.round(result.confidence * 100)}% confidence` : ''}`,
+      });
+    } catch (error) {
+      console.error('Error extracting text from image:', error);
+      toast({
+        title: "Image processing failed",
+        description: error instanceof Error ? error.message : "Failed to extract text from image",
+        variant: "destructive"
+      });
     }
   };
 

@@ -13,6 +13,7 @@ interface InputEditorProps {
   text: string;
   onTextChange: (text: string) => void;
   onFileUpload: (file: File) => Promise<void>;
+  onImageUpload?: (file: File) => Promise<void>;
   onClear: () => void;
   onCopy: (text: string) => void;
   onDetectAI: (text: string) => Promise<void>;
@@ -25,6 +26,7 @@ export function InputEditor({
   text,
   onTextChange,
   onFileUpload,
+  onImageUpload,
   onClear,
   onCopy,
   onDetectAI,
@@ -35,6 +37,8 @@ export function InputEditor({
   const [isDragActive, setIsDragActive] = useState(false);
   const [wordCount, setWordCount] = useState(0);
   const [showMathPreview, setShowMathPreview] = useState(false);
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   
   // Calculate word count whenever text changes
   useEffect(() => {
@@ -71,6 +75,21 @@ export function InputEditor({
     const files = event.target.files;
     if (files && files.length > 0) {
       await onFileUpload(files[0]);
+    }
+  };
+
+  // Handle image input for OCR
+  const handleImageInputChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0 && onImageUpload) {
+      setIsProcessingImage(true);
+      try {
+        await onImageUpload(files[0]);
+      } catch (error) {
+        console.error('Error processing image:', error);
+      } finally {
+        setIsProcessingImage(false);
+      }
     }
   };
   
@@ -134,6 +153,34 @@ export function InputEditor({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Upload</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="p-1 text-slate-400 hover:text-slate-600 transition-colors"
+                  onClick={() => imageInputRef.current?.click()}
+                  disabled={isProcessingImage}
+                >
+                  {isProcessingImage ? (
+                    <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full" />
+                  ) : (
+                    <Camera className="h-4 w-4" />
+                  )}
+                  <input 
+                    type="file" 
+                    hidden 
+                    ref={imageInputRef}
+                    onChange={handleImageInputChange}
+                    accept="image/*"
+                  />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Extract Text from Image (Math OCR)</TooltipContent>
             </Tooltip>
           </TooltipProvider>
           
