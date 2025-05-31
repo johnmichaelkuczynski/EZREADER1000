@@ -130,10 +130,23 @@ export function EditorToolbar({
         </Label>
         <Input
           id="rewrite-instructions"
-          placeholder="E.g., TAKE THE EXAM AND GET A 100/100, Simplify this text, Make it professional..."
-          value={rewriteInstructions}
-          onChange={(e) => setRewriteInstructions(e.target.value)}
+          placeholder={
+            (examMode || homeworkMode) 
+              ? "Solve Problems Mode is ON - instructions auto-generated" 
+              : "E.g., Simplify this text, Make it professional, Expand this content..."
+          }
+          value={
+            (examMode || homeworkMode) 
+              ? "SOLVE ALL MATHEMATICAL PROBLEMS AND ANSWER ALL QUESTIONS. Show complete step-by-step solutions with final answers."
+              : rewriteInstructions
+          }
+          onChange={(e) => {
+            if (!(examMode || homeworkMode)) {
+              setRewriteInstructions(e.target.value);
+            }
+          }}
           className="w-full"
+          disabled={examMode || homeworkMode}
         />
       </div>
       
