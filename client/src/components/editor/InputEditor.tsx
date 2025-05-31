@@ -50,9 +50,16 @@ export function InputEditor({
   const { getRootProps, getInputProps, isDragActive: dropzoneIsDragActive } = useDropzone({
     onDrop: async (acceptedFiles) => {
       if (acceptedFiles.length > 0) {
+        const file = acceptedFiles[0];
         try {
-          await onFileUpload(acceptedFiles[0]);
-          console.log("File uploaded successfully:", acceptedFiles[0].name);
+          // Check if it's an image file
+          if (file.type.startsWith('image/') && onImageUpload) {
+            await onImageUpload(file);
+            console.log("Image processed successfully:", file.name);
+          } else {
+            await onFileUpload(file);
+            console.log("File uploaded successfully:", file.name);
+          }
         } catch (error) {
           console.error("Error uploading file:", error);
         }
