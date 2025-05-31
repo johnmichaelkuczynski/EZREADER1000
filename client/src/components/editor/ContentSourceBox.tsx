@@ -251,7 +251,10 @@ export function ContentSourceBox({
           body: JSON.stringify({
             text: `Research and provide comprehensive information about: ${queryToUse}`,
             provider: 'claude',
-            mode: 'enhance'
+            mode: 'enhance',
+            instructions: 'Provide detailed research and analysis on this topic.',
+            useContentSource: false,
+            useStyleSource: false
           })
         }).then(res => res.json()).then(data => ({ claude: data.result })).catch(() => ({ claude: null })),
         
@@ -261,7 +264,10 @@ export function ContentSourceBox({
           body: JSON.stringify({
             text: `Research and provide comprehensive information about: ${queryToUse}`,
             provider: 'openai',
-            mode: 'enhance'
+            mode: 'enhance',
+            instructions: 'Provide detailed research and analysis on this topic.',
+            useContentSource: false,
+            useStyleSource: false
           })
         }).then(res => res.json()).then(data => ({ gpt: data.result })).catch(() => ({ gpt: null })),
         
