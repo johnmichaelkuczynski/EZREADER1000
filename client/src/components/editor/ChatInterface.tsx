@@ -47,7 +47,8 @@ export function ChatInterface({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!inputValue.trim()) return;
+    // Allow empty submissions when in exam/homework mode (auto-generates instructions)
+    if (!inputValue.trim() && !(examMode || homeworkMode)) return;
     
     onSendMessage(inputValue);
     setInputValue('');
