@@ -266,21 +266,40 @@ export function useDocumentProcessor() {
       });
       
       const result = await response.json();
-      setContentSource(result.text);
       
-      toast({
-        title: "Content source uploaded",
-        description: `Extracted text from ${file.name}`,
-      });
+      // Check current usage mode and set the appropriate source
+      if (useStyleSource && !useContentSource) {
+        // Style source mode - set as style source
+        setStyleSource(result.text);
+        toast({
+          title: "Style source uploaded",
+          description: `Style extracted from ${file.name}`,
+        });
+      } else if (useContentSource && useStyleSource) {
+        // Both mode - set as both
+        setContentSource(result.text);
+        setStyleSource(result.text);
+        toast({
+          title: "Content and style source uploaded",
+          description: `Content and style extracted from ${file.name}`,
+        });
+      } else {
+        // Content source mode (default)
+        setContentSource(result.text);
+        toast({
+          title: "Content source uploaded",
+          description: `Content extracted from ${file.name}`,
+        });
+      }
     } catch (error: any) {
-      console.error('Error uploading content source:', error);
+      console.error('Error uploading source file:', error);
       toast({
         title: "Upload failed",
         description: error?.message || 'Failed to process file',
         variant: "destructive"
       });
     }
-  }, [toast]);
+  }, [toast, useContentSource, useStyleSource]);
 
   const handleMultipleContentSourceFileUpload = useCallback(async (files: File[]) => {
     // Handle multiple file uploads
