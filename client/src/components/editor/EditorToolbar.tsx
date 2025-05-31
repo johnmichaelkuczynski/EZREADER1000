@@ -144,64 +144,73 @@ export function EditorToolbar({
         />
       </div>
       
-      {/* Exam Mode Toggle */}
-      <div className="flex items-center space-x-2 mb-2">
-        <Switch
-          id="exam-mode"
-          checked={examMode}
-          onCheckedChange={setExamMode}
-        />
-        <Label htmlFor="exam-mode" className="text-sm font-medium">
-          Exam Mode {examMode ? '(Take Test)' : '(Rewrite)'}
-        </Label>
+      {/* Mode Toggles */}
+      <div className="flex items-center space-x-6 mb-2">
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="exam-mode"
+            checked={examMode}
+            onCheckedChange={setExamMode}
+          />
+          <Label htmlFor="exam-mode" className="text-sm font-medium">
+            Exam Mode {examMode ? '(Take Test)' : '(Rewrite)'}
+          </Label>
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="homework-mode"
+            checked={false}
+            onCheckedChange={() => {}}
+          />
+          <Label htmlFor="homework-mode" className="text-sm font-medium">
+            Homework Mode (Rewrite)
+          </Label>
+        </div>
       </div>
 
       {/* Main Toolbar */}
-      <div className="flex flex-wrap justify-between items-center gap-2">
-        <div className="flex items-center">
-          <Button 
-            className="mr-2 bg-primary hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center gap-1.5 text-sm font-medium transition-colors"
-            onClick={() => onProcess(rewriteInstructions, examMode)}
-            disabled={isProcessing}
-          >
-            <PlayIcon className="h-4 w-4" />
-            <span>{isProcessing ? 'Processing...' : (examMode ? 'Take Test' : 'Process Text')}</span>
-          </Button>
-          
-          <div className="flex bg-slate-100 rounded-md p-1">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="px-3 py-1 text-xs font-medium rounded"
-              onClick={onFindOnline}
-            >
-              <SearchIcon className="h-3 w-3 mr-1" />
-              <span className="hidden sm:inline">Find Online</span>
-            </Button>
-            
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="px-3 py-1 text-xs font-medium rounded"
-              onClick={onVoiceInput}
-            >
-              <MicIcon className="h-3 w-3 mr-1" />
-              <span className="hidden sm:inline">Voice</span>
-            </Button>
-            
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="px-3 py-1 text-xs font-medium rounded"
-              onClick={onAudioTranscription}
-            >
-              <FileAudioIcon className="h-3 w-3 mr-1" />
-              <span className="hidden sm:inline">Transcribe</span>
-            </Button>
-          </div>
-        </div>
+      <div className="flex flex-wrap items-center gap-4">
+        <Button 
+          className="bg-primary hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center gap-1.5 text-sm font-medium transition-colors"
+          onClick={() => onProcess(rewriteInstructions, examMode)}
+          disabled={isProcessing}
+        >
+          <PlayIcon className="h-4 w-4" />
+          <span>{isProcessing ? 'Processing...' : (examMode ? 'Take Test' : 'Process Text')}</span>
+        </Button>
         
-        <div className="flex items-center gap-2">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="px-3 py-1 text-xs font-medium rounded bg-slate-100 hover:bg-slate-200"
+          onClick={onFindOnline}
+        >
+          <SearchIcon className="h-3 w-3 mr-1" />
+          <span>Find Online</span>
+        </Button>
+        
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="px-3 py-1 text-xs font-medium rounded bg-slate-100 hover:bg-slate-200"
+          onClick={onVoiceInput}
+        >
+          <MicIcon className="h-3 w-3 mr-1" />
+          <span>Voice</span>
+        </Button>
+        
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="px-3 py-1 text-xs font-medium rounded bg-slate-100 hover:bg-slate-200"
+          onClick={onAudioTranscription}
+        >
+          <FileAudioIcon className="h-3 w-3 mr-1" />
+          <span>Transcribe</span>
+        </Button>
+        
+        <div className="flex items-center gap-2 ml-auto">
           <Select 
             defaultValue="default"
             onValueChange={handleSelectInstruction}
@@ -247,7 +256,7 @@ export function EditorToolbar({
           )}
         </div>
       </div>
-      
+
       {/* Save Instructions Dialog */}
       <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
         <DialogContent>
@@ -291,5 +300,6 @@ export function EditorToolbar({
         </Button>
       )}
     </div>
+    </>
   );
 }
