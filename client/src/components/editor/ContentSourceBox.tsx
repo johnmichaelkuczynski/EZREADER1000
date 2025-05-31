@@ -55,6 +55,13 @@ export function ContentSourceBox({
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<Array<{ title: string; url: string; snippet: string }>>([]);
+  const [selectedSources, setSelectedSources] = useState<Set<number>>(new Set());
+  const [aiResearch, setAiResearch] = useState<{
+    claude?: string;
+    gpt?: string;
+    perplexity?: string;
+  }>({});
+  const [selectedAiSources, setSelectedAiSources] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
   // Derive current usage mode from boolean flags
@@ -179,15 +186,46 @@ export function ContentSourceBox({
     try {
       setIsSearching(true);
       
-      const result = await searchOnline(queryToUse);
-      setSearchResults(result.results);
+      // Search web sources
+      const webResult = await searchOnline(queryToUse);
+      setSearchResults(webResult.results);
       
-      if (result.content) {
-        onTextChange(result.content);
-      }
+      // Automatically query AI services for research
+      const aiPromises = [
+        fetch('/api/process-text', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: `Research and provide comprehensive information about: ${queryToUse}`,
+            provider: 'claude',
+            mode: 'enhance'
+          })
+        }).then(res => res.json()).then(data => ({ claude: data.result })).catch(() => ({ claude: null })),
+        
+        fetch('/api/process-text', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: `Research and provide comprehensive information about: ${queryToUse}`,
+            provider: 'openai',
+            mode: 'enhance'
+          })
+        }).then(res => res.json()).then(data => ({ gpt: data.result })).catch(() => ({ gpt: null })),
+        
+        fetch('/api/search-online', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: queryToUse })
+        }).then(res => res.json()).then(data => ({ perplexity: data.content })).catch(() => ({ perplexity: null }))
+      ];
       
-      setSearchDialogOpen(false);
-      setActiveTab('manual');
+      const aiResults = await Promise.all(aiPromises);
+      const combinedAiResults = aiResults.reduce((acc, result) => ({ ...acc, ...result }), {});
+      setAiResearch(combinedAiResults);
+      
+      // Don't auto-add content anymore - let user select
+      // Keep dialog open for selection
+      
     } catch (error: any) {
       console.error('Error searching online:', error);
       toast({
