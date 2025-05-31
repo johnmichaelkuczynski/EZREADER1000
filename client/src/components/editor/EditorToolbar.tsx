@@ -130,23 +130,10 @@ export function EditorToolbar({
         </Label>
         <Input
           id="rewrite-instructions"
-          placeholder={
-            (examMode || homeworkMode) 
-              ? "Solve Problems Mode is ON - instructions auto-generated" 
-              : "E.g., Simplify this text, Make it professional, Expand this content..."
-          }
-          value={
-            (examMode || homeworkMode) 
-              ? "SOLVE ALL MATHEMATICAL PROBLEMS AND ANSWER ALL QUESTIONS. Show complete step-by-step solutions with final answers."
-              : rewriteInstructions
-          }
-          onChange={(e) => {
-            if (!(examMode || homeworkMode)) {
-              setRewriteInstructions(e.target.value);
-            }
-          }}
+          placeholder="E.g., Simplify this text, Make it professional, Expand this content..."
+          value={rewriteInstructions}
+          onChange={(e) => setRewriteInstructions(e.target.value)}
           className="w-full"
-          disabled={examMode || homeworkMode}
         />
       </div>
       
@@ -159,6 +146,11 @@ export function EditorToolbar({
             onCheckedChange={(checked) => {
               setExamMode(checked);
               setHomeworkMode(checked);
+              if (checked) {
+                setRewriteInstructions("SOLVE ALL MATHEMATICAL PROBLEMS AND ANSWER ALL QUESTIONS. Show complete step-by-step solutions with final answers.");
+              } else {
+                setRewriteInstructions("");
+              }
             }}
           />
           <Label htmlFor="solve-mode" className="text-sm font-medium">
@@ -186,13 +178,8 @@ export function EditorToolbar({
         <div className="flex items-center gap-3">
           <Button 
             className="bg-primary hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center gap-1.5 text-sm font-medium transition-colors"
-            onClick={() => {
-              const finalInstructions = (examMode || homeworkMode) 
-                ? "SOLVE ALL MATHEMATICAL PROBLEMS AND ANSWER ALL QUESTIONS. Show complete step-by-step solutions with final answers."
-                : rewriteInstructions;
-              onProcess(finalInstructions, examMode);
-            }}
-            disabled={!(examMode || homeworkMode) && !rewriteInstructions.trim()}
+            onClick={() => onProcess(rewriteInstructions, examMode)}
+            disabled={!rewriteInstructions.trim()}
           >
             <PlayIcon className="h-4 w-4" />
             <span>{isProcessing ? 'Processing...' : (examMode ? 'Take Test' : 'Process Text')}</span>
