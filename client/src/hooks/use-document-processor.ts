@@ -81,7 +81,7 @@ export function useDocumentProcessor() {
   }, []);
 
   // Process document function
-  const processDocument = useCallback(async (instructions: string, examMode?: boolean) => {
+  const processDocument = useCallback(async (instructions: string, examMode?: boolean, homeworkMode?: boolean) => {
     if (!inputText.trim()) {
       toast({
         title: "No input text",
@@ -147,7 +147,7 @@ export function useDocumentProcessor() {
     } finally {
       setProcessing(false);
     }
-  }, [inputText, contentSource, useContentSource, llmProvider, processText, toast]);
+  }, [inputText, contentSource, useContentSource, llmProvider, processText, toast, homeworkMode]);
 
   // Process dialogue command - pure passthrough
   const processDialogueCommand = useCallback(async (userInput: string) => {

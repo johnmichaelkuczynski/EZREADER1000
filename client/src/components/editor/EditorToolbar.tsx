@@ -178,11 +178,11 @@ export function EditorToolbar({
         <div className="flex items-center">
           <Button 
             className="mr-2 bg-primary hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center gap-1.5 text-sm font-medium transition-colors"
-            onClick={() => onProcess(rewriteInstructions, examMode)}
+            onClick={() => onProcess(rewriteInstructions, examMode, homeworkMode)}
             disabled={isProcessing}
           >
             <PlayIcon className="h-4 w-4" />
-            <span>{isProcessing ? 'Processing...' : (examMode ? 'Take Test' : 'Process Text')}</span>
+            <span>{isProcessing ? 'Processing...' : (homeworkMode ? 'Follow Instructions' : examMode ? 'Take Test' : 'Process Text')}</span>
           </Button>
           
           <div className="flex bg-slate-100 rounded-md p-1">

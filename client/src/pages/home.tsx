@@ -234,7 +234,7 @@ export default function Home() {
   };
 
   // Handle processing
-  const handleProcess = (instructions: string, examMode?: boolean) => {
+  const handleProcess = (instructions: string, examMode?: boolean, homeworkMode?: boolean) => {
     if (!instructions.trim()) {
       toast({
         title: "No instructions",
@@ -244,7 +244,7 @@ export default function Home() {
       return;
     }
     
-    processDocument(instructions, examMode);
+    processDocument(instructions, examMode, homeworkMode);
   };
 
   // Select an instruction from saved instructions
@@ -327,6 +327,8 @@ export default function Home() {
               setRewriteInstructions={setRewriteInstructions}
               examMode={examMode}
               setExamMode={setExamMode}
+              homeworkMode={homeworkMode}
+              setHomeworkMode={setHomeworkMode}
               onClearAll={resetAll}
             />
             
