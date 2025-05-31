@@ -169,25 +169,13 @@ export function InputEditor({
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="p-1 text-slate-400 hover:text-slate-600 transition-colors"
-                  onClick={() => imageInputRef.current?.click()}
-                  disabled={isProcessingImage}
+                  className={`p-1 transition-colors ${showMathPreview ? 'text-blue-600 hover:text-blue-700' : 'text-slate-400 hover:text-slate-600'}`}
+                  onClick={() => setShowMathPreview(!showMathPreview)}
                 >
-                  {isProcessingImage ? (
-                    <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full" />
-                  ) : (
-                    <Camera className="h-4 w-4" />
-                  )}
-                  <input 
-                    type="file" 
-                    hidden 
-                    ref={imageInputRef}
-                    onChange={handleImageInputChange}
-                    accept="image/*"
-                  />
+                  {showMathPreview ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Extract Text from Image (Math OCR)</TooltipContent>
+              <TooltipContent>Math Preview</TooltipContent>
             </Tooltip>
           </TooltipProvider>
           
@@ -209,22 +197,6 @@ export function InputEditor({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>GPTZero AI Detection</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className={`p-1 transition-colors ${showMathPreview ? 'text-blue-600 hover:text-blue-700' : 'text-slate-400 hover:text-slate-600'}`}
-                  onClick={() => setShowMathPreview(!showMathPreview)}
-                >
-                  {showMathPreview ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Math Preview</TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>
