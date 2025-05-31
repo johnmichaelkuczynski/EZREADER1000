@@ -38,6 +38,7 @@ interface OutputEditorProps {
   isDetecting: boolean;
   isSendingEmail: boolean;
   inputText: string;
+  outputAIResult?: { isAI: boolean; confidence: number; details: string } | null;
 }
 
 export function OutputEditor({
@@ -53,7 +54,8 @@ export function OutputEditor({
   onSendEmail,
   isDetecting,
   isSendingEmail,
-  inputText
+  inputText,
+  outputAIResult
 }: OutputEditorProps) {
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   const [emailTo, setEmailTo] = useState('');
@@ -256,6 +258,16 @@ export function OutputEditor({
                 <p className="text-xs text-slate-400 mt-2">Your content will be processed and ready for editing</p>
               </div>
             )}
+          </div>
+        )}
+        
+        {/* AI Detection Results */}
+        {outputAIResult && (
+          <div className="mt-3 flex items-center justify-between p-3 border rounded-lg bg-gray-50 dark:bg-gray-800">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">AI Detection:</span>
+            <Badge variant={outputAIResult.isAI ? "destructive" : "secondary"} className="font-medium">
+              {Math.round(outputAIResult.confidence * 100)}%
+            </Badge>
           </div>
         )}
       </CardContent>

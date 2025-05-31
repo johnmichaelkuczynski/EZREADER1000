@@ -366,6 +366,7 @@ export default function Home() {
                 isDetecting={isOutputDetecting}
                 isSendingEmail={isSendingEmail}
                 inputText={inputText}
+                outputAIResult={outputAIResult}
               />
             </div>
             
