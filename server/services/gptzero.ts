@@ -61,7 +61,7 @@ export async function detectAIWithGPTZero(text: string): Promise<{
     console.error("GPTZero detection error:", error);
     
     if (process.env.GPTZERO_API_KEY) {
-      throw new Error(`Failed to detect AI with GPTZero: ${error.message}`);
+      throw new Error(`Failed to detect AI with GPTZero: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } else {
       console.log("GPTZero API key not found, falling back to model-based detection");
       throw new Error("GPTZero API key not configured");
