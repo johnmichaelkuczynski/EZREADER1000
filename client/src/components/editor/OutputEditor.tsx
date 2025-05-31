@@ -224,18 +224,11 @@ export function OutputEditor({
           <div className="editor overflow-y-auto p-0 relative">
             {text ? (
               <>
-                <Textarea
-                  className="min-h-[600px] h-full rounded-none border-0 resize-none focus-visible:ring-0 pr-16"
-                  placeholder="Processed text appears here... Click to edit directly"
-                  value={text}
-                  onChange={(e) => onTextChange(e.target.value)}
-                  style={{
-                    whiteSpace: 'pre-wrap',
-                    fontFamily: 'Georgia, serif'
-                  }}
-                />
-                <div className="absolute top-4 right-4 text-xs text-gray-400 bg-white/80 px-2 py-1 rounded shadow-sm">
-                  Click to edit
+                <div className="min-h-[600px] border border-gray-200 rounded-none overflow-hidden relative">
+                  <MathRenderer content={text} className="min-h-[600px] w-full overflow-x-auto p-4" />
+                  <div className="absolute top-4 right-4 text-xs text-gray-400 bg-white/80 px-2 py-1 rounded shadow-sm">
+                    Math rendered
+                  </div>
                 </div>
               </>
             ) : (
