@@ -85,8 +85,6 @@ export default function Home() {
     documentMap,
     processGlobalQuestion,
     // Mode states
-    examMode,
-    setExamMode,
     homeworkMode,
     setHomeworkMode
   } = useDocumentProcessor();
@@ -110,6 +108,7 @@ export default function Home() {
   const [rewriteInstructions, setRewriteInstructions] = useState("");
   const [audioTranscribeDialogOpen, setAudioTranscribeDialogOpen] = useState(false);
   const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [examMode, setExamMode] = useState(false);
   
   const { toast } = useToast();
   const mediaRecorder = useRef<MediaRecorder | null>(null);
@@ -331,7 +330,6 @@ export default function Home() {
               onFileUpload={handleContentSourceFileUpload}
               onMultipleFileUpload={handleMultipleContentSourceFileUpload}
               contentSourceFileRef={contentSourceFileRef}
-              documentContent={inputText}
             />
 
           </div>
@@ -450,8 +448,6 @@ export default function Home() {
               onSendToInput={(content) => {
                 setInputText(content);
               }}
-              examMode={examMode}
-              homeworkMode={homeworkMode}
             />
             
             {/* Dialogue Box - For discussing text and special commands */}

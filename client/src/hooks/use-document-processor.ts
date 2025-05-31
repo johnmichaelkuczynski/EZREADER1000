@@ -27,8 +27,7 @@ export function useDocumentProcessor() {
   const [processing, setProcessing] = useState(false);
   const [llmProvider, setLLMProvider] = useState<LLMProvider>('openai');
   
-  // Exam and homework mode state
-  const [examMode, setExamMode] = useState(false);
+  // Homework mode state
   const [homeworkMode, setHomeworkMode] = useState(false);
   
   // Messages for main processing
@@ -1005,8 +1004,6 @@ ${inputExcerpt ? `INPUT DOCUMENT:\n${inputExcerpt}\n\n` : ''}${outputExcerpt ? `
     processGlobalQuestion,
     
     // Mode states
-    examMode,
-    setExamMode,
     homeworkMode,
     setHomeworkMode
   };

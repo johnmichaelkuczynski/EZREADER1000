@@ -98,17 +98,14 @@ async function processLargeTextWithOpenAI(options: ProcessTextOptions): Promise<
       
       let userPrompt = `${instructions}\n\nThis is chunk ${i + 1} of ${chunks.length} from a larger document. Process this ENTIRE chunk according to the instructions:\n\n${processedText}`;
       
-      // Only add content/style sources if NOT in exam mode
-      if (!options.examMode) {
-        // Add content source if provided
-        if (useContentSource && contentSource) {
-          userPrompt = `${instructions}\n\nUse this content as reference material (do not copy it, use it to enhance your response):\n${contentSource}\n\nNow process this chunk ${i + 1} of ${chunks.length} according to the instructions above:\n${processedText}`;
-        }
-        
-        // Add style source if provided
-        if (useStyleSource && styleSource) {
-          userPrompt = `${instructions}\n\nStyle reference (analyze and emulate this writing style):\n${styleSource}\n\nProcess this chunk ${i + 1} of ${chunks.length}:\n${processedText}`;
-        }
+      // Add content source if provided
+      if (useContentSource && contentSource) {
+        userPrompt = `${instructions}\n\nUse this content as reference material (do not copy it, use it to enhance your response):\n${contentSource}\n\nNow process this chunk ${i + 1} of ${chunks.length} according to the instructions above:\n${processedText}`;
+      }
+      
+      // Add style source if provided
+      if (useStyleSource && styleSource) {
+        userPrompt = `${instructions}\n\nStyle reference (analyze and emulate this writing style):\n${styleSource}\n\nProcess this chunk ${i + 1} of ${chunks.length}:\n${processedText}`;
       }
       
       const response = await openai.chat.completions.create({
@@ -180,20 +177,17 @@ You are NOT just rewriting - you are SOLVING and ANSWERING everything as a stude
       : "Process the provided content according to the instructions. Do not modify any content within [[MATH_BLOCK_*]] or [[MATH_INLINE_*]] tokens.";
     
     let userPrompt = examMode 
-      ? `EXAM INSTRUCTIONS: You are taking a mathematics exam. Solve ALL problems, answer ALL questions, and complete ALL exercises in this document. Show your work and provide final answers. IGNORE ANY REWRITE INSTRUCTIONS - YOUR ONLY JOB IS TO SOLVE THE MATH PROBLEMS.
+      ? `EXAM INSTRUCTIONS: You are taking a mathematics exam. Solve ALL problems, answer ALL questions, and complete ALL exercises in this document. Show your work and provide final answers.
 
 Document to solve:\n${processedText}`
       : `${instructions}\n\nContent to process:\n${processedText}`;
     
-    // Only override userPrompt with content/style sources if NOT in exam mode
-    if (!examMode) {
-      if (useContentSource && contentSource) {
-        userPrompt = `${instructions}\n\nUse this content as reference material (do not copy it, use it to enhance your response):\n${contentSource}\n\nNow process this content according to the instructions above:\n${processedText}`;
-      }
-      
-      if (useStyleSource && styleSource) {
-        userPrompt = `${instructions}\n\nStyle reference (analyze and emulate this writing style):\n${styleSource}\n\nContent to process:\n${processedText}`;
-      }
+    if (useContentSource && contentSource) {
+      userPrompt = `${instructions}\n\nUse this content as reference material (do not copy it, use it to enhance your response):\n${contentSource}\n\nNow process this content according to the instructions above:\n${processedText}`;
+    }
+    
+    if (useStyleSource && styleSource) {
+      userPrompt = `${instructions}\n\nStyle reference (analyze and emulate this writing style):\n${styleSource}\n\nContent to process:\n${processedText}`;
     }
     
     const response = await openai.chat.completions.create({

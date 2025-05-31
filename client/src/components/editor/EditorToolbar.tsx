@@ -64,13 +64,6 @@ export function EditorToolbar({
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-
-  // Auto-populate instructions when solve mode is active
-  useEffect(() => {
-    if ((examMode || homeworkMode) && !rewriteInstructions.trim()) {
-      setRewriteInstructions("SOLVE ALL MATHEMATICAL PROBLEMS AND ANSWER ALL QUESTIONS. Show complete step-by-step solutions with final answers.");
-    }
-  }, [examMode, homeworkMode, rewriteInstructions, setRewriteInstructions]);
   
   // Load saved instructions
   useEffect(() => {
@@ -137,31 +130,34 @@ export function EditorToolbar({
         </Label>
         <Input
           id="rewrite-instructions"
-          placeholder="E.g., Simplify this text, Make it professional, Expand this content..."
+          placeholder="E.g., TAKE THE EXAM AND GET A 100/100, Simplify this text, Make it professional..."
           value={rewriteInstructions}
           onChange={(e) => setRewriteInstructions(e.target.value)}
           className="w-full"
         />
       </div>
       
-      {/* Mode Toggle */}
+      {/* Mode Toggles */}
       <div className="flex items-center space-x-6 mb-2">
         <div className="flex items-center space-x-2">
           <Switch
-            id="solve-mode"
-            checked={examMode || homeworkMode}
-            onCheckedChange={(checked) => {
-              setExamMode(checked);
-              setHomeworkMode(checked);
-              if (checked) {
-                setRewriteInstructions("SOLVE ALL MATHEMATICAL PROBLEMS AND ANSWER ALL QUESTIONS. Show complete step-by-step solutions with final answers.");
-              } else {
-                setRewriteInstructions("");
-              }
-            }}
+            id="exam-mode"
+            checked={examMode}
+            onCheckedChange={setExamMode}
           />
-          <Label htmlFor="solve-mode" className="text-sm font-medium">
-            Solve Problems Mode {(examMode || homeworkMode) ? '(Solve All Math)' : '(Rewrite Text)'}
+          <Label htmlFor="exam-mode" className="text-sm font-medium">
+            Exam Mode {examMode ? '(Take Test)' : '(Rewrite)'}
+          </Label>
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="homework-mode"
+            checked={homeworkMode}
+            onCheckedChange={setHomeworkMode}
+          />
+          <Label htmlFor="homework-mode" className="text-sm font-medium">
+            Homework Mode {homeworkMode ? '(Solve)' : '(Rewrite)'}
           </Label>
         </div>
       </div>
@@ -186,7 +182,7 @@ export function EditorToolbar({
           <Button 
             className="bg-primary hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center gap-1.5 text-sm font-medium transition-colors"
             onClick={() => onProcess(rewriteInstructions, examMode)}
-            disabled={!(examMode || homeworkMode) && !rewriteInstructions.trim()}
+            disabled={false}
           >
             <PlayIcon className="h-4 w-4" />
             <span>{isProcessing ? 'Processing...' : (examMode ? 'Take Test' : 'Process Text')}</span>
