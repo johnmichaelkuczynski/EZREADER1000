@@ -163,125 +163,128 @@ export function EditorToolbar({
       </div>
 
       {/* Main Toolbar */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <Button 
-            className="bg-primary hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center gap-1.5 text-sm font-medium transition-colors"
-            onClick={() => onProcess(rewriteInstructions, examMode)}
-            disabled={false}
-          >
-            <PlayIcon className="h-4 w-4" />
-            <span>{isProcessing ? 'Processing...' : (examMode ? 'Take Test' : 'Process Text')}</span>
-          </Button>
-          
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="px-3 py-1 text-xs font-medium rounded bg-slate-100 hover:bg-slate-200"
-            onClick={onFindOnline}
-          >
-            <SearchIcon className="h-3 w-3 mr-1" />
-            <span>Find Online</span>
-          </Button>
-          
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="px-3 py-1 text-xs font-medium rounded bg-slate-100 hover:bg-slate-200"
-            onClick={onVoiceInput}
-          >
-            <MicIcon className="h-3 w-3 mr-1" />
-            <span>Voice</span>
-          </Button>
-          
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="px-3 py-1 text-xs font-medium rounded bg-slate-100 hover:bg-slate-200"
-            onClick={onAudioTranscription}
-          >
-            <BookOpenIcon className="h-3 w-3 mr-1" />
-            <span>Audio</span>
-          </Button>
-        </div>
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <Button 
+              className="bg-primary hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center gap-1.5 text-sm font-medium transition-colors"
+              onClick={() => onProcess(rewriteInstructions, examMode)}
+              disabled={false}
+            >
+              <PlayIcon className="h-4 w-4" />
+              <span>{isProcessing ? 'Processing...' : (examMode ? 'Take Test' : 'Process Text')}</span>
+            </Button>
+            
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="px-3 py-1 text-xs font-medium rounded bg-slate-100 hover:bg-slate-200"
+              onClick={onFindOnline}
+            >
+              <SearchIcon className="h-3 w-3 mr-1" />
+              <span>Find Online</span>
+            </Button>
+            
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="px-3 py-1 text-xs font-medium rounded bg-slate-100 hover:bg-slate-200"
+              onClick={onVoiceInput}
+            >
+              <MicIcon className="h-3 w-3 mr-1" />
+              <span>Voice</span>
+            </Button>
+            
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="px-3 py-1 text-xs font-medium rounded bg-slate-100 hover:bg-slate-200"
+              onClick={onAudioTranscription}
+            >
+              <BookOpenIcon className="h-3 w-3 mr-1" />
+              <span>Audio</span>
+            </Button>
+          </div>
 
-        <div className="flex items-center gap-2">
-          {/* LLM Provider Selector */}
-          <Select value={llmProvider} onValueChange={setLLMProvider}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="openai">OpenAI</SelectItem>
-              <SelectItem value="anthropic">Anthropic</SelectItem>
-              <SelectItem value="perplexity">Perplexity</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-2">
+            {/* LLM Provider Selector */}
+            <Select value={llmProvider} onValueChange={setLLMProvider}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="openai">OpenAI</SelectItem>
+                <SelectItem value="anthropic">Anthropic</SelectItem>
+                <SelectItem value="perplexity">Perplexity</SelectItem>
+              </SelectContent>
+            </Select>
 
-          {/* Saved Instructions */}
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm">
-                <SaveIcon className="h-4 w-4 mr-1" />
-                Instructions
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Saved Instructions</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="instruction-select" className="text-sm font-medium">
-                    Select Saved Instructions
-                  </Label>
-                  <Select onValueChange={handleInstructionSelect}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Choose saved instructions..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {savedInstructions.map((instruction) => (
-                        <SelectItem key={instruction.id} value={instruction.id.toString()}>
-                          {instruction.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div>
-                  <Label htmlFor="instruction-name" className="text-sm font-medium">
-                    Save Current Instructions
-                  </Label>
-                  <Input
-                    id="instruction-name"
-                    placeholder="Enter name for instructions..."
-                    value={instructionName}
-                    onChange={(e) => setInstructionName(e.target.value)}
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button onClick={handleSaveInstructions} disabled={isSaving}>
-                  {isSaving ? 'Saving...' : 'Save'}
+            {/* Saved Instructions */}
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <SaveIcon className="h-4 w-4 mr-1" />
+                  Instructions
                 </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-          
-          {/* Clear Whole App Button */}
-          {onClearAll && (
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Saved Instructions</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="instruction-select" className="text-sm font-medium">
+                      Select Saved Instructions
+                    </Label>
+                    <Select onValueChange={handleInstructionSelect}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choose saved instructions..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {savedInstructions.map((instruction) => (
+                          <SelectItem key={instruction.id} value={instruction.id.toString()}>
+                            {instruction.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="instruction-name" className="text-sm font-medium">
+                      Save Current Instructions
+                    </Label>
+                    <Input
+                      id="instruction-name"
+                      placeholder="Enter name for instructions..."
+                      value={instructionName}
+                      onChange={(e) => setInstructionName(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button onClick={handleSaveInstructions} disabled={isSaving}>
+                    {isSaving ? 'Saving...' : 'Save'}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
+        
+        {/* Clear All Button - Moved to its own row */}
+        {onClearAll && (
+          <div className="flex justify-end">
             <Button 
               variant="destructive" 
               size="sm"
               onClick={onClearAll}
-              className="ml-2"
             >
               <Trash2 className="h-4 w-4 mr-1" />
               Clear All
             </Button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
