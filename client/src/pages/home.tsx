@@ -343,6 +343,7 @@ export default function Home() {
                 }}
                 isDetecting={isInputDetecting}
                 inputFileRef={inputFileRef}
+                aiResult={inputAIResult}
               />
               
               {/* Output Editor */}

@@ -18,6 +18,7 @@ interface InputEditorProps {
   onDetectAI: (text: string) => Promise<void>;
   isDetecting: boolean;
   inputFileRef: React.RefObject<HTMLInputElement>;
+  aiResult?: { isAI: boolean; confidence: number; details: string } | null;
 }
 
 export function InputEditor({
@@ -28,7 +29,8 @@ export function InputEditor({
   onCopy,
   onDetectAI,
   isDetecting,
-  inputFileRef
+  inputFileRef,
+  aiResult
 }: InputEditorProps) {
   const [isDragActive, setIsDragActive] = useState(false);
   const [wordCount, setWordCount] = useState(0);
@@ -145,10 +147,14 @@ export function InputEditor({
                   onClick={() => onDetectAI(text)}
                   disabled={isDetecting || !text}
                 >
-                  <Bot className="h-4 w-4" />
+                  {isDetecting ? (
+                    <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full" />
+                  ) : (
+                    <Bot className="h-4 w-4" />
+                  )}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>AI Detect</TooltipContent>
+              <TooltipContent>GPTZero AI Detection</TooltipContent>
             </Tooltip>
           </TooltipProvider>
           
@@ -219,6 +225,21 @@ export function InputEditor({
                 value={text}
                 onChange={(e) => onTextChange(e.target.value)}
               />
+          </div>
+        )}
+        
+        {/* AI Detection Results */}
+        {aiResult && (
+          <div className="mt-4 p-4 border rounded-lg bg-gray-50 dark:bg-gray-800">
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="font-semibold text-sm">GPTZero AI Detection Results</h4>
+              <Badge variant={aiResult.isAI ? "destructive" : "secondary"}>
+                {Math.round(aiResult.confidence * 100)}% {aiResult.isAI ? "AI Generated" : "Human Written"}
+              </Badge>
+            </div>
+            <div className="text-xs text-gray-600 dark:text-gray-300 whitespace-pre-line">
+              {aiResult.details}
+            </div>
           </div>
         )}
       </CardContent>
