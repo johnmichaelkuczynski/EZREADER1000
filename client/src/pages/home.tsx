@@ -85,6 +85,8 @@ export default function Home() {
     documentMap,
     processGlobalQuestion,
     // Mode states
+    examMode,
+    setExamMode,
     homeworkMode,
     setHomeworkMode
   } = useDocumentProcessor();
@@ -108,7 +110,6 @@ export default function Home() {
   const [rewriteInstructions, setRewriteInstructions] = useState("");
   const [audioTranscribeDialogOpen, setAudioTranscribeDialogOpen] = useState(false);
   const [audioFile, setAudioFile] = useState<File | null>(null);
-  const [examMode, setExamMode] = useState(false);
   
   const { toast } = useToast();
   const mediaRecorder = useRef<MediaRecorder | null>(null);

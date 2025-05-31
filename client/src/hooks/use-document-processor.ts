@@ -1005,6 +1005,8 @@ ${inputExcerpt ? `INPUT DOCUMENT:\n${inputExcerpt}\n\n` : ''}${outputExcerpt ? `
     processGlobalQuestion,
     
     // Mode states
+    examMode,
+    setExamMode,
     homeworkMode,
     setHomeworkMode
   };
