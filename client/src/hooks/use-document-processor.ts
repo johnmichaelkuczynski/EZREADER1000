@@ -257,15 +257,48 @@ export function useDocumentProcessor() {
 
   const handleContentSourceFileUpload = useCallback(async (file: File) => {
     try {
-      const formData = new FormData();
-      formData.append('pdf', file);
+      let result;
       
-      const response = await fetch('/api/process-pdf', {
-        method: 'POST',
-        body: formData
-      });
-      
-      const result = await response.json();
+      if (file.type === 'text/plain') {
+        // Handle text files directly
+        const text = await file.text();
+        result = { text };
+      } else if (file.type === 'application/pdf') {
+        // Handle PDF files
+        const formData = new FormData();
+        formData.append('pdf', file);
+        
+        const response = await fetch('/api/process-pdf', {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (!response.ok) {
+          throw new Error(`PDF processing failed: ${response.statusText}`);
+        }
+        
+        result = await response.json();
+      } else if (
+        file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+        file.type === 'application/msword'
+      ) {
+        // Handle Word documents
+        const formData = new FormData();
+        formData.append('docx', file);
+        
+        const response = await fetch('/api/process-docx', {
+          method: 'POST',
+          body: formData
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Word document processing failed: ${response.statusText}`);
+        }
+        
+        result = await response.json();
+      } else {
+        throw new Error(`Unsupported file type: ${file.type}`);
+      }
       
       // Check current usage mode and set the appropriate source
       if (useStyleSource && !useContentSource) {
