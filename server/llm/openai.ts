@@ -225,8 +225,14 @@ export async function processTextWithOpenAI(options: ProcessTextOptions): Promis
     systemPrompt += " IMPORTANT: Unless explicitly requested otherwise, your rewrite MUST be longer than the original text. Add more examples, explanations, or details to make the content more comprehensive.";
   }
   
-  // STEP 2: BLOCK-LEVEL REWRITING - Process semantic blocks to preserve structure
-  let userPrompt = `Instructions: ${instructions}
+  // STEP 2: CONSTRUCT USER PROMPT - Different approach for homework mode
+  let userPrompt = homeworkMode 
+    ? `Please complete the following instructions, homework, or exam questions:
+
+${processedText}
+
+${instructions ? `Additional context or requirements: ${instructions}` : ''}`
+    : `Instructions: ${instructions}
 
 IMPORTANT: The text below is organized into semantic blocks. Rewrite each block as a complete unit while preserving:
 - Paragraph structure and spacing
