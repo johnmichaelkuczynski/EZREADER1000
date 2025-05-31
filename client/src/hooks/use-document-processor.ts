@@ -219,10 +219,17 @@ export function useDocumentProcessor() {
     setDialogueMessages(prev => [...prev, userMessage, assistantMessage]);
 
     try {
-      // Pure passthrough - send directly to LLM without any app interpretation
+      // Include document context for dialogue
+      let contextualInput = userInput;
+      
+      if (inputText.trim() || outputText.trim()) {
+        contextualInput = `Context - Document content available:
+${inputText.trim() ? `INPUT DOCUMENT:\n${inputText}\n\n` : ''}${outputText.trim() ? `OUTPUT DOCUMENT:\n${outputText}\n\n` : ''}USER QUESTION: ${userInput}`;
+      }
+      
       const response = await processText({
-        inputText: userInput,
-        instructions: "",
+        inputText: contextualInput,
+        instructions: "You are an AI assistant discussing documents with the user. You can see the input and output documents provided in the context. Answer the user's questions about these documents, provide analysis, suggestions, or help as requested. Be helpful and conversational.",
         contentSource: "",
         useContentSource: false,
         llmProvider
