@@ -29,11 +29,7 @@ export async function extractTextFromImageWithMathpix(imageBuffer: Buffer, mimeT
       },
       body: JSON.stringify({
         src: dataUri,
-        formats: ['text', 'latex_styled'],
-        data_options: {
-          include_line_data: true,
-          include_word_data: true
-        }
+        formats: ['text']
       })
     });
 
