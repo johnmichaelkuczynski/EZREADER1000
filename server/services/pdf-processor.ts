@@ -11,7 +11,7 @@ function formatMathExpressions(text: string): string {
   formatted = formatted.replace(/\(([^)]+)\)\/\(([^)]+)\)/g, '\\frac{$1}{$2}');
   
   // Simple fractions like a/b -> \frac{a}{b} (when a and b are simple expressions)
-  formatted = formatted.replace(/([a-zA-Z0-9\^]+)\/([a-zA-Z0-9\^]+)/g, '\\frac{$1}{$2}');
+  formatted = formatted.replace(/([a-zA-Z0-9\^{}+-]+)\/([a-zA-Z0-9\^{}+-]+)/g, '\\frac{$1}{$2}');
   
   // Limits like lim_{x -> 2} -> \lim_{x \to 2}
   formatted = formatted.replace(/lim_\{([^}]+)\}/g, '\\lim_{$1}');
@@ -20,18 +20,37 @@ function formatMathExpressions(text: string): string {
   // Square roots like sqrt(x) -> \sqrt{x}
   formatted = formatted.replace(/sqrt\(([^)]+)\)/g, '\\sqrt{$1}');
   formatted = formatted.replace(/sqrtx/g, '\\sqrt{x}');
+  formatted = formatted.replace(/√/g, '\\sqrt');
   
   // Exponents in expressions like x^2 -> x^{2}
   formatted = formatted.replace(/([a-zA-Z])\^(\d+)/g, '$1^{$2}');
+  formatted = formatted.replace(/([a-zA-Z])\^([a-zA-Z])/g, '$1^{$2}');
   
-  // Functions like f(x) = ... -> wrap in math delimiters when appropriate
-  formatted = formatted.replace(/^(\s*\([a-z]\)\s*[a-zA-Z]\([^)]+\)\s*=.*)$/gm, '$$$1$$');
+  // Handle expressions like 3x^2 -> 3x^{2}
+  formatted = formatted.replace(/(\d+[a-zA-Z])\^(\d+)/g, '$1^{$2}');
   
-  // Mathematical expressions on their own lines
-  formatted = formatted.replace(/^(\s*[a-zA-Z]\([^)]+\)\s*=\s*[^=]+)$/gm, '$$$1$$');
+  // Convert ln to \ln
+  formatted = formatted.replace(/\bln\(/g, '\\ln(');
   
-  // Wrap standalone mathematical expressions
-  formatted = formatted.replace(/^(\s*\\[a-zA-Z]+\{[^}]+\}.*)$/gm, '$$$1$$');
+  // Convert log to \log
+  formatted = formatted.replace(/\blog\(/g, '\\log(');
+  
+  // Convert sin, cos, tan to LaTeX
+  formatted = formatted.replace(/\bsin\(/g, '\\sin(');
+  formatted = formatted.replace(/\bcos\(/g, '\\cos(');
+  formatted = formatted.replace(/\btan\(/g, '\\tan(');
+  
+  // Handle mathematical expressions that start with f(x) = or g(x) = etc.
+  formatted = formatted.replace(/^(\s*[a-zA-Z]\([^)]*\)\s*=\s*.+)$/gm, '$$$$1$$');
+  
+  // Handle derivative notation like f'(x)
+  formatted = formatted.replace(/([a-zA-Z])'/g, '$1\'');
+  
+  // Wrap lines that contain mathematical operators and variables
+  formatted = formatted.replace(/^(\s*[a-zA-Z]\([^)]*\)\s*=\s*[^=]*[\+\-\*/\^][^=]*)$/gm, '$$$$1$$');
+  
+  // Handle expressions that are clearly mathematical (contain fractions, limits, etc.)
+  formatted = formatted.replace(/^(\s*.*\\(?:frac|lim|sqrt|ln|log|sin|cos|tan).*)$/gm, '$$$$1$$');
   
   return formatted;
 }
