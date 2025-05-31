@@ -23,6 +23,12 @@ export async function detectAIWithGPTZero(text: string): Promise<{
   details: string;
 }> {
   try {
+    // Truncate text to fit GPTZero's 50,000 character limit
+    const maxLength = 45000; // Leave some buffer
+    const truncatedText = text.length > maxLength 
+      ? text.substring(0, maxLength) + "\n\n[Text truncated for analysis]"
+      : text;
+    
     const response = await fetch(GPTZERO_API_URL, {
       method: 'POST',
       headers: {
@@ -31,7 +37,7 @@ export async function detectAIWithGPTZero(text: string): Promise<{
         'X-Api-Key': process.env.GPTZERO_API_KEY || ""
       },
       body: JSON.stringify({
-        document: text,
+        document: truncatedText,
         docType: 'text'
       })
     });
