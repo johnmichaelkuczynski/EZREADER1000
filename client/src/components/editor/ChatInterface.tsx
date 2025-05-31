@@ -16,6 +16,8 @@ interface ChatInterfaceProps {
   reprocessOutput: boolean;
   onReprocessOutputChange: (value: boolean) => void;
   onSendToInput?: (content: string) => void;
+  examMode?: boolean;
+  homeworkMode?: boolean;
 }
 
 export function ChatInterface({
@@ -24,7 +26,9 @@ export function ChatInterface({
   onClearChat,
   reprocessOutput,
   onReprocessOutputChange,
-  onSendToInput
+  onSendToInput,
+  examMode = false,
+  homeworkMode = false
 }: ChatInterfaceProps) {
   const [inputValue, setInputValue] = useState('');
   const [isRecording, setIsRecording] = useState(false);
@@ -208,7 +212,7 @@ export function ChatInterface({
           <Button 
             type="submit" 
             className="bg-primary hover:bg-blue-600 text-white p-3 rounded-lg flex-shrink-0 transition-colors h-10 w-10"
-            disabled={!inputValue.trim()}
+            disabled={!(examMode || homeworkMode) && !inputValue.trim()}
           >
             <Send className="h-4 w-4" />
           </Button>

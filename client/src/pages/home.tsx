@@ -449,6 +449,8 @@ export default function Home() {
               onSendToInput={(content) => {
                 setInputText(content);
               }}
+              examMode={examMode}
+              homeworkMode={homeworkMode}
             />
             
             {/* Dialogue Box - For discussing text and special commands */}

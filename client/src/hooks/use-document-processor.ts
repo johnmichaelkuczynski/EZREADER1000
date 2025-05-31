@@ -27,7 +27,8 @@ export function useDocumentProcessor() {
   const [processing, setProcessing] = useState(false);
   const [llmProvider, setLLMProvider] = useState<LLMProvider>('openai');
   
-  // Homework mode state
+  // Exam and homework mode state
+  const [examMode, setExamMode] = useState(false);
   const [homeworkMode, setHomeworkMode] = useState(false);
   
   // Messages for main processing
