@@ -161,7 +161,7 @@ export function useDocumentProcessor() {
         styleSource,
         useStyleSource,
         llmProvider,
-        examMode
+        examMode: examMode || homeworkMode
       });
       
       setOutputText(result);
