@@ -1,35 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogFooter 
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { PlayIcon, SearchIcon, MicIcon, FileAudioIcon, SaveIcon, Trash2 } from 'lucide-react';
-import { LLMProvider, SavedInstruction } from '@/types';
-import { saveInstructions, getSavedInstructions } from '@/lib/api';
-import { useToast } from '@/hooks/use-toast';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PlayIcon, SearchIcon, MicIcon, BookOpenIcon, SaveIcon, Trash2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { getSavedInstructions, saveInstructions } from "@/lib/api";
+
+interface SavedInstruction {
+  id: number;
+  name: string;
+  instructions: string;
+  userId: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 interface EditorToolbarProps {
-  onProcess: (instructions: string, examMode?: boolean) => void;
-  onFindOnline: () => void;
-  onVoiceInput: () => void;
-  onAudioTranscription: () => void;
+  onProcess: (instructions: string, examMode: boolean) => void;
+  onFindOnline?: () => void;
+  onVoiceInput?: () => void;
+  onAudioTranscription?: () => void;
   isProcessing: boolean;
-  llmProvider: LLMProvider;
-  setLLMProvider: (provider: LLMProvider) => void;
+  llmProvider: string;
+  setLLMProvider: (provider: string) => void;
   onInstructionsSelect: (instructions: string) => void;
   currentInstructions: string;
   enableSynthesisMode?: boolean;
@@ -63,9 +59,8 @@ export function EditorToolbar({
   setHomeworkMode,
   onClearAll
 }: EditorToolbarProps) {
-  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
-  const [instructionName, setInstructionName] = useState('');
   const [savedInstructions, setSavedInstructions] = useState<SavedInstruction[]>([]);
+  const [instructionName, setInstructionName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -98,23 +93,19 @@ export function EditorToolbar({
 
     setIsSaving(true);
     try {
-      const savedInstruction = await saveInstructions({
-        name: instructionName,
-        instructions: currentInstructions
-      });
-      
-      setSavedInstructions(prev => [...prev, savedInstruction]);
-      setInstructionName('');
-      setSaveDialogOpen(false);
-      
+      await saveInstructions(instructionName.trim(), currentInstructions);
       toast({
         title: "Instructions saved",
-        description: "Your instructions have been saved successfully."
+        description: "Your instructions have been saved successfully.",
       });
+      setInstructionName("");
+      
+      // Reload saved instructions
+      const instructions = await getSavedInstructions();
+      setSavedInstructions(instructions);
     } catch (error) {
-      console.error('Failed to save instructions:', error);
       toast({
-        title: "Save failed",
+        title: "Error",
         description: "Failed to save instructions. Please try again.",
         variant: "destructive"
       });
@@ -123,9 +114,7 @@ export function EditorToolbar({
     }
   };
 
-  const handleSelectInstruction = (value: string) => {
-    if (value === 'default') return;
-    
+  const handleInstructionSelect = (value: string) => {
     const instruction = savedInstructions.find(inst => inst.id.toString() === value);
     if (instruction) {
       onInstructionsSelect(instruction.instructions);
@@ -133,21 +122,20 @@ export function EditorToolbar({
   };
   
   return (
-    <React.Fragment>
-      <div className="space-y-3 mb-3">
-        {/* Rewrite Instructions Input */}
-        <div className="w-full">
-          <Label htmlFor="rewrite-instructions" className="text-sm font-medium mb-2 block">
-            Rewrite Instructions
-          </Label>
-          <Input
-            id="rewrite-instructions"
-            placeholder="E.g., TAKE THE EXAM AND GET A 100/100, Simplify this text, Make it professional..."
-            value={rewriteInstructions}
-            onChange={(e) => setRewriteInstructions(e.target.value)}
-            className="w-full"
-          />
-        </div>
+    <div className="space-y-3 mb-3">
+      {/* Rewrite Instructions Input */}
+      <div className="w-full">
+        <Label htmlFor="rewrite-instructions" className="text-sm font-medium mb-2 block">
+          Rewrite Instructions
+        </Label>
+        <Input
+          id="rewrite-instructions"
+          placeholder="E.g., TAKE THE EXAM AND GET A 100/100, Simplify this text, Make it professional..."
+          value={rewriteInstructions}
+          onChange={(e) => setRewriteInstructions(e.target.value)}
+          className="w-full"
+        />
+      </div>
       
       {/* Mode Toggles */}
       <div className="flex items-center space-x-6 mb-2">
@@ -212,101 +200,89 @@ export function EditorToolbar({
             className="px-3 py-1 text-xs font-medium rounded bg-slate-100 hover:bg-slate-200"
             onClick={onAudioTranscription}
           >
-            <FileAudioIcon className="h-3 w-3 mr-1" />
-            <span>Transcribe</span>
+            <BookOpenIcon className="h-3 w-3 mr-1" />
+            <span>Audio</span>
           </Button>
         </div>
-        
+
         <div className="flex items-center gap-2">
-          <Select 
-            defaultValue="default"
-            onValueChange={handleSelectInstruction}
-          >
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Saved Instructions" />
+          {/* LLM Provider Selector */}
+          <Select value={llmProvider} onValueChange={setLLMProvider}>
+            <SelectTrigger className="w-32">
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="default">Saved Instructions</SelectItem>
-              {!isLoading && savedInstructions.map(instruction => (
-                <SelectItem key={instruction.id} value={instruction.id.toString()}>
-                  {instruction.name}
-                </SelectItem>
-              ))}
-              {isLoading && <SelectItem value="loading" disabled>Loading...</SelectItem>}
-              {!isLoading && savedInstructions.length === 0 && (
-                <SelectItem value="none" disabled>No saved instructions</SelectItem>
-              )}
+              <SelectItem value="openai">OpenAI</SelectItem>
+              <SelectItem value="anthropic">Anthropic</SelectItem>
+              <SelectItem value="perplexity">Perplexity</SelectItem>
             </SelectContent>
           </Select>
+
+          {/* Saved Instructions */}
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                <SaveIcon className="h-4 w-4 mr-1" />
+                Instructions
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Saved Instructions</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="instruction-select" className="text-sm font-medium">
+                    Select Saved Instructions
+                  </Label>
+                  <Select onValueChange={handleInstructionSelect}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose saved instructions..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {savedInstructions.map((instruction) => (
+                        <SelectItem key={instruction.id} value={instruction.id.toString()}>
+                          {instruction.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <Label htmlFor="instruction-name" className="text-sm font-medium">
+                    Save Current Instructions
+                  </Label>
+                  <Input
+                    id="instruction-name"
+                    placeholder="Enter name for instructions..."
+                    value={instructionName}
+                    onChange={(e) => setInstructionName(e.target.value)}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button onClick={handleSaveInstructions} disabled={isSaving}>
+                  {isSaving ? 'Saving...' : 'Save'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
           
-          <Button 
-            variant="outline" 
-            size="icon"
-            className="bg-slate-100 hover:bg-slate-200 p-2 rounded-md text-slate-600 transition-colors"
-            onClick={() => setSaveDialogOpen(true)}
-          >
-            <SaveIcon className="h-4 w-4" />
-          </Button>
-          
-          {/* Full Document Synthesis Mode Toggle */}
-          {setEnableSynthesisMode && (
-            <div className="flex items-center space-x-2 ml-2 bg-slate-100 p-2 rounded-md">
-              <Switch
-                id="synthesis-mode"
-                checked={enableSynthesisMode}
-                onCheckedChange={setEnableSynthesisMode}
-              />
-              <Label htmlFor="synthesis-mode" className="text-xs font-medium">
-                Full Document Synthesis Mode
-              </Label>
-            </div>
+          {/* Clear Whole App Button */}
+          {onClearAll && (
+            <Button 
+              variant="destructive" 
+              size="sm"
+              onClick={onClearAll}
+              className="ml-2"
+            >
+              <Trash2 className="h-4 w-4 mr-1" />
+              Clear All
+            </Button>
           )}
         </div>
       </div>
-
-      {/* Save Instructions Dialog */}
-      <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Save Instructions</DialogTitle>
-          </DialogHeader>
-          
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="instruction-name">Instruction Name</Label>
-              <Input
-                id="instruction-name"
-                placeholder="E.g., Simplify Text, Professional Tone, etc."
-                value={instructionName}
-                onChange={(e) => setInstructionName(e.target.value)}
-              />
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setSaveDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSaveInstructions} disabled={isSaving || !instructionName}>
-              {isSaving ? 'Saving...' : 'Save'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      {/* Clear Whole App Button */}
-      {onClearAll && (
-        <Button 
-          variant="destructive" 
-          size="sm"
-          onClick={onClearAll}
-          className="ml-2"
-        >
-          <Trash2 className="h-4 w-4 mr-1" />
-          Clear All
-        </Button>
-      )}
-      </div>
-    </React.Fragment>
+    </div>
   );
 }
