@@ -93,20 +93,12 @@ export function ContentSourceBox({
           if (onMultipleFileUpload && acceptedFiles.length > 1) {
             // Handle multiple files
             await onMultipleFileUpload(acceptedFiles);
-            setActiveTab('manual');
-            toast({
-              title: "Files uploaded successfully",
-              description: `${acceptedFiles.length} files have been processed.`
-            });
           } else {
             // Handle single file (fallback to original behavior)
             await onFileUpload(acceptedFiles[0]);
-            setActiveTab('manual');
-            toast({
-              title: "File uploaded successfully",
-              description: `File ${acceptedFiles[0].name} has been processed.`
-            });
           }
+          // Always switch to manual tab after successful upload
+          setActiveTab('manual');
         } catch (error) {
           console.error("Error uploading file(s):", error);
           toast({
@@ -136,20 +128,12 @@ export function ContentSourceBox({
         if (onMultipleFileUpload && fileArray.length > 1) {
           // Handle multiple files
           await onMultipleFileUpload(fileArray);
-          setActiveTab('manual');
-          toast({
-            title: "Files uploaded successfully",
-            description: `${fileArray.length} files have been processed.`
-          });
         } else {
           // Handle single file (fallback to original behavior)
           await onFileUpload(fileArray[0]);
-          setActiveTab('manual');
-          toast({
-            title: "File uploaded successfully",
-            description: `File ${fileArray[0].name} has been processed.`
-          });
         }
+        // Always switch to manual tab after successful upload
+        setActiveTab('manual');
       } catch (error: any) {
         console.error("Error uploading file(s):", error);
         toast({
