@@ -46,7 +46,6 @@ export function useDocumentProcessor() {
   const inputFileRef = useRef<HTMLInputElement>(null);
   const contentSourceFileRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLInputElement>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
   
   // Special content for commands
   const [specialContent, setSpecialContent] = useState('');
