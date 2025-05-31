@@ -87,8 +87,9 @@ export function useDocumentProcessor() {
       return;
     }
 
-    // Check if document needs chunking (over 40,000 characters)
-    if (inputText.length > 40000) {
+    // Check if document needs chunking (over 5,000 characters or more than 1,000 words)
+    const wordCount = inputText.trim().split(/\s+/).length;
+    if (inputText.length > 5000 || wordCount > 1000) {
       // Split into chunks and show chunk selector
       const chunks = inputText.split(/\n\n+/).filter(chunk => chunk.trim().length > 0);
       if (chunks.length > 1) {
