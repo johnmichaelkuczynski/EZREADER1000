@@ -125,7 +125,7 @@ export function useDocumentProcessor() {
       if (examMode) {
         finalInstructions = "SOLVE ALL MATHEMATICAL PROBLEMS AND ANSWER ALL QUESTIONS. Show complete step-by-step solutions with final answers. Do not just rewrite - SOLVE each problem completely and provide the numerical or algebraic answers.";
       } else if (homeworkMode) {
-        finalInstructions = "Complete this homework assignment by solving all problems step-by-step. Show your work clearly and provide final answers for each question.";
+        finalInstructions = "SOLVE ALL MATHEMATICAL PROBLEMS COMPLETELY. Do not explain what needs to be done - ACTUALLY DO IT. For each problem: 1) Solve it step-by-step with actual calculations 2) Show all work 3) Provide the final numerical answer. DO NOT just describe the process - SOLVE each equation, simplify each expression, and give concrete answers.";
       } else if (useContentSource && useStyleSource) {
         finalInstructions = "Rewrite this text using the content source as reference material and matching the writing style of the style source.";
       } else if (useContentSource) {
