@@ -137,27 +137,19 @@ export function EditorToolbar({
         />
       </div>
       
-      {/* Mode Toggles */}
+      {/* Mode Toggle */}
       <div className="flex items-center space-x-6 mb-2">
         <div className="flex items-center space-x-2">
           <Switch
-            id="exam-mode"
-            checked={examMode}
-            onCheckedChange={setExamMode}
+            id="solve-mode"
+            checked={examMode || homeworkMode}
+            onCheckedChange={(checked) => {
+              setExamMode(checked);
+              setHomeworkMode(checked);
+            }}
           />
-          <Label htmlFor="exam-mode" className="text-sm font-medium">
-            Exam Mode {examMode ? '(Take Test)' : '(Rewrite)'}
-          </Label>
-        </div>
-        
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="homework-mode"
-            checked={homeworkMode}
-            onCheckedChange={setHomeworkMode}
-          />
-          <Label htmlFor="homework-mode" className="text-sm font-medium">
-            Homework Mode {homeworkMode ? '(Solve)' : '(Rewrite)'}
+          <Label htmlFor="solve-mode" className="text-sm font-medium">
+            Solve Problems Mode {(examMode || homeworkMode) ? '(Solve All Math)' : '(Rewrite Text)'}
           </Label>
         </div>
       </div>
