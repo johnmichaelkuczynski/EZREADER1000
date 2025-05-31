@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useState, useEffect } from 'react';
-import { PlayIcon, SearchIcon, MicIcon, FileAudioIcon, SaveIcon, Trash2 } from 'lucide-react';
+import { PlayIcon, SearchIcon, MicIcon, FileAudioIcon, SaveIcon, Trash2, X } from 'lucide-react';
 import { LLMProvider, SavedInstruction } from '@/types';
 import { saveInstructions, getSavedInstructions } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
@@ -178,14 +178,23 @@ export function EditorToolbar({
       {/* Main Toolbar */}
       <div className="flex flex-wrap justify-between items-center gap-2">
         <div className="flex items-center">
-          <Button 
-            className="mr-2 bg-primary hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center gap-1.5 text-sm font-medium transition-colors"
-            onClick={() => onProcess(rewriteInstructions, examMode, homeworkMode)}
-            disabled={isProcessing}
-          >
-            <PlayIcon className="h-4 w-4" />
-            <span>{isProcessing ? 'Processing...' : (homeworkMode ? 'Follow Instructions' : examMode ? 'Take Test' : 'Process Text')}</span>
-          </Button>
+          {isProcessing ? (
+            <Button 
+              className="mr-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md flex items-center gap-1.5 text-sm font-medium transition-colors"
+              onClick={onCancelProcessing}
+            >
+              <X className="h-4 w-4" />
+              <span>Cancel</span>
+            </Button>
+          ) : (
+            <Button 
+              className="mr-2 bg-primary hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center gap-1.5 text-sm font-medium transition-colors"
+              onClick={() => onProcess(rewriteInstructions, examMode, homeworkMode)}
+            >
+              <PlayIcon className="h-4 w-4" />
+              <span>{homeworkMode ? 'Follow Instructions' : examMode ? 'Take Test' : 'Process Text'}</span>
+            </Button>
+          )}
           
           <div className="flex bg-slate-100 rounded-md p-1">
             <Button 
