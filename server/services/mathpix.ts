@@ -9,10 +9,10 @@ interface MathpixResponse {
 
 export async function extractTextFromImageWithMathpix(imageBuffer: Buffer, mimeType: string): Promise<{ text: string; confidence?: number }> {
   const appId = process.env.MATHPIX_APP_ID;
-  const appKey = process.env.MATHPIX_APP_KEY;
+  const apiKey = process.env.MATHPIX_API_KEY;
 
-  if (!appId || !appKey) {
-    throw new Error('Mathpix credentials not configured. Please set MATHPIX_APP_ID and MATHPIX_APP_KEY environment variables.');
+  if (!appId || !apiKey) {
+    throw new Error('Mathpix credentials not configured. Please set MATHPIX_APP_ID and MATHPIX_API_KEY environment variables.');
   }
 
   try {
@@ -24,7 +24,7 @@ export async function extractTextFromImageWithMathpix(imageBuffer: Buffer, mimeT
       method: 'POST',
       headers: {
         'app_id': appId,
-        'app_key': appKey,
+        'app_key': apiKey,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
