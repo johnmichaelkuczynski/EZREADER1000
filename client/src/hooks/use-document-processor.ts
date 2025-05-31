@@ -27,6 +27,9 @@ export function useDocumentProcessor() {
   const [processing, setProcessing] = useState(false);
   const [llmProvider, setLLMProvider] = useState<LLMProvider>('openai');
   
+  // Homework mode state
+  const [homeworkMode, setHomeworkMode] = useState(false);
+  
   // Messages for main processing
   const [messages, setMessages] = useState<Message[]>([]);
   
@@ -70,6 +73,7 @@ export function useDocumentProcessor() {
     useStyleSource?: boolean;
     llmProvider: LLMProvider;
     examMode?: boolean;
+    homeworkMode?: boolean;
   }) => {
     const response = await apiRequest('POST', '/api/process-text', options);
     const data = await response.json();
