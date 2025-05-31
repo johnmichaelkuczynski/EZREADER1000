@@ -987,6 +987,10 @@ export function useDocumentProcessor() {
     enableSynthesisMode,
     setEnableSynthesisMode,
     documentMap,
-    processGlobalQuestion
+    processGlobalQuestion,
+    
+    // Mode states
+    homeworkMode,
+    setHomeworkMode
   };
 }
