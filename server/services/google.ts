@@ -27,7 +27,7 @@ export async function searchOnline(query: string, maxResults = 5): Promise<{
   content: string;
 }> {
   const apiKey = process.env.GOOGLE_API_KEY;
-  const searchEngineId = process.env.GOOGLE_SEARCH_ENGINE_ID;
+  const searchEngineId = process.env.GOOGLE_CSE_ID;
   
   if (!apiKey || !searchEngineId) {
     throw new Error('Google API Key or Search Engine ID not configured');
