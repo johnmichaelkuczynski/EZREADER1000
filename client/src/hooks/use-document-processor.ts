@@ -112,13 +112,11 @@ export function useDocumentProcessor() {
 
   // Process document function
   const processDocument = useCallback(async (instructions: string, examMode?: boolean) => {
+    // NEVER prevent processing - always allow the button to work
+    // If no input text, we'll still process with a helpful message
     if (!inputText.trim()) {
-      toast({
-        title: "No input text",
-        description: "Please enter some text to process",
-        variant: "destructive"
-      });
-      return;
+      // Instead of blocking, set a helpful default input
+      setInputText("Please provide text to process or describe what you need help with.");
     }
 
     // Auto-generate instructions based on toggle states if no instructions provided
