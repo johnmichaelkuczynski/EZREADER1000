@@ -60,6 +60,37 @@ export function useDocumentProcessor() {
   // Rewrite instructions for chunking
   const [rewriteInstructions, setRewriteInstructions] = useState('');
 
+  // Helper function to create meaningful chunks
+  const createMeaningfulChunks = (text: string): string[] => {
+    // Split by paragraphs first, then combine into reasonably sized chunks
+    const paragraphs = text.split(/\n\s*\n/).filter(p => p.trim().length > 0);
+    const chunks: string[] = [];
+    let currentChunk = '';
+    
+    for (const paragraph of paragraphs) {
+      const trimmedParagraph = paragraph.trim();
+      if (!trimmedParagraph) continue;
+      
+      // Test if adding this paragraph would make chunk too large
+      const testChunk = currentChunk + (currentChunk ? '\n\n' : '') + trimmedParagraph;
+      
+      // Target chunk size: 2000-4000 characters (roughly 300-600 words)
+      if (testChunk.length > 4000 && currentChunk.length > 500) {
+        chunks.push(currentChunk);
+        currentChunk = trimmedParagraph;
+      } else {
+        currentChunk = testChunk;
+      }
+    }
+    
+    // Add the last chunk if it has content
+    if (currentChunk.trim().length > 100) {
+      chunks.push(currentChunk);
+    }
+    
+    return chunks;
+  };
+
   // Core text processing function
   const processText = useCallback(async (options: {
     inputText: string;
@@ -90,8 +121,8 @@ export function useDocumentProcessor() {
     // Check if document needs chunking (over 3,000 characters or more than 600 words)
     const wordCount = inputText.trim().split(/\s+/).length;
     if (inputText.length > 3000 || wordCount > 600) {
-      // Split into chunks and show chunk selector
-      const chunks = inputText.split(/\n\n+/).filter(chunk => chunk.trim().length > 0);
+      // Create meaningful chunks with proper size (target ~500-1000 words per chunk)
+      const chunks = createMeaningfulChunks(inputText);
       if (chunks.length > 1) {
         setDocumentChunks(chunks);
         setShowChunkSelector(true);
