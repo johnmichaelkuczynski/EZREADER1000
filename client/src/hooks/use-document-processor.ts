@@ -219,12 +219,21 @@ export function useDocumentProcessor() {
     setDialogueMessages(prev => [...prev, userMessage, assistantMessage]);
 
     try {
-      // Include document context for dialogue
+      // Include document context for dialogue with size limits
       let contextualInput = userInput;
       
       if (inputText.trim() || outputText.trim()) {
+        // Truncate documents to prevent context overflow (max ~8000 chars each)
+        const truncateText = (text: string, maxLength: number = 8000) => {
+          if (text.length <= maxLength) return text;
+          return text.substring(0, maxLength) + "\n\n[Document truncated - showing first " + maxLength + " characters]";
+        };
+
+        const inputExcerpt = inputText.trim() ? truncateText(inputText.trim()) : '';
+        const outputExcerpt = outputText.trim() ? truncateText(outputText.trim()) : '';
+        
         contextualInput = `Context - Document content available:
-${inputText.trim() ? `INPUT DOCUMENT:\n${inputText}\n\n` : ''}${outputText.trim() ? `OUTPUT DOCUMENT:\n${outputText}\n\n` : ''}USER QUESTION: ${userInput}`;
+${inputExcerpt ? `INPUT DOCUMENT:\n${inputExcerpt}\n\n` : ''}${outputExcerpt ? `OUTPUT DOCUMENT:\n${outputExcerpt}\n\n` : ''}USER QUESTION: ${userInput}`;
       }
       
       const response = await processText({
