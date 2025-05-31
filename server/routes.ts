@@ -18,8 +18,8 @@ import { detectAIWithGPTZero } from "./services/gptzero";
 import { searchOnline, fetchWebContent } from "./services/google";
 import { sendDocumentEmail } from "./services/sendgrid";
 import { extractTextFromPDF } from "./services/pdf-processor";
+import { extractTextFromImageWithMathpix } from "./services/mathpix";
 import { processMathPDFWithAzure, processMathImageWithAzure, enhanceMathFormatting } from "./services/azure-math";
-import { extractTextFromImage } from "./services/mathpix";
 
 // Configure multer storage
 const upload = multer({
@@ -645,17 +645,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Process image with OCR
+  // Process image with Mathpix OCR (including math text)
   app.post('/api/process-image-ocr', upload.single('image'), async (req: Request, res: Response) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No image file provided" });
       }
 
-      const result = await extractTextFromImage(req.file.buffer, req.file.mimetype);
-      res.json({ text: result });
+      const result = await extractTextFromImageWithMathpix(req.file.buffer, req.file.mimetype);
+      res.json({ 
+        text: result.text,
+        confidence: result.confidence
+      });
     } catch (error: any) {
-      console.error('Error processing image with OCR:', error);
+      console.error('Error processing image with Mathpix OCR:', error);
       res.status(500).json({ error: error.message || "Failed to extract text from image" });
     }
   });

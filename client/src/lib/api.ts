@@ -100,6 +100,25 @@ export async function saveInstructions(name: string, instructions: string): Prom
   return await response.json();
 }
 
+// Extract text from image using Mathpix OCR (including math)
+export async function extractTextFromImage(file: File): Promise<{ text: string; confidence?: number }> {
+  const formData = new FormData();
+  formData.append('image', file);
+
+  const response = await fetch("/api/process-image-ocr", {
+    method: "POST",
+    body: formData,
+    credentials: "include"
+  });
+  
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to extract text from image: ${response.status} - ${errorText}`);
+  }
+  
+  return await response.json();
+}
+
 // Get saved instructions
 export async function getSavedInstructions(): Promise<SavedInstruction[]> {
   const response = await fetch("/api/saved-instructions", {
