@@ -332,30 +332,18 @@ export function useDocumentProcessor() {
         throw new Error(`Unsupported file type: ${file.type}`);
       }
       
-      // Check current usage mode and set the appropriate source
-      if (useStyleSource && !useContentSource) {
-        // Style source mode - set as style source
+      // Always set as content source regardless of mode - simplify logic
+      setContentSource(result.text);
+      
+      // Also set as style source if that mode is enabled
+      if (useStyleSource) {
         setStyleSource(result.text);
-        toast({
-          title: "Style source uploaded",
-          description: `Style extracted from ${file.name}`,
-        });
-      } else if (useContentSource && useStyleSource) {
-        // Both mode - set as both
-        setContentSource(result.text);
-        setStyleSource(result.text);
-        toast({
-          title: "Content and style source uploaded",
-          description: `Content and style extracted from ${file.name}`,
-        });
-      } else {
-        // Content source mode (default)
-        setContentSource(result.text);
-        toast({
-          title: "Content source uploaded",
-          description: `Content extracted from ${file.name}`,
-        });
       }
+      
+      toast({
+        title: "Content source uploaded",
+        description: `Extracted ${result.text.length} characters from ${file.name}`,
+      });
     } catch (error: any) {
       console.error('Error uploading source file:', error);
       toast({
