@@ -162,7 +162,19 @@ export function EditorToolbar({
         </div>
       </div>
 
-
+      {/* Clear All Button Row */}
+      {onClearAll && (
+        <div className="flex justify-end mb-2">
+          <Button 
+            variant="destructive" 
+            size="sm"
+            onClick={onClearAll}
+          >
+            <Trash2 className="h-4 w-4 mr-1" />
+            Clear All
+          </Button>
+        </div>
+      )}
 
       {/* Main Toolbar */}
       <div className="flex items-center justify-between gap-3">

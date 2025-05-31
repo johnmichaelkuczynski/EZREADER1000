@@ -186,16 +186,6 @@ export function ContentSourceBox({
         <h2 className="text-xl font-bold text-gray-800">Reference Content & Instructions</h2>
         <div className="flex gap-2">
           <Button 
-            variant="outline" 
-            size="sm"
-            className="text-red-600 border-red-200 hover:bg-red-50"
-            onClick={onClear}
-          >
-            <Trash2 className="h-4 w-4 mr-1" />
-            Clear All
-          </Button>
-          
-          <Button 
             variant="default"
             size="sm"
             className="bg-blue-600 hover:bg-blue-700 text-white"
