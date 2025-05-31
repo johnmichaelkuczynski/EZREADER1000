@@ -100,12 +100,12 @@ async function processLargeTextWithOpenAI(options: ProcessTextOptions): Promise<
       
       // Add content source if provided
       if (useContentSource && contentSource) {
-        userPrompt = `Content source for reference:\n${contentSource}\n\n${userPrompt}`;
+        userPrompt = `${instructions}\n\nUse this content as reference material (do not copy it, use it to enhance your response):\n${contentSource}\n\nNow process this chunk ${i + 1} of ${chunks.length} according to the instructions above:\n${processedText}`;
       }
       
       // Add style source if provided
       if (useStyleSource && styleSource) {
-        userPrompt = `Style reference:\n${styleSource}\n\n${userPrompt}`;
+        userPrompt = `${instructions}\n\nStyle reference (analyze and emulate this writing style):\n${styleSource}\n\nProcess this chunk ${i + 1} of ${chunks.length}:\n${processedText}`;
       }
       
       const response = await openai.chat.completions.create({
@@ -165,11 +165,11 @@ export async function processTextWithOpenAI(options: ProcessTextOptions): Promis
     let userPrompt = `${instructions}\n\nContent to process:\n${processedText}`;
     
     if (useContentSource && contentSource) {
-      userPrompt = `Content source for reference:\n${contentSource}\n\n${userPrompt}`;
+      userPrompt = `${instructions}\n\nUse this content as reference material (do not copy it, use it to enhance your response):\n${contentSource}\n\nNow process this content according to the instructions above:\n${processedText}`;
     }
     
     if (useStyleSource && styleSource) {
-      userPrompt = `Style reference:\n${styleSource}\n\n${userPrompt}`;
+      userPrompt = `${instructions}\n\nStyle reference (analyze and emulate this writing style):\n${styleSource}\n\nContent to process:\n${processedText}`;
     }
     
     const response = await openai.chat.completions.create({

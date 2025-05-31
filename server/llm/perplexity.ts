@@ -191,7 +191,13 @@ export async function processTextWithPerplexity(options: ProcessTextOptions): Pr
   let userContent = `Instructions: ${instructions}\n\nText to transform:\n${processedText}`;
   
   if (useContentSource && contentSource) {
-    userContent += `\n\nAdditional content source for reference:\n${contentSource}`;
+    systemPrompt += " Use the provided content source as reference material to enhance your response. Do not copy it directly.";
+    userContent = `Instructions: ${instructions}\n\nUse this content as reference material (do not copy it, use it to enhance your response):\n${contentSource}\n\nNow transform this text according to the instructions above:\n${processedText}`;
+  }
+  
+  if (useStyleSource && styleSource) {
+    systemPrompt += " Analyze and emulate the writing style from the provided style reference.";
+    userContent = `Instructions: ${instructions}\n\nStyle reference (analyze and emulate this writing style):\n${styleSource}\n\nText to transform:\n${processedText}`;
   }
   
   const messages = [
