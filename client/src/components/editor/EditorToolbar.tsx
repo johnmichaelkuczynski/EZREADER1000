@@ -23,7 +23,7 @@ import { saveInstructions, getSavedInstructions } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
 interface EditorToolbarProps {
-  onProcess: (instructions: string, examMode?: boolean) => void;
+  onProcess: (instructions: string, examMode?: boolean, homeworkMode?: boolean) => void;
   onFindOnline: () => void;
   onVoiceInput: () => void;
   onAudioTranscription: () => void;
@@ -38,6 +38,8 @@ interface EditorToolbarProps {
   setRewriteInstructions: (instructions: string) => void;
   examMode: boolean;
   setExamMode: (enabled: boolean) => void;
+  homeworkMode: boolean;
+  setHomeworkMode: (enabled: boolean) => void;
   onClearAll?: () => void;
 }
 
@@ -57,6 +59,8 @@ export function EditorToolbar({
   setRewriteInstructions,
   examMode,
   setExamMode,
+  homeworkMode,
+  setHomeworkMode,
   onClearAll
 }: EditorToolbarProps) {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
@@ -144,16 +148,29 @@ export function EditorToolbar({
         />
       </div>
       
-      {/* Exam Mode Toggle */}
-      <div className="flex items-center space-x-2 mb-2">
-        <Switch
-          id="exam-mode"
-          checked={examMode}
-          onCheckedChange={setExamMode}
-        />
-        <Label htmlFor="exam-mode" className="text-sm font-medium">
-          Exam Mode {examMode ? '(Take Test)' : '(Rewrite)'}
-        </Label>
+      {/* Mode Toggles */}
+      <div className="flex items-center space-x-4 mb-2">
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="exam-mode"
+            checked={examMode}
+            onCheckedChange={setExamMode}
+          />
+          <Label htmlFor="exam-mode" className="text-sm font-medium">
+            Exam Mode {examMode ? '(Take Test)' : '(Rewrite)'}
+          </Label>
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="homework-mode"
+            checked={homeworkMode}
+            onCheckedChange={setHomeworkMode}
+          />
+          <Label htmlFor="homework-mode" className="text-sm font-medium">
+            Homework Mode {homeworkMode ? '(Follow Instructions)' : '(Rewrite)'}
+          </Label>
+        </div>
       </div>
 
       {/* Main Toolbar */}

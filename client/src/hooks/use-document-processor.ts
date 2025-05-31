@@ -114,7 +114,8 @@ export function useDocumentProcessor() {
         styleSource,
         useStyleSource,
         llmProvider,
-        examMode
+        examMode,
+        homeworkMode
       });
       
       setOutputText(result);
@@ -769,6 +770,8 @@ export function useDocumentProcessor() {
     dialogueMessages,
     setDialogueMessages,
     processing,
+    homeworkMode,
+    setHomeworkMode,
     
     // Core functions
     processDocument,

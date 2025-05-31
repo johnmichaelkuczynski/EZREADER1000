@@ -81,7 +81,9 @@ export default function Home() {
     enableSynthesisMode,
     setEnableSynthesisMode,
     documentMap,
-    processGlobalQuestion
+    processGlobalQuestion,
+    homeworkMode,
+    setHomeworkMode
   } = useDocumentProcessor();
 
   const {
