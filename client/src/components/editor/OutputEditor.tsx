@@ -62,7 +62,7 @@ export function OutputEditor({
   const [emailSubject, setEmailSubject] = useState('EZ Reader - Transformed Document');
   const [emailMessage, setEmailMessage] = useState('Here is the transformed document you requested.');
   const [wordCount, setWordCount] = useState(0);
-  const [showMathPreview, setShowMathPreview] = useState(true);
+  const [showMathPreview, setShowMathPreview] = useState(false);
   
   // Calculate word count whenever text changes
   useEffect(() => {
@@ -176,7 +176,22 @@ export function OutputEditor({
             </Tooltip>
           </TooltipProvider>
           
-
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className={`p-1 transition-colors ${showMathPreview ? 'text-blue-600 hover:text-blue-700' : 'text-slate-400 hover:text-slate-600'}`}
+                  onClick={() => setShowMathPreview(!showMathPreview)}
+                >
+                  {showMathPreview ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Math Preview</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
           
           <TooltipProvider>
             <Tooltip>
