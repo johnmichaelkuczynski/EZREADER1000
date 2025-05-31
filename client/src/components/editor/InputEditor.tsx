@@ -230,16 +230,11 @@ export function InputEditor({
         
         {/* AI Detection Results */}
         {aiResult && (
-          <div className="mt-4 p-4 border rounded-lg bg-gray-50 dark:bg-gray-800">
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="font-semibold text-sm">GPTZero AI Detection Results</h4>
-              <Badge variant={aiResult.isAI ? "destructive" : "secondary"}>
-                {Math.round(aiResult.confidence * 100)}% {aiResult.isAI ? "AI Generated" : "Human Written"}
-              </Badge>
-            </div>
-            <div className="text-xs text-gray-600 dark:text-gray-300 whitespace-pre-line">
-              {aiResult.details}
-            </div>
+          <div className="mt-3 flex items-center justify-between p-3 border rounded-lg bg-gray-50 dark:bg-gray-800">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">AI Detection:</span>
+            <Badge variant={aiResult.isAI ? "destructive" : "secondary"} className="font-medium">
+              {Math.round(aiResult.confidence * 100)}%
+            </Badge>
           </div>
         )}
       </CardContent>
