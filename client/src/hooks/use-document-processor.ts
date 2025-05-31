@@ -281,6 +281,22 @@ export function useDocumentProcessor() {
         extractedText = result.text;
       } else if (file.type === 'text/plain') {
         extractedText = await file.text();
+      } else if (file.type.startsWith('image/')) {
+        // Handle image files with OCR
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        const response = await fetch('/api/process-image-ocr', {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Image OCR failed: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        extractedText = result.text;
       } else {
         throw new Error(`Unsupported file type: ${file.type}`);
       }
