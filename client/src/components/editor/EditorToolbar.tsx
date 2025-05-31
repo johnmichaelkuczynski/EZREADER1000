@@ -186,8 +186,13 @@ export function EditorToolbar({
         <div className="flex items-center gap-3">
           <Button 
             className="bg-primary hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center gap-1.5 text-sm font-medium transition-colors"
-            onClick={() => onProcess(rewriteInstructions, examMode)}
-            disabled={false}
+            onClick={() => {
+              const finalInstructions = (examMode || homeworkMode) 
+                ? "SOLVE ALL MATHEMATICAL PROBLEMS AND ANSWER ALL QUESTIONS. Show complete step-by-step solutions with final answers."
+                : rewriteInstructions;
+              onProcess(finalInstructions, examMode);
+            }}
+            disabled={!(examMode || homeworkMode) && !rewriteInstructions.trim()}
           >
             <PlayIcon className="h-4 w-4" />
             <span>{isProcessing ? 'Processing...' : (examMode ? 'Take Test' : 'Process Text')}</span>
