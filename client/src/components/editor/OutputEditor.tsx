@@ -215,8 +215,8 @@ export function OutputEditor({
               </div>
             </TabsContent>
             <TabsContent value="preview" className="mt-0">
-              <div className="min-h-[600px] border border-gray-200 rounded-none">
-                <MathRenderer content={text} className="min-h-[600px]" />
+              <div className="min-h-[600px] border border-gray-200 rounded-none overflow-hidden">
+                <MathRenderer content={text} className="min-h-[600px] w-full overflow-x-auto" />
               </div>
             </TabsContent>
           </Tabs>

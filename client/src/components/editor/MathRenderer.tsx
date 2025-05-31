@@ -116,7 +116,12 @@ export function MathRenderer({ content, className = "" }: MathRendererProps) {
         borderRadius: '6px',
         whiteSpace: 'pre-wrap',
         maxHeight: '300px',
-        overflowY: 'auto'
+        overflowY: 'auto',
+        overflowX: 'auto',
+        wordWrap: 'break-word',
+        wordBreak: 'break-word',
+        maxWidth: '100%',
+        boxSizing: 'border-box'
       }}
     />
   );
