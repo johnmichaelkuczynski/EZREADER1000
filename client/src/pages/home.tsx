@@ -59,6 +59,8 @@ export default function Home() {
     handleAudioTranscription,
     isInputDetecting,
     isOutputDetecting,
+    inputAIResult,
+    outputAIResult,
     detectAIText,
     clearInput,
     clearOutput,
