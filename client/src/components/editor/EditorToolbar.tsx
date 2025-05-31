@@ -38,6 +38,8 @@ interface EditorToolbarProps {
   setRewriteInstructions: (instructions: string) => void;
   examMode: boolean;
   setExamMode: (enabled: boolean) => void;
+  homeworkMode: boolean;
+  setHomeworkMode: (enabled: boolean) => void;
   onClearAll?: () => void;
 }
 
@@ -57,6 +59,8 @@ export function EditorToolbar({
   setRewriteInstructions,
   examMode,
   setExamMode,
+  homeworkMode,
+  setHomeworkMode,
   onClearAll
 }: EditorToolbarProps) {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
@@ -161,11 +165,11 @@ export function EditorToolbar({
         <div className="flex items-center space-x-2">
           <Switch
             id="homework-mode"
-            checked={false}
-            onCheckedChange={() => {}}
+            checked={homeworkMode}
+            onCheckedChange={setHomeworkMode}
           />
           <Label htmlFor="homework-mode" className="text-sm font-medium">
-            Homework Mode (Rewrite)
+            Homework Mode {homeworkMode ? '(Solve)' : '(Rewrite)'}
           </Label>
         </div>
       </div>

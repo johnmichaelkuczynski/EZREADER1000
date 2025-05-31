@@ -350,6 +350,8 @@ export default function Home() {
               setRewriteInstructions={setRewriteInstructions}
               examMode={examMode}
               setExamMode={setExamMode}
+              homeworkMode={homeworkMode}
+              setHomeworkMode={setHomeworkMode}
               onClearAll={resetAll}
             />
             

@@ -27,6 +27,9 @@ export function useDocumentProcessor() {
   const [processing, setProcessing] = useState(false);
   const [llmProvider, setLLMProvider] = useState<LLMProvider>('openai');
   
+  // Homework mode state
+  const [homeworkMode, setHomeworkMode] = useState(false);
+  
   // Messages for main processing
   const [messages, setMessages] = useState<Message[]>([]);
   
@@ -121,7 +124,11 @@ export function useDocumentProcessor() {
     // Auto-generate instructions based on toggle states if no instructions provided
     let finalInstructions = instructions;
     if (!instructions.trim()) {
-      if (useContentSource && useStyleSource) {
+      if (examMode) {
+        finalInstructions = "SOLVE ALL MATHEMATICAL PROBLEMS AND ANSWER ALL QUESTIONS. Show complete step-by-step solutions with final answers. Do not just rewrite - SOLVE each problem completely and provide the numerical or algebraic answers.";
+      } else if (homeworkMode) {
+        finalInstructions = "Complete this homework assignment by solving all problems step-by-step. Show your work clearly and provide final answers for each question.";
+      } else if (useContentSource && useStyleSource) {
         finalInstructions = "Rewrite this text using the content source as reference material and matching the writing style of the style source.";
       } else if (useContentSource) {
         finalInstructions = "Rewrite this text using the content source as reference material.";
