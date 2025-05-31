@@ -41,6 +41,7 @@ interface EditorToolbarProps {
   homeworkMode: boolean;
   setHomeworkMode: (enabled: boolean) => void;
   onClearAll?: () => void;
+  onCancelProcessing?: () => void;
 }
 
 export function EditorToolbar({
@@ -61,7 +62,8 @@ export function EditorToolbar({
   setExamMode,
   homeworkMode,
   setHomeworkMode,
-  onClearAll
+  onClearAll,
+  onCancelProcessing
 }: EditorToolbarProps) {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [instructionName, setInstructionName] = useState('');
