@@ -336,11 +336,69 @@ export function useDocumentProcessor() {
   }, [toast, useContentSource, useStyleSource]);
 
   const handleMultipleContentSourceFileUpload = useCallback(async (files: File[]) => {
-    // Handle multiple file uploads
+    // Handle multiple file uploads by concatenating all content
+    let combinedText = '';
+    
     for (const file of files) {
-      await handleContentSourceFileUpload(file);
+      try {
+        let result;
+        
+        if (file.type === 'text/plain') {
+          const text = await file.text();
+          result = { text };
+        } else if (file.type === 'application/pdf') {
+          const formData = new FormData();
+          formData.append('pdf', file);
+          
+          const response = await fetch('/api/process-pdf', {
+            method: 'POST',
+            body: formData
+          });
+          
+          if (!response.ok) {
+            throw new Error(`PDF processing failed: ${response.statusText}`);
+          }
+          
+          result = await response.json();
+        } else if (
+          file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+          file.type === 'application/msword'
+        ) {
+          const formData = new FormData();
+          formData.append('docx', file);
+          
+          const response = await fetch('/api/process-docx', {
+            method: 'POST',
+            body: formData
+          });
+          
+          if (!response.ok) {
+            throw new Error(`Word document processing failed: ${response.statusText}`);
+          }
+          
+          result = await response.json();
+        } else {
+          throw new Error(`Unsupported file type: ${file.type}`);
+        }
+        
+        if (result && result.text) {
+          combinedText += (combinedText ? '\n\n--- ' + file.name + ' ---\n\n' : '') + result.text;
+        }
+      } catch (error) {
+        console.error(`Error processing file ${file.name}:`, error);
+      }
     }
-  }, [handleContentSourceFileUpload]);
+    
+    if (combinedText) {
+      // Set the combined text in content source
+      setContentSource(combinedText);
+      
+      toast({
+        title: "Files uploaded successfully",
+        description: `${files.length} files processed and combined`,
+      });
+    }
+  }, [toast]);
 
   const handleAudioTranscription = useCallback(async (file: File) => {
     try {
