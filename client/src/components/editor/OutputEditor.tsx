@@ -156,6 +156,9 @@ export function OutputEditor({
               <DropdownMenuItem onClick={() => onExportLaTeX(text)}>
                 Export as LaTeX
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setEmailDialogOpen(true)}>
+                Share by Email
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           
@@ -189,24 +192,6 @@ export function OutputEditor({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Math Preview</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          
-          
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="p-1 text-slate-400 hover:text-slate-600 transition-colors"
-                  onClick={() => text ? setEmailDialogOpen(true) : null}
-                  disabled={!text}
-                >
-                  <Mail className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Email</TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>
