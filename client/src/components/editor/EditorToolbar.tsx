@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -16,7 +17,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { useState, useEffect } from 'react';
 import { PlayIcon, SearchIcon, MicIcon, FileAudioIcon, SaveIcon, Trash2 } from 'lucide-react';
 import { LLMProvider, SavedInstruction } from '@/types';
 import { saveInstructions, getSavedInstructions } from '@/lib/api';
@@ -129,20 +129,21 @@ export function EditorToolbar({
   };
   
   return (
-    <div className="space-y-3 mb-3">
-      {/* Rewrite Instructions Input */}
-      <div className="w-full">
-        <Label htmlFor="rewrite-instructions" className="text-sm font-medium mb-2 block">
-          Rewrite Instructions
-        </Label>
-        <Input
-          id="rewrite-instructions"
-          placeholder="E.g., TAKE THE EXAM AND GET A 100/100, Simplify this text, Make it professional..."
-          value={rewriteInstructions}
-          onChange={(e) => setRewriteInstructions(e.target.value)}
-          className="w-full"
-        />
-      </div>
+    <React.Fragment>
+      <div className="space-y-3 mb-3">
+        {/* Rewrite Instructions Input */}
+        <div className="w-full">
+          <Label htmlFor="rewrite-instructions" className="text-sm font-medium mb-2 block">
+            Rewrite Instructions
+          </Label>
+          <Input
+            id="rewrite-instructions"
+            placeholder="E.g., TAKE THE EXAM AND GET A 100/100, Simplify this text, Make it professional..."
+            value={rewriteInstructions}
+            onChange={(e) => setRewriteInstructions(e.target.value)}
+            className="w-full"
+          />
+        </div>
       
       {/* Mode Toggles */}
       <div className="flex items-center space-x-6 mb-2">
@@ -299,7 +300,7 @@ export function EditorToolbar({
           Clear All
         </Button>
       )}
-    </div>
-    </>
+      </div>
+    </React.Fragment>
   );
 }
