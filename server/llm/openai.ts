@@ -84,67 +84,54 @@ export interface ProcessTextOptions {
 
 import { protectMathFormulas, restoreMathFormulas, protectMathAndStructure, restoreMathAndFormatting, splitIntoSemanticBlocks, reconstructFromBlocks } from "../utils/math-formula-protection";
 
-// Process extremely large text by chunking and sampling
+// Process extremely large text by processing ALL chunks sequentially
 async function processLargeTextWithOpenAI(options: ProcessTextOptions): Promise<string> {
   const { text, instructions, contentSource, styleSource, useContentSource, useStyleSource, maxTokens = 4000 } = options;
   
-  console.log("Processing extremely large document with specialized OpenAI approach");
+  console.log("Processing extremely large document with full content processing");
   
   // Step 1: Split the text into manageable chunks
   const MAX_CHUNK_TOKENS = 32000; // Well below GPT-4o's context limit
   const chunks = splitIntoChunks(text, MAX_CHUNK_TOKENS);
   console.log(`Split large document into ${chunks.length} chunks for processing`);
   
-  // Step 2: Create a representative sample of the document
-  // Include the beginning, end, and some evenly distributed middle sections
-  let representativeText = '';
+  let processedResults: string[] = [];
   
-  // Always include the first chunk (introduction)
-  representativeText += chunks[0] + "\n\n--- SECTION BREAK ---\n\n";
-  
-  // For very large documents, include some evenly distributed middle sections
-  if (chunks.length > 4) {
-    const numMiddleChunks = Math.min(3, Math.floor(chunks.length / 2));
-    const step = Math.floor((chunks.length - 2) / (numMiddleChunks + 1));
+  // Process each chunk individually with full content
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i];
+    console.log(`Processing chunk ${i + 1}/${chunks.length}`);
     
-    for (let i = 1; i <= numMiddleChunks; i++) {
-      const index = Math.min(chunks.length - 2, i * step);
-      representativeText += chunks[index] + "\n\n--- SECTION BREAK ---\n\n";
+    const chunkInstructions = `${instructions}\n\nThis is chunk ${i + 1} of ${chunks.length} from a larger document. Process this entire chunk according to the instructions.`;
+  
+    try {
+      // Process the current chunk
+      const { processedText, mathBlocks } = protectMathFormulas(chunk);
+    
+      let systemPrompt = "You are processing one chunk of a larger document. Do not modify any content within [[MATH_BLOCK_*]] or [[MATH_INLINE_*]] tokens as they contain special mathematical notation. CRITICAL: When generating mathematical expressions, use clean LaTeX format (e.g., A = P(1 + r/n)^{nt}) NOT Unicode superscripts or special characters. This ensures proper PDF rendering.";
+    
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: `${chunkInstructions}\n\nContent to process:\n${processedText}` }
+        ],
+        max_tokens: maxTokens,
+        temperature: 0.7,
+      });
+
+      const result = response.choices[0]?.message?.content || '';
+      const finalResult = restoreMathFormulas(result, mathBlocks);
+      processedResults.push(finalResult);
+      
+    } catch (error: any) {
+      console.error(`Error processing chunk ${i + 1}:`, error);
+      processedResults.push(`[Error processing chunk ${i + 1}: ${error.message}]`);
     }
   }
   
-  // Always include the last chunk (conclusion)
-  representativeText += chunks[chunks.length - 1];
-  
-  // Step 3: Process the representative text with modified instructions
-  const enhancedInstructions = `NOTE: This is a very large document (${estimateTokenCount(text)} estimated tokens) that has been sampled to include the beginning, end, and some middle sections. The document is separated by "--- SECTION BREAK ---" markers.\n\nOriginal instructions: ${instructions}\n\nPlease process this representative sample of the document according to the instructions. Since this is only a sample of a much larger document, focus on maintaining the overall intent, style, and key points.`;
-  
-  try {
-    // Process the representative text
-    const { processedText, mathBlocks } = protectMathFormulas(representativeText);
-    
-    let systemPrompt = "You are processing a very large document that has been sampled. Do not modify any content within [[MATH_BLOCK_*]] or [[MATH_INLINE_*]] tokens as they contain special mathematical notation. CRITICAL: When generating mathematical expressions, use clean LaTeX format (e.g., A = P(1 + r/n)^{nt}) NOT Unicode superscripts or special characters. This ensures proper PDF rendering.";
-    
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: `${enhancedInstructions}\n\nText to transform:\n${processedText}` }
-      ],
-      max_tokens: maxTokens * 2, // Allow more output tokens for comprehensive processing
-      temperature: 0.7,
-    });
-    
-    const processedContent = response.choices[0].message.content || "";
-    
-    // Restore math formulas in the processed text
-    const finalResult = restoreMathFormulas(processedContent, mathBlocks);
-    
-    return finalResult;
-  } catch (error: any) {
-    console.error("OpenAI large document processing error:", error);
-    throw new Error(`Failed to process large text with OpenAI: ${error.message}`);
-  }
+  // Combine all processed chunks
+  return processedResults.join('\n\n--- CHUNK BREAK ---\n\n');
 }
 
 export async function processTextWithOpenAI(options: ProcessTextOptions): Promise<string> {
