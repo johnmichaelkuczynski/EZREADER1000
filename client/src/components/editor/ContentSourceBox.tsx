@@ -249,12 +249,14 @@ export function ContentSourceBox({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            text: `Research and provide comprehensive information about: ${queryToUse}`,
-            provider: 'claude',
-            mode: 'enhance',
+            inputText: `Research and provide comprehensive information about: ${queryToUse}`,
+            llmProvider: 'anthropic',
             instructions: 'Provide detailed research and analysis on this topic.',
+            contentSource: '',
+            styleSource: '',
             useContentSource: false,
-            useStyleSource: false
+            useStyleSource: false,
+            examMode: false
           })
         }).then(res => res.json()).then(data => ({ claude: data.result })).catch(() => ({ claude: null })),
         
@@ -262,12 +264,14 @@ export function ContentSourceBox({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            text: `Research and provide comprehensive information about: ${queryToUse}`,
-            provider: 'openai',
-            mode: 'enhance',
+            inputText: `Research and provide comprehensive information about: ${queryToUse}`,
+            llmProvider: 'openai',
             instructions: 'Provide detailed research and analysis on this topic.',
+            contentSource: '',
+            styleSource: '',
             useContentSource: false,
-            useStyleSource: false
+            useStyleSource: false,
+            examMode: false
           })
         }).then(res => res.json()).then(data => ({ gpt: data.result })).catch(() => ({ gpt: null })),
         
