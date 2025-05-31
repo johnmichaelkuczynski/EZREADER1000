@@ -118,6 +118,20 @@ export function useDocumentProcessor() {
       return;
     }
 
+    // Auto-generate instructions based on toggle states if no instructions provided
+    let finalInstructions = instructions;
+    if (!instructions.trim()) {
+      if (useContentSource && useStyleSource) {
+        finalInstructions = "Rewrite this text using the content source as reference material and matching the writing style of the style source.";
+      } else if (useContentSource) {
+        finalInstructions = "Rewrite this text using the content source as reference material.";
+      } else if (useStyleSource) {
+        finalInstructions = "Rewrite this text in the style of the style source.";
+      } else {
+        finalInstructions = "Improve and refine this text.";
+      }
+    }
+
     // Check if document needs chunking (over 3,000 characters or more than 600 words)
     const wordCount = inputText.trim().split(/\s+/).length;
     if (inputText.length > 3000 || wordCount > 600) {
@@ -126,7 +140,7 @@ export function useDocumentProcessor() {
       if (chunks.length > 1) {
         setDocumentChunks(chunks);
         setShowChunkSelector(true);
-        setRewriteInstructions(instructions);
+        setRewriteInstructions(finalInstructions);
         return;
       }
     }
@@ -136,7 +150,7 @@ export function useDocumentProcessor() {
     try {
       const result = await processText({
         inputText,
-        instructions,
+        instructions: finalInstructions,
         contentSource,
         useContentSource,
         styleSource,
