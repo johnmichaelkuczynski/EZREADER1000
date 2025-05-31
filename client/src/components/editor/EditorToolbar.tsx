@@ -23,7 +23,7 @@ import { saveInstructions, getSavedInstructions } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
 interface EditorToolbarProps {
-  onProcess: (instructions: string, examMode?: boolean, homeworkMode?: boolean) => void;
+  onProcess: (instructions: string, examMode?: boolean) => void;
   onFindOnline: () => void;
   onVoiceInput: () => void;
   onAudioTranscription: () => void;
@@ -38,8 +38,6 @@ interface EditorToolbarProps {
   setRewriteInstructions: (instructions: string) => void;
   examMode: boolean;
   setExamMode: (enabled: boolean) => void;
-  homeworkMode: boolean;
-  setHomeworkMode: (enabled: boolean) => void;
   onClearAll?: () => void;
 }
 
@@ -59,8 +57,6 @@ export function EditorToolbar({
   setRewriteInstructions,
   examMode,
   setExamMode,
-  homeworkMode,
-  setHomeworkMode,
   onClearAll
 }: EditorToolbarProps) {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
@@ -148,29 +144,16 @@ export function EditorToolbar({
         />
       </div>
       
-      {/* Mode Toggles */}
-      <div className="flex items-center space-x-4 mb-2">
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="exam-mode"
-            checked={examMode}
-            onCheckedChange={setExamMode}
-          />
-          <Label htmlFor="exam-mode" className="text-sm font-medium">
-            Exam Mode {examMode ? '(Take Test)' : '(Rewrite)'}
-          </Label>
-        </div>
-        
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="homework-mode"
-            checked={homeworkMode}
-            onCheckedChange={setHomeworkMode}
-          />
-          <Label htmlFor="homework-mode" className="text-sm font-medium">
-            Homework Mode {homeworkMode ? '(Follow Instructions)' : '(Rewrite)'}
-          </Label>
-        </div>
+      {/* Exam Mode Toggle */}
+      <div className="flex items-center space-x-2 mb-2">
+        <Switch
+          id="exam-mode"
+          checked={examMode}
+          onCheckedChange={setExamMode}
+        />
+        <Label htmlFor="exam-mode" className="text-sm font-medium">
+          Exam Mode {examMode ? '(Take Test)' : '(Rewrite)'}
+        </Label>
       </div>
 
       {/* Main Toolbar */}
@@ -178,11 +161,11 @@ export function EditorToolbar({
         <div className="flex items-center">
           <Button 
             className="mr-2 bg-primary hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center gap-1.5 text-sm font-medium transition-colors"
-            onClick={() => onProcess(rewriteInstructions, examMode, homeworkMode)}
+            onClick={() => onProcess(rewriteInstructions, examMode)}
             disabled={isProcessing}
           >
             <PlayIcon className="h-4 w-4" />
-            <span>{isProcessing ? 'Processing...' : (homeworkMode ? 'Follow Instructions' : examMode ? 'Take Test' : 'Process Text')}</span>
+            <span>{isProcessing ? 'Processing...' : (examMode ? 'Take Test' : 'Process Text')}</span>
           </Button>
           
           <div className="flex bg-slate-100 rounded-md p-1">

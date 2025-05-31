@@ -152,7 +152,7 @@ async function processLargeTextWithPerplexity(options: ProcessTextOptions): Prom
 }
 
 export async function processTextWithPerplexity(options: ProcessTextOptions): Promise<string> {
-  const { text, instructions, contentSource, styleSource, useContentSource, useStyleSource, maxTokens = 4000, examMode = false, homeworkMode = false } = options;
+  const { text, instructions, contentSource, styleSource, useContentSource, useStyleSource, maxTokens = 4000, examMode = false } = options;
   
   // Estimate token count to check for large documents
   const estimatedTokens = estimateTokenCount(text);
@@ -169,9 +169,7 @@ export async function processTextWithPerplexity(options: ProcessTextOptions): Pr
   const { processedText, mathBlocks } = protectMathFormulas(text);
   
   // Base system prompt
-  let systemPrompt = homeworkMode 
-    ? "You are following instructions provided in the input text. Treat the input text as homework, exam questions, or tasks to complete. Do not modify any content within [[MATH_BLOCK_*]] or [[MATH_INLINE_*]] tokens as they contain special mathematical notation. The input text contains instructions, questions, or tasks for you to complete. Follow them exactly and provide complete responses."
-    : examMode 
+  let systemPrompt = examMode 
     ? "You are taking an exam. Answer the exam questions directly and thoroughly to achieve a perfect score. Do not modify any content within [[MATH_BLOCK_*]] or [[MATH_INLINE_*]] tokens as they contain special mathematical notation. Provide complete, accurate answers that demonstrate full understanding of the material."
     : "Transform the provided text according to the instructions. Do not modify any content within [[MATH_BLOCK_*]] or [[MATH_INLINE_*]] tokens as they contain special mathematical notation.";
   
@@ -190,9 +188,7 @@ export async function processTextWithPerplexity(options: ProcessTextOptions): Pr
   }
   
   // Use the protected text with math formulas replaced by tokens
-  let userContent = homeworkMode 
-    ? `Please complete the following instructions, homework, or exam questions:\n\n${processedText}\n\n${instructions ? `Additional context or requirements: ${instructions}` : ''}`
-    : `Instructions: ${instructions}\n\nText to transform:\n${processedText}`;
+  let userContent = `Instructions: ${instructions}\n\nText to transform:\n${processedText}`;
   
   if (useContentSource && contentSource) {
     userContent += `\n\nAdditional content source for reference:\n${contentSource}`;

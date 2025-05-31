@@ -80,7 +80,6 @@ export interface ProcessTextOptions {
   useStyleSource?: boolean;
   maxTokens?: number;
   examMode?: boolean;
-  homeworkMode?: boolean;
 }
 
 import { protectMathFormulas, restoreMathFormulas, protectMathAndStructure, restoreMathAndFormatting, splitIntoSemanticBlocks, reconstructFromBlocks } from "../utils/math-formula-protection";
@@ -149,7 +148,7 @@ async function processLargeTextWithOpenAI(options: ProcessTextOptions): Promise<
 }
 
 export async function processTextWithOpenAI(options: ProcessTextOptions): Promise<string> {
-  const { text, instructions, contentSource, styleSource, useContentSource, useStyleSource, maxTokens = 4000, examMode = false, homeworkMode = false } = options;
+  const { text, instructions, contentSource, styleSource, useContentSource, useStyleSource, maxTokens = 4000, examMode = false } = options;
   
   // For pure passthrough dialogue (no instructions), send user input directly
   if (!instructions || instructions.trim() === "") {
@@ -193,14 +192,7 @@ export async function processTextWithOpenAI(options: ProcessTextOptions): Promis
   // STEP 1: PRE-PROCESSING - Protect math formulas and split into semantic blocks
   const { processedText, mathBlocks, semanticBlocks } = protectMathAndStructure(text);
   
-  let systemPrompt = homeworkMode 
-    ? `You are following instructions provided in the input text. Treat the input text as homework, exam questions, or tasks to complete. Follow these CRITICAL rules:
-
-1. MATH PROTECTION: Never modify content within __MATH_BLOCK_### tokens - these contain LaTeX math expressions
-2. HOMEWORK MODE: The input text contains instructions, questions, or tasks for you to complete. Follow them exactly
-3. FORMATTING: Use clean LaTeX format for any math (e.g., A = P(1 + r/n)^{nt}) NOT Unicode superscripts
-4. OUTPUT: Provide complete responses to the instructions/questions in the input text`
-    : examMode 
+  let systemPrompt = examMode 
     ? `You are taking an exam. Answer the exam questions directly and thoroughly to achieve a perfect score. Follow these CRITICAL rules:
 
 1. MATH PROTECTION: Never modify content within __MATH_BLOCK_### tokens - these contain LaTeX math expressions
@@ -225,14 +217,8 @@ export async function processTextWithOpenAI(options: ProcessTextOptions): Promis
     systemPrompt += " IMPORTANT: Unless explicitly requested otherwise, your rewrite MUST be longer than the original text. Add more examples, explanations, or details to make the content more comprehensive.";
   }
   
-  // STEP 2: CONSTRUCT USER PROMPT - Different approach for homework mode
-  let userPrompt = homeworkMode 
-    ? `Please complete the following instructions, homework, or exam questions:
-
-${processedText}
-
-${instructions ? `Additional context or requirements: ${instructions}` : ''}`
-    : `Instructions: ${instructions}
+  // STEP 2: BLOCK-LEVEL REWRITING - Process semantic blocks to preserve structure
+  let userPrompt = `Instructions: ${instructions}
 
 IMPORTANT: The text below is organized into semantic blocks. Rewrite each block as a complete unit while preserving:
 - Paragraph structure and spacing

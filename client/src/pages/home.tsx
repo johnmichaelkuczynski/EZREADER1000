@@ -81,9 +81,7 @@ export default function Home() {
     enableSynthesisMode,
     setEnableSynthesisMode,
     documentMap,
-    processGlobalQuestion,
-    homeworkMode,
-    setHomeworkMode
+    processGlobalQuestion
   } = useDocumentProcessor();
 
   const {
@@ -234,7 +232,7 @@ export default function Home() {
   };
 
   // Handle processing
-  const handleProcess = (instructions: string, examMode?: boolean, homeworkMode?: boolean) => {
+  const handleProcess = (instructions: string, examMode?: boolean) => {
     if (!instructions.trim()) {
       toast({
         title: "No instructions",
@@ -244,7 +242,7 @@ export default function Home() {
       return;
     }
     
-    processDocument(instructions, examMode, homeworkMode);
+    processDocument(instructions, examMode);
   };
 
   // Select an instruction from saved instructions
@@ -327,8 +325,6 @@ export default function Home() {
               setRewriteInstructions={setRewriteInstructions}
               examMode={examMode}
               setExamMode={setExamMode}
-              homeworkMode={homeworkMode}
-              setHomeworkMode={setHomeworkMode}
               onClearAll={resetAll}
             />
             

@@ -86,7 +86,6 @@ export const processTextSchema = z.object({
   useStyleSource: z.boolean().default(false),
   reprocessOutput: z.boolean().default(false),
   examMode: z.boolean().optional().default(false),
-  homeworkMode: z.boolean().optional().default(false),
 });
 
 export const detectAiSchema = z.object({

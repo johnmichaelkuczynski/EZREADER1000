@@ -145,7 +145,7 @@ const anthropic = new Anthropic({
 });
 
 export async function processTextWithAnthropic(options: ProcessTextOptions): Promise<string> {
-  const { text, instructions, contentSource, styleSource, useContentSource, useStyleSource, maxTokens = 4000, examMode = false, homeworkMode = false } = options;
+  const { text, instructions, contentSource, styleSource, useContentSource, useStyleSource, maxTokens = 4000, examMode = false } = options;
   
   // Estimate token count to check for large documents
   const estimatedTokens = estimateTokenCount(text);
@@ -161,9 +161,7 @@ export async function processTextWithAnthropic(options: ProcessTextOptions): Pro
   // Protect math formulas before processing
   const { processedText, mathBlocks } = protectMathFormulas(text);
   
-  let systemPrompt = homeworkMode 
-    ? "You are following instructions provided in the input text. Treat the input text as homework, exam questions, or tasks to complete. Do not modify any content within [[MATH_BLOCK_*]] or [[MATH_INLINE_*]] tokens as they contain special mathematical notation. CRITICAL: When generating mathematical expressions, use clean LaTeX format (e.g., A = P(1 + r/n)^{nt}) NOT Unicode superscripts or special characters. The input text contains instructions, questions, or tasks for you to complete. Follow them exactly and provide complete responses."
-    : examMode 
+  let systemPrompt = examMode 
     ? "You are taking an exam. Answer the exam questions directly and thoroughly to achieve a perfect score. Do not modify any content within [[MATH_BLOCK_*]] or [[MATH_INLINE_*]] tokens as they contain special mathematical notation. CRITICAL: When generating mathematical expressions, use clean LaTeX format (e.g., A = P(1 + r/n)^{nt}) NOT Unicode superscripts or special characters. Provide complete, accurate answers that demonstrate full understanding of the material."
     : "You are an assistant that transforms text according to user instructions. Do not modify any content within [[MATH_BLOCK_*]] or [[MATH_INLINE_*]] tokens as they contain special mathematical notation. CRITICAL: When generating mathematical expressions, use clean LaTeX format (e.g., A = P(1 + r/n)^{nt}) NOT Unicode superscripts or special characters. This ensures proper PDF rendering.";
   
@@ -180,9 +178,7 @@ export async function processTextWithAnthropic(options: ProcessTextOptions): Pro
   }
   
   // Use the protected text with math formulas replaced by tokens
-  let userContent = homeworkMode 
-    ? `Please complete the following instructions, homework, or exam questions:\n\n${processedText}\n\n${instructions ? `Additional context or requirements: ${instructions}` : ''}`
-    : `Instructions: ${instructions}\n\nText to transform:\n${processedText}`;
+  let userContent = `Instructions: ${instructions}\n\nText to transform:\n${processedText}`;
   
   if (useContentSource && contentSource) {
     systemPrompt += " Use the provided content source for additional context or information.";
