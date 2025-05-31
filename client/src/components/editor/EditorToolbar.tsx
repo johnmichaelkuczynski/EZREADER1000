@@ -163,7 +163,7 @@ export function EditorToolbar({
       </div>
 
       {/* Main Toolbar */}
-      <div className="flex flex-col gap-3">
+      <div className="flex items-center justify-between gap-3">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <Button 
@@ -219,6 +219,18 @@ export function EditorToolbar({
               </SelectContent>
             </Select>
 
+            {/* Clear All Button */}
+            {onClearAll && (
+              <Button 
+                variant="destructive" 
+                size="sm"
+                onClick={onClearAll}
+              >
+                <Trash2 className="h-4 w-4 mr-1" />
+                Clear All
+              </Button>
+            )}
+
             {/* Saved Instructions */}
             <Dialog>
               <DialogTrigger asChild>
@@ -271,20 +283,6 @@ export function EditorToolbar({
             </Dialog>
           </div>
         </div>
-        
-        {/* Clear All Button - Moved to its own row */}
-        {onClearAll && (
-          <div className="flex justify-end">
-            <Button 
-              variant="destructive" 
-              size="sm"
-              onClick={onClearAll}
-            >
-              <Trash2 className="h-4 w-4 mr-1" />
-              Clear All
-            </Button>
-          </div>
-        )}
       </div>
     </div>
   );
