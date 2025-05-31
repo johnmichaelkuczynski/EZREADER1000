@@ -360,6 +360,7 @@ export default function Home() {
                 text={inputText}
                 onTextChange={setInputText}
                 onFileUpload={handleInputFileUpload}
+                onImageUpload={handleImageUpload}
                 onClear={clearInput}
                 onCopy={copyToClipboard}
                 onDetectAI={(text) => {
