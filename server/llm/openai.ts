@@ -159,10 +159,28 @@ export async function processTextWithOpenAI(options: ProcessTextOptions): Promis
     const { processedText, mathBlocks } = protectMathFormulas(text);
     
     let systemPrompt = examMode 
-      ? "You are taking an exam. Answer all questions thoroughly and accurately."
+      ? `You are a highly skilled mathematics student taking an exam. Your task is to solve ALL mathematical problems, answer ALL questions, and complete ALL exercises found in the document. 
+
+CRITICAL EXAM RULES:
+1. SOLVE every mathematical problem you encounter - show full work and final answers
+2. ANSWER every question posed in the document
+3. COMPLETE every exercise or assignment 
+4. For integrals: Calculate them step by step and provide numerical answers
+5. For equations: Solve them completely 
+6. For word problems: Set up equations and solve
+7. For proofs: Provide complete mathematical proofs
+8. Use proper mathematical notation and LaTeX formatting
+9. Do not modify content within [[MATH_BLOCK_*]] or [[MATH_INLINE_*]] tokens
+10. Your goal is to get 100% on this exam by solving everything correctly
+
+You are NOT just rewriting - you are SOLVING and ANSWERING everything as a student would on an exam.`
       : "Process the provided content according to the instructions. Do not modify any content within [[MATH_BLOCK_*]] or [[MATH_INLINE_*]] tokens.";
     
-    let userPrompt = `${instructions}\n\nContent to process:\n${processedText}`;
+    let userPrompt = examMode 
+      ? `EXAM INSTRUCTIONS: You are taking a mathematics exam. Solve ALL problems, answer ALL questions, and complete ALL exercises in this document. Show your work and provide final answers.
+
+Document to solve:\n${processedText}`
+      : `${instructions}\n\nContent to process:\n${processedText}`;
     
     if (useContentSource && contentSource) {
       userPrompt = `${instructions}\n\nUse this content as reference material (do not copy it, use it to enhance your response):\n${contentSource}\n\nNow process this content according to the instructions above:\n${processedText}`;
