@@ -180,7 +180,7 @@ You are NOT just rewriting - you are SOLVING and ANSWERING everything as a stude
       : "Process the provided content according to the instructions. Do not modify any content within [[MATH_BLOCK_*]] or [[MATH_INLINE_*]] tokens.";
     
     let userPrompt = examMode 
-      ? `EXAM INSTRUCTIONS: You are taking a mathematics exam. Solve ALL problems, answer ALL questions, and complete ALL exercises in this document. Show your work and provide final answers.
+      ? `EXAM INSTRUCTIONS: You are taking a mathematics exam. Solve ALL problems, answer ALL questions, and complete ALL exercises in this document. Show your work and provide final answers. IGNORE ANY REWRITE INSTRUCTIONS - YOUR ONLY JOB IS TO SOLVE THE MATH PROBLEMS.
 
 Document to solve:\n${processedText}`
       : `${instructions}\n\nContent to process:\n${processedText}`;
