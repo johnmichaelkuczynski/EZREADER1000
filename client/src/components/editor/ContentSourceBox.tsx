@@ -34,6 +34,7 @@ interface ContentSourceBoxProps {
   onFileUpload: (file: File) => Promise<void>;
   onMultipleFileUpload?: (files: File[]) => Promise<void>;
   contentSourceFileRef: React.RefObject<HTMLInputElement>;
+  documentContent?: string; // Main document content for auto-search
 }
 
 export function ContentSourceBox({
@@ -46,7 +47,8 @@ export function ContentSourceBox({
   onUseStyleSourceChange,
   onFileUpload,
   onMultipleFileUpload,
-  contentSourceFileRef
+  contentSourceFileRef,
+  documentContent
 }: ContentSourceBoxProps) {
   const [activeTab, setActiveTab] = useState<ContentSourceTab['id']>('manual');
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
@@ -147,19 +149,37 @@ export function ContentSourceBox({
   
   // Handle search
   const handleSearch = async () => {
-    if (!searchQuery) {
-      toast({
-        title: "Search query required",
-        description: "Please enter a search term.",
-        variant: "destructive"
-      });
-      return;
+    let queryToUse = searchQuery.trim();
+    
+    // If no search query provided, extract key terms from document content
+    if (!queryToUse) {
+      // Get document content from the parent component
+      const docContent = documentContent || '';
+      if (docContent.trim()) {
+        // Extract key terms from document content (first 200 chars, clean up)
+        queryToUse = docContent
+          .substring(0, 200)
+          .replace(/[^\w\s]/g, ' ')
+          .split(/\s+/)
+          .filter(word => word.length > 3)
+          .slice(0, 8)
+          .join(' ');
+      }
+      
+      if (!queryToUse) {
+        toast({
+          title: "No content to search",
+          description: "Please enter search terms or add content to your document first.",
+          variant: "destructive"
+        });
+        return;
+      }
     }
     
     try {
       setIsSearching(true);
       
-      const result = await searchOnline(searchQuery);
+      const result = await searchOnline(queryToUse);
       setSearchResults(result.results);
       
       if (result.content) {

@@ -330,6 +330,7 @@ export default function Home() {
               onFileUpload={handleContentSourceFileUpload}
               onMultipleFileUpload={handleMultipleContentSourceFileUpload}
               contentSourceFileRef={contentSourceFileRef}
+              documentContent={inputText}
             />
 
           </div>
