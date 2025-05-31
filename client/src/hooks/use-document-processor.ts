@@ -135,7 +135,7 @@ export function useDocumentProcessor() {
       } else if (useStyleSource) {
         finalInstructions = "Rewrite this text in the style of the style source.";
       } else {
-        finalInstructions = "Improve and refine this text.";
+        finalInstructions = "Make this text as professional as possible.";
       }
     }
 
