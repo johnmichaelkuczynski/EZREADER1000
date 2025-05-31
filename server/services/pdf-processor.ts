@@ -1,6 +1,42 @@
 import pdfParse from 'pdf-parse';
 
 /**
+ * Convert common mathematical expressions to LaTeX format
+ */
+function formatMathExpressions(text: string): string {
+  let formatted = text;
+  
+  // Convert common math patterns to LaTeX
+  // Fractions like (x^2 - 4)/(x - 2) -> \frac{x^2 - 4}{x - 2}
+  formatted = formatted.replace(/\(([^)]+)\)\/\(([^)]+)\)/g, '\\frac{$1}{$2}');
+  
+  // Simple fractions like a/b -> \frac{a}{b} (when a and b are simple expressions)
+  formatted = formatted.replace(/([a-zA-Z0-9\^]+)\/([a-zA-Z0-9\^]+)/g, '\\frac{$1}{$2}');
+  
+  // Limits like lim_{x -> 2} -> \lim_{x \to 2}
+  formatted = formatted.replace(/lim_\{([^}]+)\}/g, '\\lim_{$1}');
+  formatted = formatted.replace(/->/g, '\\to');
+  
+  // Square roots like sqrt(x) -> \sqrt{x}
+  formatted = formatted.replace(/sqrt\(([^)]+)\)/g, '\\sqrt{$1}');
+  formatted = formatted.replace(/sqrtx/g, '\\sqrt{x}');
+  
+  // Exponents in expressions like x^2 -> x^{2}
+  formatted = formatted.replace(/([a-zA-Z])\^(\d+)/g, '$1^{$2}');
+  
+  // Functions like f(x) = ... -> wrap in math delimiters when appropriate
+  formatted = formatted.replace(/^(\s*\([a-z]\)\s*[a-zA-Z]\([^)]+\)\s*=.*)$/gm, '$$$1$$');
+  
+  // Mathematical expressions on their own lines
+  formatted = formatted.replace(/^(\s*[a-zA-Z]\([^)]+\)\s*=\s*[^=]+)$/gm, '$$$1$$');
+  
+  // Wrap standalone mathematical expressions
+  formatted = formatted.replace(/^(\s*\\[a-zA-Z]+\{[^}]+\}.*)$/gm, '$$$1$$');
+  
+  return formatted;
+}
+
+/**
  * Extract text from a PDF buffer with multiple fallback methods
  */
 export async function extractTextFromPDF(pdfBuffer: Buffer): Promise<string> {
@@ -60,8 +96,8 @@ export async function extractTextFromPDF(pdfBuffer: Buffer): Promise<string> {
         if (result.length > 0) result += '\n';
       }
       
-      // Add the raw extracted text without any processing
-      result += text;
+      // Add the extracted text with math formatting
+      result += formatMathExpressions(text);
       
       // If text is empty or very short, try next method or show note
       if (text.trim().length < 10 && i < extractionMethods.length - 1) {
