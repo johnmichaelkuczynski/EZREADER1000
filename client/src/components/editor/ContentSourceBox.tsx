@@ -154,16 +154,67 @@ export function ContentSourceBox({
     }
   };
   
+  // Handle source selection
+  const toggleSourceSelection = (index: number) => {
+    const newSelected = new Set(selectedSources);
+    if (newSelected.has(index)) {
+      newSelected.delete(index);
+    } else {
+      newSelected.add(index);
+    }
+    setSelectedSources(newSelected);
+  };
+
+  const toggleAiSourceSelection = (source: string) => {
+    const newSelected = new Set(selectedAiSources);
+    if (newSelected.has(source)) {
+      newSelected.delete(source);
+    } else {
+      newSelected.add(source);
+    }
+    setSelectedAiSources(newSelected);
+  };
+
+  const addSelectedSources = () => {
+    let combinedContent = "";
+    
+    // Add selected web sources
+    selectedSources.forEach(index => {
+      const source = searchResults[index];
+      if (source) {
+        combinedContent += `[${source.title}]\n${source.url}\n${source.snippet}\n\n`;
+      }
+    });
+    
+    // Add selected AI research
+    if (selectedAiSources.has('claude') && aiResearch.claude) {
+      combinedContent += `[Claude Research]\n${aiResearch.claude}\n\n`;
+    }
+    if (selectedAiSources.has('gpt') && aiResearch.gpt) {
+      combinedContent += `[GPT Research]\n${aiResearch.gpt}\n\n`;
+    }
+    if (selectedAiSources.has('perplexity') && aiResearch.perplexity) {
+      combinedContent += `[Perplexity Research]\n${aiResearch.perplexity}\n\n`;
+    }
+    
+    if (combinedContent) {
+      onTextChange(text + (text ? '\n\n' : '') + combinedContent);
+      setActiveTab('manual');
+    }
+    
+    setSearchDialogOpen(false);
+    setSelectedSources(new Set());
+    setSelectedAiSources(new Set());
+  };
+
   // Handle search
   const handleSearch = async () => {
     let queryToUse = searchQuery.trim();
     
     // If no search query provided, extract key terms from document content
     if (!queryToUse) {
-      // Get document content from the parent component
       const docContent = documentContent || '';
       if (docContent.trim()) {
-        // Extract key terms from document content (first 200 chars, clean up)
         queryToUse = docContent
           .substring(0, 200)
           .replace(/[^\w\s]/g, ' ')
@@ -185,6 +236,8 @@ export function ContentSourceBox({
     
     try {
       setIsSearching(true);
+      setSearchResults([]);
+      setAiResearch({});
       
       // Search web sources
       const webResult = await searchOnline(queryToUse);
@@ -222,9 +275,6 @@ export function ContentSourceBox({
       const aiResults = await Promise.all(aiPromises);
       const combinedAiResults = aiResults.reduce((acc, result) => ({ ...acc, ...result }), {});
       setAiResearch(combinedAiResults);
-      
-      // Don't auto-add content anymore - let user select
-      // Keep dialog open for selection
       
     } catch (error: any) {
       console.error('Error searching online:', error);
@@ -393,31 +443,23 @@ Or paste reference content that should guide the transformation..."
       
       {/* Enhanced Search Dialog */}
       <Dialog open={searchDialogOpen} onOpenChange={setSearchDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-blue-800">Search Online for Reference Content</DialogTitle>
+            <DialogTitle className="text-2xl font-bold text-blue-800">Comprehensive Research & Source Selection</DialogTitle>
             <DialogDescription className="text-base text-gray-600">
-              Search the web to find relevant content that will be added to your reference materials. This content can then be used to guide the AI's transformation of your main document.
+              Search web sources and get AI research from multiple providers. Select any combination of sources to add to your reference content.
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4 py-4">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h4 className="font-semibold text-blue-800 mb-2">Search Tips:</h4>
-              <ul className="text-sm text-blue-700 space-y-1">
-                <li>• Use specific keywords related to your topic</li>
-                <li>• Include terms like "guide", "tutorial", or "examples" for instructional content</li>
-                <li>• Search for academic papers, documentation, or authoritative sources</li>
-              </ul>
-            </div>
-            
+          <div className="space-y-6 py-4">
+            {/* Search Input */}
             <div className="space-y-2">
               <Label htmlFor="search-input" className="text-base font-medium">Search Query</Label>
               <div className="flex gap-2">
                 <Input
                   id="search-input"
                   className="text-base p-3"
-                  placeholder="Enter detailed search terms (e.g., 'machine learning tutorial with Python examples')"
+                  placeholder="Enter search terms or leave blank to auto-search from document content"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => {
@@ -432,19 +474,128 @@ Or paste reference content that should guide the transformation..."
                   className="bg-blue-600 hover:bg-blue-700 px-6"
                   size="lg"
                 >
-                  {isSearching ? 'Searching...' : 'Search Web'}
+                  {isSearching ? 'Researching...' : 'Research All'}
                 </Button>
               </div>
             </div>
-            
-            {searchResults.length > 0 && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <h4 className="font-semibold text-green-800 mb-2">Search Results Found</h4>
-                <p className="text-sm text-green-700">
-                  Found {searchResults.length} results. Content has been added to your reference materials.
-                </p>
+
+            {/* Results Grid */}
+            {(searchResults.length > 0 || Object.keys(aiResearch).length > 0) && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                {/* Web Sources */}
+                <div className="space-y-4">
+                  <h3 className="text-xl font-bold text-gray-800 border-b border-gray-200 pb-2">
+                    Web Sources ({searchResults.length})
+                  </h3>
+                  <div className="space-y-3 max-h-96 overflow-y-auto">
+                    {searchResults.map((result, index) => (
+                      <div key={index} className="border rounded-lg p-4 hover:bg-gray-50">
+                        <div className="flex items-start gap-3">
+                          <Checkbox
+                            checked={selectedSources.has(index)}
+                            onCheckedChange={() => toggleSourceSelection(index)}
+                            className="mt-1"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium text-blue-600 text-sm leading-tight mb-1">
+                              {result.title}
+                            </h4>
+                            <p className="text-xs text-blue-500 mb-2 break-all">
+                              {result.url}
+                            </p>
+                            <p className="text-sm text-gray-600 leading-relaxed">
+                              {result.snippet}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* AI Research */}
+                <div className="space-y-4">
+                  <h3 className="text-xl font-bold text-gray-800 border-b border-gray-200 pb-2">
+                    AI Research
+                  </h3>
+                  <div className="space-y-3 max-h-96 overflow-y-auto">
+                    {aiResearch.claude && (
+                      <div className="border rounded-lg p-4 hover:bg-gray-50">
+                        <div className="flex items-start gap-3">
+                          <Checkbox
+                            checked={selectedAiSources.has('claude')}
+                            onCheckedChange={() => toggleAiSourceSelection('claude')}
+                            className="mt-1"
+                          />
+                          <div className="flex-1">
+                            <h4 className="font-medium text-purple-600 mb-2">Claude Research</h4>
+                            <p className="text-sm text-gray-600 leading-relaxed line-clamp-4">
+                              {aiResearch.claude.substring(0, 200)}...
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {aiResearch.gpt && (
+                      <div className="border rounded-lg p-4 hover:bg-gray-50">
+                        <div className="flex items-start gap-3">
+                          <Checkbox
+                            checked={selectedAiSources.has('gpt')}
+                            onCheckedChange={() => toggleAiSourceSelection('gpt')}
+                            className="mt-1"
+                          />
+                          <div className="flex-1">
+                            <h4 className="font-medium text-green-600 mb-2">GPT Research</h4>
+                            <p className="text-sm text-gray-600 leading-relaxed line-clamp-4">
+                              {aiResearch.gpt.substring(0, 200)}...
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {aiResearch.perplexity && (
+                      <div className="border rounded-lg p-4 hover:bg-gray-50">
+                        <div className="flex items-start gap-3">
+                          <Checkbox
+                            checked={selectedAiSources.has('perplexity')}
+                            onCheckedChange={() => toggleAiSourceSelection('perplexity')}
+                            className="mt-1"
+                          />
+                          <div className="flex-1">
+                            <h4 className="font-medium text-orange-600 mb-2">Perplexity Research</h4>
+                            <p className="text-sm text-gray-600 leading-relaxed line-clamp-4">
+                              {aiResearch.perplexity.substring(0, 200)}...
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
+
+            {/* Action Buttons */}
+            <div className="flex justify-between items-center pt-4 border-t">
+              <div className="text-sm text-gray-600">
+                Selected: {selectedSources.size} web sources, {selectedAiSources.size} AI sources
+              </div>
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={() => setSearchDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={addSelectedSources}
+                  disabled={selectedSources.size === 0 && selectedAiSources.size === 0}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  Add Selected Sources ({selectedSources.size + selectedAiSources.size})
+                </Button>
+              </div>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
