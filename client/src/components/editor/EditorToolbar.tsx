@@ -64,6 +64,13 @@ export function EditorToolbar({
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+
+  // Auto-populate instructions when solve mode is active
+  useEffect(() => {
+    if ((examMode || homeworkMode) && !rewriteInstructions.trim()) {
+      setRewriteInstructions("SOLVE ALL MATHEMATICAL PROBLEMS AND ANSWER ALL QUESTIONS. Show complete step-by-step solutions with final answers.");
+    }
+  }, [examMode, homeworkMode, rewriteInstructions, setRewriteInstructions]);
   
   // Load saved instructions
   useEffect(() => {
