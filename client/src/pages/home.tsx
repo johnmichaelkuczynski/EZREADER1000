@@ -86,7 +86,11 @@ export default function Home() {
     processGlobalQuestion,
     // Mode states
     homeworkMode,
-    setHomeworkMode
+    setHomeworkMode,
+    // Instruction memory
+    lastUsedInstructions,
+    rewriteInstructions,
+    setRewriteInstructions
   } = useDocumentProcessor();
 
   const {
@@ -105,7 +109,7 @@ export default function Home() {
   const [isSearching, setIsSearching] = useState(false);
   const [voiceDialogOpen, setVoiceDialogOpen] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
-  const [rewriteInstructions, setRewriteInstructions] = useState("");
+
   const [audioTranscribeDialogOpen, setAudioTranscribeDialogOpen] = useState(false);
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [examMode, setExamMode] = useState(false);
@@ -261,8 +265,11 @@ export default function Home() {
 
   // Handle processing
   const handleProcess = (instructions: string, examMode?: boolean) => {
-    // If no instructions provided, use the instructions directly without blocking
-    const finalInstructions = instructions.trim() || "Rewrite and improve this text";
+    // Smart instruction handling: use provided instructions, or fall back to last used, or default
+    let finalInstructions = instructions.trim();
+    if (!finalInstructions) {
+      finalInstructions = lastUsedInstructions.trim() || "Rewrite well";
+    }
     
     processDocument(finalInstructions, examMode);
   };

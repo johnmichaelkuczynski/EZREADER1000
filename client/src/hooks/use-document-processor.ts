@@ -1021,6 +1021,12 @@ ${inputExcerpt ? `INPUT DOCUMENT:\n${inputExcerpt}\n\n` : ''}${outputExcerpt ? `
     
     // Mode states
     homeworkMode,
-    setHomeworkMode
+    setHomeworkMode,
+    
+    // Instruction memory
+    lastUsedInstructions,
+    setLastUsedInstructions,
+    rewriteInstructions,
+    setRewriteInstructions
   };
 }
