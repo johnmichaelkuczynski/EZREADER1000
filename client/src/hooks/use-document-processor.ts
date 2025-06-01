@@ -60,8 +60,9 @@ export function useDocumentProcessor() {
   const [enableSynthesisMode, setEnableSynthesisMode] = useState(false);
   const [documentMap, setDocumentMap] = useState<string[]>([]);
   
-  // Rewrite instructions for chunking
+  // Rewrite instructions for chunking - persist last used instructions
   const [rewriteInstructions, setRewriteInstructions] = useState('');
+  const [lastUsedInstructions, setLastUsedInstructions] = useState('');
 
   // Helper function to create meaningful chunks
   const createMeaningfulChunks = (text: string): string[] => {
@@ -119,22 +120,33 @@ export function useDocumentProcessor() {
       setInputText("Please provide text to process or describe what you need help with.");
     }
 
-    // Auto-generate instructions based on toggle states if no instructions provided
-    let finalInstructions = instructions;
-    if (!instructions.trim()) {
-      if (examMode) {
-        finalInstructions = "SOLVE ALL MATHEMATICAL PROBLEMS AND ANSWER ALL QUESTIONS. Show complete step-by-step solutions with final answers. Do not just rewrite - SOLVE each problem completely and provide the numerical or algebraic answers.";
-      } else if (homeworkMode) {
-        finalInstructions = "SOLVE ALL MATHEMATICAL PROBLEMS COMPLETELY. Do not explain what needs to be done - ACTUALLY DO IT. For each problem: 1) Solve it step-by-step with actual calculations 2) Show all work 3) Provide the final numerical answer. DO NOT just describe the process - SOLVE each equation, simplify each expression, and give concrete answers.";
-      } else if (useContentSource && useStyleSource) {
-        finalInstructions = "Rewrite this text using the content source as reference material and matching the writing style of the style source.";
-      } else if (useContentSource) {
-        finalInstructions = "Rewrite this text using the content source as reference material.";
-      } else if (useStyleSource) {
-        finalInstructions = "Rewrite this text in the style of the style source.";
-      } else {
-        finalInstructions = "Make this text as professional as possible.";
+    // Smart instruction handling: use provided instructions, or fall back to last used, or default
+    let finalInstructions = instructions.trim();
+    if (!finalInstructions) {
+      // First try to use last used instructions
+      finalInstructions = lastUsedInstructions.trim();
+      
+      // If still no instructions, generate based on toggle states
+      if (!finalInstructions) {
+        if (examMode) {
+          finalInstructions = "SOLVE ALL MATHEMATICAL PROBLEMS AND ANSWER ALL QUESTIONS. Show complete step-by-step solutions with final answers. Do not just rewrite - SOLVE each problem completely and provide the numerical or algebraic answers.";
+        } else if (homeworkMode) {
+          finalInstructions = "SOLVE ALL MATHEMATICAL PROBLEMS COMPLETELY. Do not explain what needs to be done - ACTUALLY DO IT. For each problem: 1) Solve it step-by-step with actual calculations 2) Show all work 3) Provide the final numerical answer. DO NOT just describe the process - SOLVE each equation, simplify each expression, and give concrete answers.";
+        } else if (useContentSource && useStyleSource) {
+          finalInstructions = "Rewrite this text using the content source as reference material and matching the writing style of the style source.";
+        } else if (useContentSource) {
+          finalInstructions = "Rewrite this text using the content source as reference material.";
+        } else if (useStyleSource) {
+          finalInstructions = "Rewrite this text in the style of the style source.";
+        } else {
+          finalInstructions = "Rewrite well";
+        }
       }
+    }
+    
+    // Remember these instructions for next time (only if they were explicitly provided)
+    if (instructions.trim()) {
+      setLastUsedInstructions(finalInstructions);
     }
 
     // Check if document needs chunking (over 3,000 characters or more than 600 words)
@@ -161,9 +173,9 @@ export function useDocumentProcessor() {
         inputText,
         instructions: finalInstructions,
         contentSource,
-        useContentSource: effectiveUseContentSource,
+        useContentSource: Boolean(effectiveUseContentSource),
         styleSource,
-        useStyleSource: effectiveUseStyleSource,
+        useStyleSource: Boolean(effectiveUseStyleSource),
         llmProvider,
         examMode: examMode || homeworkMode
       });
