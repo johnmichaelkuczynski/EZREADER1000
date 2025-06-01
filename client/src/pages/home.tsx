@@ -11,7 +11,7 @@ import { SpecialContentPopup } from "@/components/editor/SpecialContentPopup";
 import { ProcessingStatusBar } from "@/components/editor/ProcessingStatusBar";
 import { EditorToolbar } from "@/components/editor/EditorToolbar";
 import { ChunkSelector } from "@/components/editor/ChunkSelector";
-import { useDocumentProcessor } from "@/hooks/use-document-processor";
+import { useDocumentProcessor, LLMProvider } from "@/hooks/use-document-processor";
 import { useFileOperations } from "@/hooks/use-file-operations";
 import { 
   Dialog, 
@@ -345,7 +345,7 @@ export default function Home() {
               onAudioTranscription={() => setAudioTranscribeDialogOpen(true)}
               isProcessing={processing}
               llmProvider={llmProvider}
-              setLLMProvider={setLLMProvider}
+              setLLMProvider={(provider: string) => setLLMProvider(provider as any)}
               onInstructionsSelect={handleInstructionSelect}
               currentInstructions={messages.filter(msg => msg.role === 'user').pop()?.content || ''}
               enableSynthesisMode={enableSynthesisMode}
