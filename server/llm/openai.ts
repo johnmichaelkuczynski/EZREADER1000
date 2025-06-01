@@ -94,7 +94,7 @@ async function processLargeTextWithOpenAI(options: ProcessTextOptions): Promise<
     try {
       const { processedText, mathBlocks } = protectMathFormulas(chunk);
       
-      let systemPrompt = "Process the full content provided. Do not modify any content within [[MATH_BLOCK_*]] or [[MATH_INLINE_*]] tokens as they contain mathematical notation.";
+      let systemPrompt = "Process the full content provided. Do not modify any content within [[MATH_BLOCK_*]] or [[MATH_INLINE_*]] tokens as they contain mathematical notation. When you encounter LaTeX math notation like \\( \\) or \\[ \\], convert it to clean readable text format. For example, convert \\( Q: \\) to just Q: and \\( P: \\) to just P:.";
       
       let userPrompt = `${instructions}\n\nThis is chunk ${i + 1} of ${chunks.length} from a larger document. Process this ENTIRE chunk according to the instructions:\n\n${processedText}`;
       
@@ -140,7 +140,7 @@ async function processLargeTextWithOpenAI(options: ProcessTextOptions): Promise<
             const smallResponse = await openai.chat.completions.create({
               model: "gpt-4o",
               messages: [
-                { role: "system", content: systemPrompt },
+                { role: "system", content: "Process the content provided. Do not modify any content within [[MATH_BLOCK_*]] or [[MATH_INLINE_*]] tokens as they contain mathematical notation. When you encounter LaTeX math notation like \\( \\) or \\[ \\], convert it to clean readable text format. For example, convert \\( Q: \\) to just Q: and \\( P: \\) to just P:." },
                 { role: "user", content: `${instructions}\n\nThis is part ${j + 1} of ${smallerChunks.length} from chunk ${i + 1}:\n\n${smallProcessedText}` }
               ],
               max_tokens: 2000,
@@ -221,7 +221,7 @@ CRITICAL EXAM RULES:
 10. Your goal is to get 100% on this exam by solving everything correctly
 
 You are NOT just rewriting - you are SOLVING and ANSWERING everything as a student would on an exam.`
-      : "";
+      : "Process the content provided. Do not modify any content within [[MATH_BLOCK_*]] or [[MATH_INLINE_*]] tokens as they contain mathematical notation. When you encounter LaTeX math notation like \\( \\) or \\[ \\], convert it to clean readable text format. For example, convert \\( Q: \\) to just Q: and \\( P: \\) to just P:.";
     
     let userPrompt = examMode 
       ? `EXAM INSTRUCTIONS: You are taking a mathematics exam. Solve ALL problems, answer ALL questions, and complete ALL exercises in this document. Show your work and provide final answers.
