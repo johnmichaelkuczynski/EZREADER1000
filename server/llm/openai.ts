@@ -124,7 +124,42 @@ async function processLargeTextWithOpenAI(options: ProcessTextOptions): Promise<
       
     } catch (error: any) {
       console.error(`Error processing chunk ${i + 1}:`, error);
-      processedResults.push(`[Error processing chunk ${i + 1}: ${error.message}]`);
+      
+      // If it's a token limit error, try with a smaller chunk
+      if (error.message?.includes('maximum context length')) {
+        console.log(`Chunk ${i + 1} too large, splitting further...`);
+        try {
+          // Split this chunk into smaller pieces
+          const smallerChunks = splitIntoChunks(chunk, 16000);
+          let smallChunkResults = [];
+          
+          for (let j = 0; j < smallerChunks.length; j++) {
+            const smallChunk = smallerChunks[j];
+            const { processedText: smallProcessedText, mathBlocks: smallMathBlocks } = protectMathFormulas(smallChunk);
+            
+            const smallResponse = await openai.chat.completions.create({
+              model: "gpt-4o",
+              messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: `${instructions}\n\nThis is part ${j + 1} of ${smallerChunks.length} from chunk ${i + 1}:\n\n${smallProcessedText}` }
+              ],
+              max_tokens: 2000,
+              temperature: 0.7,
+            });
+            
+            const smallResult = smallResponse.choices[0]?.message?.content || '';
+            const smallFinalResult = restoreMathFormulas(smallResult, smallMathBlocks);
+            smallChunkResults.push(smallFinalResult);
+          }
+          
+          processedResults.push(smallChunkResults.join('\n\n'));
+        } catch (splitError: any) {
+          console.error(`Error processing split chunk ${i + 1}:`, splitError);
+          processedResults.push(`[Error: Document section too large to process - ${splitError.message}]`);
+        }
+      } else {
+        processedResults.push(`[Error processing chunk ${i + 1}: ${error.message}]`);
+      }
     }
   }
   
@@ -147,7 +182,7 @@ export async function processTextWithOpenAI(options: ProcessTextOptions): Promis
   
   // Check if document is too large for single processing
   const estimatedTokens = estimateTokenCount(text);
-  const MAX_INPUT_TOKENS = 100000;
+  const MAX_INPUT_TOKENS = 50000; // Reduced limit to prevent token overflow
   
   if (estimatedTokens > MAX_INPUT_TOKENS) {
     console.log(`Large document detected: ${estimatedTokens} tokens. Using chunk processing.`);
