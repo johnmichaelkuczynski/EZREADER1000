@@ -169,8 +169,8 @@ async function processLargeTextWithOpenAI(options: ProcessTextOptions): Promise<
 export async function processTextWithOpenAI(options: ProcessTextOptions): Promise<string> {
   const { text, instructions, contentSource, styleSource, useContentSource, useStyleSource, maxTokens = 4000, examMode = false } = options;
   
-  // For pure passthrough dialogue (no instructions), send directly
-  if (!instructions || instructions.trim() === "") {
+  // For pure passthrough - send text directly without any system prompts or processing instructions
+  if (!instructions || instructions.trim() === "" || instructions.trim() === "PASSTHROUGH") {
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [{ role: "user", content: text }],
@@ -193,6 +193,18 @@ export async function processTextWithOpenAI(options: ProcessTextOptions): Promis
   try {
     const { processedText, mathBlocks } = protectMathFormulas(text);
     
+    // Pure passthrough mode - no system prompts, just send the content directly
+    if (instructions.trim() === "PASSTHROUGH" || (!examMode && instructions.trim() === "")) {
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [{ role: "user", content: processedText }],
+        max_tokens: maxTokens,
+        temperature: 0.7,
+      });
+      const result = response.choices[0]?.message?.content || '';
+      return restoreMathFormulas(result, mathBlocks);
+    }
+
     let systemPrompt = examMode 
       ? `You are a highly skilled mathematics student taking an exam. Your task is to solve ALL mathematical problems, answer ALL questions, and complete ALL exercises found in the document. 
 
@@ -209,13 +221,13 @@ CRITICAL EXAM RULES:
 10. Your goal is to get 100% on this exam by solving everything correctly
 
 You are NOT just rewriting - you are SOLVING and ANSWERING everything as a student would on an exam.`
-      : "Process the provided content according to the instructions. Do not modify any content within [[MATH_BLOCK_*]] or [[MATH_INLINE_*]] tokens.";
+      : "";
     
     let userPrompt = examMode 
       ? `EXAM INSTRUCTIONS: You are taking a mathematics exam. Solve ALL problems, answer ALL questions, and complete ALL exercises in this document. Show your work and provide final answers.
 
 Document to solve:\n${processedText}`
-      : `${instructions}\n\nContent to process:\n${processedText}`;
+      : `${instructions}\n\n${processedText}`;
     
     if (useContentSource && contentSource) {
       userPrompt = `${instructions}\n\nUse this content as reference material (do not copy it, use it to enhance your response):\n${contentSource}\n\nNow process this content according to the instructions above:\n${processedText}`;
