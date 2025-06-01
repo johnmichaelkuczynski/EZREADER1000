@@ -150,24 +150,9 @@ export function useDocumentProcessor() {
       }
     }
 
-    // Validate sources before processing
-    if (useContentSource && !contentSource?.trim()) {
-      toast({
-        title: "Content source required",
-        description: "You selected 'Use as content source' but no content source is available. Please upload a content source file first.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    if (useStyleSource && !styleSource?.trim()) {
-      toast({
-        title: "Style source required", 
-        description: "You selected 'Use as style source' but no style source is available. Please upload a style source file first.",
-        variant: "destructive"
-      });
-      return;
-    }
+    // Auto-disable source options if content is missing (don't block processing)
+    const effectiveUseContentSource = useContentSource && contentSource?.trim();
+    const effectiveUseStyleSource = useStyleSource && styleSource?.trim();
 
     setProcessing(true);
     
@@ -176,9 +161,9 @@ export function useDocumentProcessor() {
         inputText,
         instructions: finalInstructions,
         contentSource,
-        useContentSource,
+        useContentSource: effectiveUseContentSource,
         styleSource,
-        useStyleSource,
+        useStyleSource: effectiveUseStyleSource,
         llmProvider,
         examMode: examMode || homeworkMode
       });
