@@ -261,16 +261,10 @@ export default function Home() {
 
   // Handle processing
   const handleProcess = (instructions: string, examMode?: boolean) => {
-    if (!instructions.trim()) {
-      toast({
-        title: "No instructions",
-        description: "Please provide instructions in the Rewrite Instructions field.",
-        variant: "destructive"
-      });
-      return;
-    }
+    // If no instructions provided, use the instructions directly without blocking
+    const finalInstructions = instructions.trim() || "Rewrite and improve this text";
     
-    processDocument(instructions, examMode);
+    processDocument(finalInstructions, examMode);
   };
 
   // Select an instruction from saved instructions
