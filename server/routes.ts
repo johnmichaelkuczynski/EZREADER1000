@@ -106,12 +106,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           throw new Error('Invalid LLM provider');
       }
       
-      // Azure math enhancement temporarily disabled - need correct model deployment names
-      let finalText = processedText;
-      
-      // Strip markdown from the processed text to improve readability
-      const cleanedText = stripMarkdown(finalText);
-      res.json({ result: cleanedText });
+      // Return LLM output exactly as received - NO FILTERING OR PROCESSING
+      res.json({ result: processedText });
     } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         res.status(400).json({ error: fromZodError(error).message });
@@ -169,14 +165,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           throw new Error('Invalid LLM provider');
       }
       
-      // Azure math enhancement temporarily disabled - need correct model deployment names
-      let finalText = processedText;
-      
-      // Strip markdown from the processed chunk text
-      const cleanedText = stripMarkdown(finalText);
-      
+      // Return LLM output exactly as received - NO FILTERING OR PROCESSING
       res.json({ 
-        result: cleanedText,
+        result: processedText,
         chunkIndex: data.chunkIndex,
         totalChunks: data.totalChunks
       });

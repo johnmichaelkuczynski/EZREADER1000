@@ -92,20 +92,19 @@ async function processLargeTextWithOpenAI(options: ProcessTextOptions): Promise<
     console.log(`Processing chunk ${i + 1}/${chunks.length} - ${chunk.length} characters`);
     
     try {
-      const { processedText, mathBlocks } = protectMathFormulas(chunk);
+      // NO MATH PROTECTION - SEND RAW TEXT TO LLM
+      let systemPrompt = "You are a helpful assistant. Follow the instructions exactly and return your response as-is without any filtering or modification.";
       
-      let systemPrompt = "Process the full content provided. Do not modify any content within [[MATH_BLOCK_*]] or [[MATH_INLINE_*]] tokens as they contain mathematical notation. When you encounter LaTeX math notation like \\( \\) or \\[ \\], convert it to clean readable text format. For example, convert \\( Q: \\) to just Q: and \\( P: \\) to just P:.";
-      
-      let userPrompt = `${instructions}\n\nThis is chunk ${i + 1} of ${chunks.length} from a larger document. Process this ENTIRE chunk according to the instructions:\n\n${processedText}`;
+      let userPrompt = `${instructions}\n\nThis is chunk ${i + 1} of ${chunks.length} from a larger document. Process this ENTIRE chunk according to the instructions:\n\n${chunk}`;
       
       // Add content source if provided
       if (useContentSource && contentSource) {
-        userPrompt = `${instructions}\n\nUse this content as reference material (do not copy it, use it to enhance your response):\n${contentSource}\n\nNow process this chunk ${i + 1} of ${chunks.length} according to the instructions above:\n${processedText}`;
+        userPrompt = `${instructions}\n\nUse this content as reference material (do not copy it, use it to enhance your response):\n${contentSource}\n\nNow process this chunk ${i + 1} of ${chunks.length} according to the instructions above:\n${chunk}`;
       }
       
       // Add style source if provided
       if (useStyleSource && styleSource) {
-        userPrompt = `${instructions}\n\nStyle reference (analyze and emulate this writing style):\n${styleSource}\n\nProcess this chunk ${i + 1} of ${chunks.length}:\n${processedText}`;
+        userPrompt = `${instructions}\n\nStyle reference (analyze and emulate this writing style):\n${styleSource}\n\nProcess this chunk ${i + 1} of ${chunks.length}:\n${chunk}`;
       }
       
       const response = await openai.chat.completions.create({
@@ -119,8 +118,8 @@ async function processLargeTextWithOpenAI(options: ProcessTextOptions): Promise<
       });
 
       const result = response.choices[0]?.message?.content || '';
-      const finalResult = restoreMathFormulas(result, mathBlocks);
-      processedResults.push(finalResult);
+      // NO PROCESSING - PURE PASSTHROUGH
+      processedResults.push(result);
       
     } catch (error: any) {
       console.error(`Error processing chunk ${i + 1}:`, error);
@@ -135,21 +134,21 @@ async function processLargeTextWithOpenAI(options: ProcessTextOptions): Promise<
           
           for (let j = 0; j < smallerChunks.length; j++) {
             const smallChunk = smallerChunks[j];
-            const { processedText: smallProcessedText, mathBlocks: smallMathBlocks } = protectMathFormulas(smallChunk);
+            // NO MATH PROCESSING - RAW PASSTHROUGH
             
             const smallResponse = await openai.chat.completions.create({
               model: "gpt-4o",
               messages: [
-                { role: "system", content: "Process the content provided. Do not modify any content within [[MATH_BLOCK_*]] or [[MATH_INLINE_*]] tokens as they contain mathematical notation. When you encounter LaTeX math notation like \\( \\) or \\[ \\], convert it to clean readable text format. For example, convert \\( Q: \\) to just Q: and \\( P: \\) to just P:." },
-                { role: "user", content: `${instructions}\n\nThis is part ${j + 1} of ${smallerChunks.length} from chunk ${i + 1}:\n\n${smallProcessedText}` }
+                { role: "system", content: "You are a helpful assistant. Follow the instructions exactly and return your response as-is without any filtering or modification." },
+                { role: "user", content: `${instructions}\n\nThis is part ${j + 1} of ${smallerChunks.length} from chunk ${i + 1}:\n\n${smallChunk}` }
               ],
               max_tokens: 2000,
               temperature: 0.7,
             });
             
             const smallResult = smallResponse.choices[0]?.message?.content || '';
-            const smallFinalResult = restoreMathFormulas(smallResult, smallMathBlocks);
-            smallChunkResults.push(smallFinalResult);
+            // NO RESTORATION - PURE PASSTHROUGH
+            smallChunkResults.push(smallResult);
           }
           
           processedResults.push(smallChunkResults.join('\n\n'));
