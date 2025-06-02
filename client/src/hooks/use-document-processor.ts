@@ -63,6 +63,15 @@ export function useDocumentProcessor() {
   // Rewrite instructions for chunking - persist last used instructions
   const [rewriteInstructions, setRewriteInstructions] = useState('');
   const [lastUsedInstructions, setLastUsedInstructions] = useState('');
+  
+  // Rewrite history for "Rewrite the Rewrite" functionality
+  const [rewriteHistory, setRewriteHistory] = useState<{
+    originalText: string;
+    previousInstructions: string;
+    currentRewrite: string;
+  } | null>(null);
+  const [showRewriteTheRewrite, setShowRewriteTheRewrite] = useState(false);
+  const [rewriteTheRewriteInstructions, setRewriteTheRewriteInstructions] = useState('');
 
   // Helper function to create meaningful chunks
   const createMeaningfulChunks = (text: string): string[] => {
@@ -181,6 +190,16 @@ export function useDocumentProcessor() {
       });
       
       setOutputText(result);
+      
+      // Capture rewrite history for "Rewrite the Rewrite" functionality
+      setRewriteHistory({
+        originalText: inputText,
+        previousInstructions: finalInstructions,
+        currentRewrite: result
+      });
+      
+      // Show the "Rewrite the Rewrite" option after processing
+      setShowRewriteTheRewrite(true);
       
       // Add to messages
       const userMessage: Message = {
@@ -958,6 +977,82 @@ ${inputExcerpt ? `INPUT DOCUMENT:\n${inputExcerpt}\n\n` : ''}${outputExcerpt ? `
     setProcessing(false);
   }, []);
 
+  // Process "Rewrite the Rewrite" functionality
+  const processRewriteTheRewrite = useCallback(async (refinementInstructions: string) => {
+    if (!rewriteHistory) return;
+    
+    try {
+      setProcessing(true);
+      setShowRewriteTheRewrite(false);
+      
+      // Create comprehensive prompt with all context
+      const comprehensivePrompt = `You are refining a previous rewrite based on user feedback. Here is the context:
+
+ORIGINAL TEXT:
+${rewriteHistory.originalText}
+
+PREVIOUS INSTRUCTIONS:
+${rewriteHistory.previousInstructions}
+
+CURRENT REWRITE:
+${rewriteHistory.currentRewrite}
+
+USER'S REFINEMENT INSTRUCTIONS:
+${refinementInstructions}
+
+Please create an improved version that addresses the user's specific feedback while maintaining the quality of the rewrite. Pay special attention to any content that may have been omitted or incorrectly handled in the previous version.`;
+
+      const response = await fetch('/api/process-text', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          inputText: comprehensivePrompt,
+          instructions: "Refine the rewrite based on the user's specific feedback",
+          contentSource,
+          useContentSource,
+          llmProvider
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      const refinedRewrite = data.result;
+      
+      // Update output with refined version
+      setOutputText(refinedRewrite);
+      
+      // Update rewrite history for potential further refinements
+      setRewriteHistory({
+        originalText: rewriteHistory.originalText,
+        previousInstructions: `${rewriteHistory.previousInstructions}\n\nRefinement: ${refinementInstructions}`,
+        currentRewrite: refinedRewrite
+      });
+      
+      // Clear the refinement instructions
+      setRewriteTheRewriteInstructions('');
+      
+      toast({
+        title: "Rewrite refined successfully",
+        description: "The content has been improved based on your feedback",
+      });
+      
+    } catch (error: any) {
+      console.error('Error refining rewrite:', error);
+      toast({
+        title: "Refinement failed",
+        description: error?.message || 'Failed to refine the rewrite',
+        variant: "destructive"
+      });
+    } finally {
+      setProcessing(false);
+    }
+  }, [rewriteHistory, contentSource, useContentSource, llmProvider, toast]);
+
   // Placeholder functions for synthesis mode
   const processSpecialCommand = useCallback(async (command: string) => {
     // Simplified implementation
@@ -1080,6 +1175,14 @@ ${inputExcerpt ? `INPUT DOCUMENT:\n${inputExcerpt}\n\n` : ''}${outputExcerpt ? `
     lastUsedInstructions,
     setLastUsedInstructions,
     rewriteInstructions,
-    setRewriteInstructions
+    setRewriteInstructions,
+    
+    // Rewrite the Rewrite functionality
+    rewriteHistory,
+    showRewriteTheRewrite,
+    setShowRewriteTheRewrite,
+    rewriteTheRewriteInstructions,
+    setRewriteTheRewriteInstructions,
+    processRewriteTheRewrite
   };
 }

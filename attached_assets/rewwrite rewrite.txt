@@ -1,0 +1,177 @@
+
+i want there to be a dialogue box underneath the rewrite called "rewrite the rewrite"; here the user puts customized instructions and the app rewrites the rewrite to his specifications; this function is aware of (i) the original text, (ii) the instructions given for the previous rewrite, and (iii) the rewrite; as well, as of course, (iv) the user's instructions for the re-rewrite. do you understand? so for example, i gave the app a logic text, and it fucked up the rewrite; specifically, it left out the fucking laws of logic (it replaced them with watered down paragraphses, contrary to my instructions)30 Laws of Logic
+look at the text below; the rewrite left out the fucking laws of logic. and there is no way for to get the app to put them back in, because (even though i have aksed you 100s of times) there is no simple way to rewrite rewrite. 
+
+J.-M. Kuczynski, PhD
+
+Excluded Middle Non-contradiction Modus Ponens Modus Tollens Contraposition Double Negation Simplification Logical Addition Additive Identity
+Multiplicative identity Transitivity
+Self-equivalence Contraction Expansion
+Generalized Expansion Consistency
+Boolean Modus Ponens Boolean Modus Tollens Identity of Indiscernibles Indiscernibility of identicals Actuality of Necessity Possibility of Actuality Duality (Version 1)
+Duality (Version 2) S5
+Distributivity of Necessity
+Non-distributivity of Possibility Extrusion
+Absorption
+Promiscuity of Necessity
+
+Excluded Middle
+ 
+p or not p
+Either Jim has two cars or Jim does not have two cars
+
+Non-contradiction
+
+Not both p and not p
+Jim does not both have and not have two cars
+
+Modus Ponens
+
+If p, and if p entails q, then q
+If Jim has two cars, and if Jim’s being happy follows from his having two cars, then Jim is happy
+Note: to say that p entails q is to say that q follows from p. in other words, p entails q means that if p, then q
+
+Modus Tollens
+
+If not q, and if p entails q, then not-p
+If Jim is unhappy, and if Jim’s being happy follows from his having two cars, then Jim does not have two cars
+
+Contraposition
+
+p entails q is equivalent with not q entails not p
+For x is a raven to entail that x is black is for x is non-black to entail that x is a non-raven.
+
+Double Negation
+
+p if, and only if, not not p
+Any given statement is equivalent with the negation of its own negation.
+ 
+Jim has two cars if, and only if, Jim does not not have two cars.
+Note: to say that two statements are equivalent is to say that each entails the other.
+
+Simplification
+
+If p and q, then p
+If Jim has two cars and bill is over 7 ft tall, then jim has two cars
+
+
+Logical Addition
+
+if p, then either p or q
+If Jim has two cars, then either Jim has two cars or bill is over 7 ft tall
+
+Additive Identity
+
+If p, then either p or p
+If Jim has two cars, then either Jim has two cars or Jim has two cars
+Multiplicative identity If p, then p and p
+If Jim has two cars, then either Jim has two cars and Jim has two cars
+
+Transitivity
+
+If p entails q and q entails r, then p entails r. p: Jim has exactly two cars
+q: Jim has an even prime number of cars. r: Jim has a prime number of cars.
+ 
+p entails q. q entails r. p entails r.
+
+Self-equivalence
+
+p if, and only if, p
+Any given statement is equivalent with itself.
+
+Contraction
+
+p or not-p follows from q.
+No statement does not entail a tautology.
+
+Expansion
+
+If p entails both q and not q, then p is false
+x is a four sided triangle entails x has and does not have more than three sides. therefore it is false that x is a three sided triangle
+This law is a consequence of the Law of Non-contradiction, taken in conjunction with modus tollens. it is therefore a derived law
+Generalized Expansion
+
+If q is a law of logic and p entails not-q, then p is false.
+Explanation: If q is a truth of logic, then q holds in all possible worlds. Therefore, not-q is false in all possible worlds. Therefore, by modus tollens, anything that entails q is false in all possible worlds.
+
+Consistency
+
+If p entails not-p, then not-p.
+No truth is inconsistent with itself p: x is a round square
+ 
+q: x has exactly three sides.
+p entails q. p also entails not-q. Therefore, p entails both q and not-q. Given the law of non-contradiction, q and not-q is false.
+Therefore, by modus tollens, p is false.
+
+
+Boolean Modus Ponens
+
+If all f’s are g’s, then if x is an f, x is also a g.
+This law is an analogue of modus ponens. what modus ponens says about statements, this law says about classes.
+
+Boolean Modus Tollens
+
+If all f’s are g’s, then if x is a non-g, x is a non-f
+This law is an analogue of modus tollens. what modus tollens says about statements, this law says about classes.
+
+Identity of Indiscernibles
+
+Objects are identical when the same
+If there is no characteristic that x has that y does not have and no characteristic that y has that x does not have, then x=y
+
+Indiscernibility of identicals
+
+Objects are the same when identical
+If x and y are the very same object, then there is no characteristic x has that y does not have and no characteristic that y has that x does not have.
+ 
+Actuality of Necessity
+What is necessary is actual.
+In other words, if p must be true, then p is true.
+Squares must have four sides; therefore, squares do have four sides
+Explanation: p is necessarily true if p is true in all possible worlds. if p is true in all possible worlds, then p is true in this world.
+
+Possibility of Actuality
+
+What is actual is possible
+In other words, if p is true, then p can be true This law follows from the previous two
+Duality (Version 1)
+If p is necessarily true, then not-p is necessarily false
+Squares have four sides is necessarily true. therefore, squares do not have four sides is necessarily false.
+
+Duality (Version 2)
+
+If p is possible, then p is not necessarily false.
+Jim has two cars is possible. Therefore, Jim has two two cars is not necessarily false.
+
+S5
+If p is unconditionally true, then it is unconditionally the case that p is unconditionally true.
+Given that squares have four sides is unconditionally true, it follows that
+squares have four sides is unconditionally true is unconditionally true.
+ 
+Distributivity of Necessity
+If p is necessarily true and q is necessarily true, then p and q is necessarily true.
+p: Squares have four sides q: Triangles have three sides
+p is necessarily true, and so is q. therefore, it is necessarily the case that both p and q.
+
+Non-distributivity of Possibility
+Given only that p is possible and that q is possible, it does not follow that thye are compossible. in other words, p and q is possible does not follow from p is possible and q is possible
+p: Jim has more than two cars q: Jim has less than two cars.
+p and q is not possible, even though p is possible and q is possible.
+
+Extrusion
+
+If q is a contradiction, then p or q is equivalent with p
+Either Jim is wealthy or Squares have three sides is equivalent with Jim is wealthy.
+
+Absorption
+
+If q is a tautology, then p and q is equivalent with p.
+Jim is wealthy and Squares have four sides is equivalent with Squares have four sides.
+
+
+Promiscuity of Necessity
+ 
+If p is necessary, then q entails p, for any q.
+Given that squares have four sides is necessary, there is no truth and no falsehood that does not entail it.
+Explanation: If p is necessary, there is no world where not-p is true and a fortiori no world where q and not-p is true. For q to entail p is for there to be no world where q and not-p is true. Therefore, q entails p.
+
