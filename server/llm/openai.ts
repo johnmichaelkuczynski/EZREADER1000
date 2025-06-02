@@ -168,6 +168,31 @@ async function processLargeTextWithOpenAI(options: ProcessTextOptions): Promise<
 export async function processTextWithOpenAI(options: ProcessTextOptions): Promise<string> {
   const { text, instructions, contentSource, styleSource, useContentSource, useStyleSource, maxTokens = 4000, examMode = false } = options;
   
+  // HOMEWORK MODE DETECTION: Check if this is homework/assignment completion
+  const isHomeworkMode = instructions.includes("I am a teacher creating solution keys") || 
+                        instructions.includes("educational assessment purposes") ||
+                        instructions.includes("COMPLETE THIS ASSIGNMENT ENTIRELY");
+  
+  if (isHomeworkMode) {
+    // HOMEWORK MODE: Treat input as assignment questions to solve
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        { 
+          role: "system", 
+          content: "You are an expert tutor and academic assistant. Solve the following assignment thoroughly and step-by-step. Provide complete solutions, not just explanations. For math problems, show all work and provide final answers. For written questions, provide comprehensive responses. Do not reformat or rewrite - actually solve the problems presented."
+        },
+        { 
+          role: "user", 
+          content: `Please solve the following assignment completely:\n\n${text}`
+        }
+      ],
+      max_tokens: maxTokens,
+      temperature: 0.7,
+    });
+    return response.choices[0]?.message?.content || '';
+  }
+  
   // For pure passthrough - send text directly without any system prompts or processing instructions
   if (!instructions || instructions.trim() === "" || instructions.trim() === "PASSTHROUGH") {
     const response = await openai.chat.completions.create({

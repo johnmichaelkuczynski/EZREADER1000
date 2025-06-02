@@ -154,7 +154,43 @@ export async function processTextWithAnthropic(options: ProcessTextOptions): Pro
     return await processLargeTextWithAnthropic(options);
   }
   
-  // Standard processing for normal-sized documents
+  // HOMEWORK MODE DETECTION: Check if this is homework/assignment completion
+  const isHomeworkMode = instructions.includes("I am a teacher creating solution keys") || 
+                        instructions.includes("educational assessment purposes") ||
+                        instructions.includes("COMPLETE THIS ASSIGNMENT ENTIRELY");
+  
+  if (isHomeworkMode) {
+    // HOMEWORK MODE: Treat input as assignment questions to solve
+    const systemPrompt = "You are an expert tutor and academic assistant. Solve the following assignment thoroughly and step-by-step. Provide complete solutions, not just explanations. For math problems, show all work and provide final answers. For written questions, provide comprehensive responses. Do not reformat or rewrite - actually solve the problems presented.";
+    
+    const userContent = `Please solve the following assignment completely:\n\n${text}`;
+    
+    try {
+      const message = await anthropic.messages.create({
+        model: "claude-3-7-sonnet-20250219",
+        system: systemPrompt,
+        max_tokens: maxTokens,
+        messages: [
+          { role: 'user', content: userContent }
+        ],
+      });
+      
+      let responseContent = '';
+      if (message.content && message.content.length > 0) {
+        const contentBlock = message.content[0];
+        if ('text' in contentBlock) {
+          responseContent = contentBlock.text;
+        }
+      }
+      
+      return responseContent;
+    } catch (error: any) {
+      console.error("Anthropic homework processing error:", error);
+      throw new Error(`Failed to process homework with Anthropic: ${error.message}`);
+    }
+  }
+  
+  // REGULAR REWRITE MODE: Standard processing for normal-sized documents
   // Protect math formulas before processing
   const { processedText, mathBlocks } = protectMathFormulas(text);
   
