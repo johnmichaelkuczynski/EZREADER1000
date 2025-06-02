@@ -795,6 +795,59 @@ ${inputExcerpt ? `INPUT DOCUMENT:\n${inputExcerpt}\n\n` : ''}${outputExcerpt ? `
           return filteredLines.join('\n') + '\n\n' + data.result;
         });
         
+      } else if (mode === 'expand' && selectedIndices.length > 0) {
+        // Expand individual chunks with additional content
+        console.log('Expand mode: expanding', selectedIndices.length, 'chunks individually');
+        let workingContent = [...documentChunks];
+        
+        // First show original content
+        setOutputText(workingContent.join('\n\n'));
+        
+        // Process each selected chunk by expanding it
+        for (let i = 0; i < selectedIndices.length; i++) {
+          const chunkIndex = selectedIndices[i];
+          const chunkText = documentChunks[chunkIndex];
+          
+          console.log(`Expanding chunk ${i + 1}/${selectedIndices.length} (index ${chunkIndex})`);
+          
+          try {
+            const expandPrompt = `${rewriteInstructions}\n\nExpand this section with additional relevant content. Keep the original content and add more details, examples, or related information:\n\n${chunkText}`;
+            
+            const response = await fetch('/api/process-text', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                inputText: expandPrompt,
+                instructions: `Expand this content by adding more details, examples, or related information while keeping the original content`,
+                contentSource,
+                useContentSource,
+                llmProvider
+              }),
+            });
+            
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const expandData = await response.json();
+            
+            // Replace the specific chunk in working content with expanded version
+            workingContent[chunkIndex] = expandData.result;
+            
+            // Update the output with the new version
+            setOutputText(workingContent.join('\n\n'));
+            
+            console.log(`Completed expanding chunk ${i + 1}/${selectedIndices.length}`);
+            
+          } catch (chunkError: any) {
+            console.error(`Error expanding chunk ${chunkIndex}:`, chunkError);
+            workingContent[chunkIndex] = `[Error expanding chunk: ${chunkError.message}]`;
+            setOutputText(workingContent.join('\n\n'));
+          }
+        }
+        
       } else if (mode === 'both') {
         // Rewrite selected chunks AND add new ones
         console.log('Both mode: rewriting', selectedIndices.length, 'chunks and adding', additionalChunks, 'new chunks');

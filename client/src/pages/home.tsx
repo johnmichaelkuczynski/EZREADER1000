@@ -404,7 +404,7 @@ export default function Home() {
             {showChunkSelector && documentChunks.length > 0 && (
               <ChunkSelector
                 chunks={documentChunks}
-                onProcessSelected={async (selectedIndices: number[], mode: 'rewrite' | 'add' | 'both', additionalChunks?: number) => {
+                onProcessSelected={async (selectedIndices: number[], mode: 'rewrite' | 'add' | 'both' | 'expand', additionalChunks?: number) => {
                   try {
                     // Use the correct processSelectedChunks function from the hook
                     await processSelectedChunks(selectedIndices, mode, additionalChunks || 0);
@@ -412,7 +412,7 @@ export default function Home() {
                     // Update the final message
                     setMessages(prev => prev.map(msg => 
                       msg.role === 'assistant' && msg.id === prev[prev.length - 1]?.id
-                        ? { ...msg, content: `Processing complete! ${mode === 'add' ? 'New content added' : mode === 'both' ? 'Content rewritten and expanded' : 'Content rewritten'} successfully.` }
+                        ? { ...msg, content: `Processing complete! ${mode === 'add' ? 'New content added' : mode === 'both' ? 'Content rewritten and expanded' : mode === 'expand' ? 'Selected chunks expanded' : 'Content rewritten'} successfully.` }
                         : msg
                     ));
                   } catch (error) {

@@ -233,7 +233,7 @@ export function ChunkSelector({
       onProcessSelected(selectedChunks, processingMode, additionalChunks);
     } else if (processingMode === 'expand' && selectedChunks.length === 0) {
       return; // Don't process if nothing is selected for expand mode
-    } else if (selectedChunks.length === 0 && processingMode !== 'add') {
+    } else if (selectedChunks.length === 0 && processingMode === 'rewrite') {
       return; // Don't process if nothing is selected for rewrite mode
     } else {
       onProcessSelected(selectedChunks, processingMode, additionalChunks);
