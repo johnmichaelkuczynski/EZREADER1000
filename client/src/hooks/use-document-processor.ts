@@ -120,24 +120,25 @@ export function useDocumentProcessor() {
       setInputText("Please provide text to process or describe what you need help with.");
     }
 
-    // Smart instruction handling: use provided instructions, or fall back to last used, or default
-    let finalInstructions = instructions.trim();
-    if (!finalInstructions) {
-      // First try to use last used instructions
-      finalInstructions = lastUsedInstructions.trim();
-      
-      // If still no instructions, generate based on toggle states
+    // HOMEWORK MODE OVERRIDE: If homework mode is enabled, ALWAYS use homework instructions
+    let finalInstructions;
+    if (homeworkMode) {
+      finalInstructions = "COMPLETE THIS ASSIGNMENT ENTIRELY. Do not explain or describe - ACTUALLY DO THE WORK. For any subject:\n\n- MATH: Solve all problems step-by-step with final numerical answers\n- SCIENCE: Answer all questions with complete explanations and calculations\n- ESSAYS: Write the full essay with proper structure and arguments\n- RESEARCH: Provide comprehensive research with sources and analysis\n- LANGUAGE: Translate, analyze, or complete language exercises fully\n- PROGRAMMING: Write complete, working code solutions\n- HISTORY: Provide detailed answers with dates, facts, and analysis\n- ANY OTHER SUBJECT: Complete all tasks and provide full solutions\n\nDO THE ACTUAL HOMEWORK - don't just rewrite or explain what needs to be done.";
+    } else {
+      // Regular mode: use provided instructions, or fall back to defaults
+      finalInstructions = instructions.trim();
       if (!finalInstructions) {
-        if (homeworkMode) {
-          finalInstructions = "COMPLETE THIS ASSIGNMENT ENTIRELY. Do not explain or describe - ACTUALLY DO THE WORK. For any subject:\n\n- MATH: Solve all problems step-by-step with final numerical answers\n- SCIENCE: Answer all questions with complete explanations and calculations\n- ESSAYS: Write the full essay with proper structure and arguments\n- RESEARCH: Provide comprehensive research with sources and analysis\n- LANGUAGE: Translate, analyze, or complete language exercises fully\n- PROGRAMMING: Write complete, working code solutions\n- HISTORY: Provide detailed answers with dates, facts, and analysis\n- ANY OTHER SUBJECT: Complete all tasks and provide full solutions\n\nDO THE ACTUAL HOMEWORK - don't just rewrite or explain what needs to be done.";
-        } else if (useContentSource && useStyleSource) {
-          finalInstructions = "Rewrite this text using the content source as reference material and matching the writing style of the style source.";
-        } else if (useContentSource) {
-          finalInstructions = "Rewrite this text using the content source as reference material.";
-        } else if (useStyleSource) {
-          finalInstructions = "Rewrite this text in the style of the style source.";
-        } else {
-          finalInstructions = "Rewrite well";
+        finalInstructions = lastUsedInstructions.trim();
+        if (!finalInstructions) {
+          if (useContentSource && useStyleSource) {
+            finalInstructions = "Rewrite this text using the content source as reference material and matching the writing style of the style source.";
+          } else if (useContentSource) {
+            finalInstructions = "Rewrite this text using the content source as reference material.";
+          } else if (useStyleSource) {
+            finalInstructions = "Rewrite this text in the style of the style source.";
+          } else {
+            finalInstructions = "Rewrite well";
+          }
         }
       }
     }
