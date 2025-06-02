@@ -30,7 +30,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface ChunkSelectorProps {
   chunks: string[];
-  onProcessSelected: (selectedIndices: number[], mode: 'rewrite' | 'add' | 'both', additionalChunks?: number) => void;
+  onProcessSelected: (selectedIndices: number[], mode: 'rewrite' | 'add' | 'both' | 'expand', additionalChunks?: number) => void;
   onCancel: () => void;
 }
 
@@ -57,7 +57,7 @@ export function ChunkSelector({
   const [pageSize, setPageSize] = useState(10);
   const [selectionMode, setSelectionMode] = useState<'individual' | 'range'>('individual');
   const [rangeStart, setRangeStart] = useState<number | null>(null);
-  const [processingMode, setProcessingMode] = useState<'rewrite' | 'add' | 'both'>('rewrite');
+  const [processingMode, setProcessingMode] = useState<'rewrite' | 'add' | 'both' | 'expand'>('rewrite');
   const [additionalChunks, setAdditionalChunks] = useState<number>(1);
   
   // Filter chunks based on search term
@@ -231,7 +231,9 @@ export function ChunkSelector({
     if (processingMode === 'add' || (processingMode === 'both' && selectedChunks.length === 0)) {
       // For add mode, we don't need selected chunks
       onProcessSelected(selectedChunks, processingMode, additionalChunks);
-    } else if (selectedChunks.length === 0) {
+    } else if (processingMode === 'expand' && selectedChunks.length === 0) {
+      return; // Don't process if nothing is selected for expand mode
+    } else if (selectedChunks.length === 0 && processingMode !== 'add') {
       return; // Don't process if nothing is selected for rewrite mode
     } else {
       onProcessSelected(selectedChunks, processingMode, additionalChunks);
@@ -268,7 +270,7 @@ export function ChunkSelector({
         {/* Processing Mode Selection */}
         <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
           <h4 className="text-sm font-medium mb-3">What would you like to do?</h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
             <div 
               className={`p-3 border rounded-lg cursor-pointer transition-colors ${
                 processingMode === 'rewrite' 
@@ -294,6 +296,20 @@ export function ChunkSelector({
               <div className="font-medium text-sm">Add New Content</div>
               <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                 Generate new chunks to expand the document
+              </div>
+            </div>
+            
+            <div 
+              className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                processingMode === 'expand' 
+                  ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20' 
+                  : 'border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
+              onClick={() => setProcessingMode('expand')}
+            >
+              <div className="font-medium text-sm">Expand Selected</div>
+              <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                Add content to each selected chunk individually
               </div>
             </div>
             

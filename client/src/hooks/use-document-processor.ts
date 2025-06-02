@@ -687,7 +687,7 @@ ${inputExcerpt ? `INPUT DOCUMENT:\n${inputExcerpt}\n\n` : ''}${outputExcerpt ? `
   // Process selected chunks with live streaming updates
   const processSelectedChunks = useCallback(async (
     selectedIndices: number[],
-    mode: 'rewrite' | 'add' | 'both',
+    mode: 'rewrite' | 'add' | 'both' | 'expand',
     additionalChunks: number = 0
   ) => {
     try {
