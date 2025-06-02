@@ -11,7 +11,6 @@ import { SpecialContentPopup } from "@/components/editor/SpecialContentPopup";
 import { ProcessingStatusBar } from "@/components/editor/ProcessingStatusBar";
 import { EditorToolbar } from "@/components/editor/EditorToolbar";
 import { ChunkSelector } from "@/components/editor/ChunkSelector";
-import { RewriteTheRewrite } from "@/components/editor/RewriteTheRewrite";
 import { useDocumentProcessor, LLMProvider } from "@/hooks/use-document-processor";
 import { useFileOperations } from "@/hooks/use-file-operations";
 import { 
@@ -91,14 +90,7 @@ export default function Home() {
     // Instruction memory
     lastUsedInstructions,
     rewriteInstructions,
-    setRewriteInstructions,
-    // Rewrite the Rewrite functionality
-    rewriteHistory,
-    showRewriteTheRewrite,
-    setShowRewriteTheRewrite,
-    rewriteTheRewriteInstructions,
-    setRewriteTheRewriteInstructions,
-    processRewriteTheRewrite
+    setRewriteInstructions
   } = useDocumentProcessor();
 
   const {
@@ -412,15 +404,15 @@ export default function Home() {
             {showChunkSelector && documentChunks.length > 0 && (
               <ChunkSelector
                 chunks={documentChunks}
-                onProcessSelected={(selectedIndices: number[], modes: ('rewrite' | 'add' | 'expand')[], additionalChunks?: number) => {
+                onProcessSelected={async (selectedIndices: number[], mode: 'rewrite' | 'add' | 'both', additionalChunks?: number) => {
                   try {
                     // Use the correct processSelectedChunks function from the hook
-                    processSelectedChunks(selectedIndices, modes, additionalChunks || 0);
+                    await processSelectedChunks(selectedIndices, mode, additionalChunks || 0);
                     
                     // Update the final message
                     setMessages(prev => prev.map(msg => 
                       msg.role === 'assistant' && msg.id === prev[prev.length - 1]?.id
-                        ? { ...msg, content: `Processing complete! ${modes.join(', ')} modes processed successfully.` }
+                        ? { ...msg, content: `Processing complete! ${mode === 'add' ? 'New content added' : mode === 'both' ? 'Content rewritten and expanded' : 'Content rewritten'} successfully.` }
                         : msg
                     ));
                   } catch (error) {
@@ -436,18 +428,6 @@ export default function Home() {
               <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <div className="text-sm text-blue-600">Processing chunks...</div>
               </div>
-            )}
-            
-            {/* Rewrite the Rewrite - shown after processing is complete */}
-            {showRewriteTheRewrite && rewriteHistory && !processing && (
-              <RewriteTheRewrite
-                isVisible={showRewriteTheRewrite}
-                onProcess={processRewriteTheRewrite}
-                onClose={() => setShowRewriteTheRewrite(false)}
-                instructions={rewriteTheRewriteInstructions}
-                setInstructions={setRewriteTheRewriteInstructions}
-                processing={processing}
-              />
             )}
             
             {/* Chat Interface */}

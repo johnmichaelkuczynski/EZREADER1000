@@ -27,6 +27,9 @@ export function useDocumentProcessor() {
   const [processing, setProcessing] = useState(false);
   const [llmProvider, setLLMProvider] = useState<LLMProvider>('openai');
   
+  // Homework mode state
+  const [homeworkMode, setHomeworkMode] = useState(false);
+  
   // Messages for main processing
   const [messages, setMessages] = useState<Message[]>([]);
   
@@ -60,345 +63,222 @@ export function useDocumentProcessor() {
   // Rewrite instructions for chunking - persist last used instructions
   const [rewriteInstructions, setRewriteInstructions] = useState('');
   const [lastUsedInstructions, setLastUsedInstructions] = useState('');
-  
-  // Homework mode state
-  const [homeworkMode, setHomeworkMode] = useState(false);
-  
-  // Rewrite history for "Rewrite the Rewrite" functionality
-  const [rewriteHistory, setRewriteHistory] = useState<{
-    originalText: string;
-    previousInstructions: string;
-    currentRewrite: string;
-  } | null>(null);
-  const [showRewriteTheRewrite, setShowRewriteTheRewrite] = useState(false);
-  const [rewriteTheRewriteInstructions, setRewriteTheRewriteInstructions] = useState('');
 
-  // Process selected chunks with multiple modes support
-  const processSelectedChunks = useCallback(async (
-    selectedIndices: number[],
-    modes: ('rewrite' | 'add' | 'expand')[],
-    additionalChunks: number = 0
-  ) => {
-    try {
-      console.log('Processing chunks:', { selectedIndices, modes, additionalChunks, documentChunks: documentChunks.length });
-      setShowChunkSelector(false);
-      setProcessing(true);
-      
-      // Clear output and start fresh
-      setOutputText('');
-      let workingContent = [...documentChunks];
-      let finalResult = workingContent.join('\n\n');
-      
-      // Process modes sequentially - supports multiple modes now
-      if (modes.includes('rewrite') && selectedIndices.length > 0) {
-        console.log('Rewrite mode: processing', selectedIndices.length, 'chunks');
-        
-        for (let i = 0; i < selectedIndices.length; i++) {
-          const chunkIndex = selectedIndices[i];
-          const chunkText = workingContent[chunkIndex];
-          
-          const response = await fetch('/api/process-text', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              inputText: chunkText,
-              instructions: rewriteInstructions,
-              contentSource,
-              useContentSource,
-              llmProvider
-            }),
-          });
-          
-          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-          
-          const data = await response.json();
-          workingContent[chunkIndex] = data.result;
-          finalResult = workingContent.join('\n\n');
-          setOutputText(finalResult);
-        }
-      }
-      
-      if (modes.includes('expand') && selectedIndices.length > 0) {
-        console.log('Expand mode: expanding', selectedIndices.length, 'chunks');
-        
-        for (let i = 0; i < selectedIndices.length; i++) {
-          const chunkIndex = selectedIndices[i];
-          const chunkText = workingContent[chunkIndex];
-          
-          const expandPrompt = `${rewriteInstructions}\n\nExpand this section with additional content:\n\n${chunkText}`;
-          
-          const response = await fetch('/api/process-text', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              inputText: expandPrompt,
-              instructions: 'Expand this content with more details while keeping the original',
-              contentSource,
-              useContentSource,
-              llmProvider
-            }),
-          });
-          
-          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-          
-          const data = await response.json();
-          workingContent[chunkIndex] = data.result;
-          finalResult = workingContent.join('\n\n');
-          setOutputText(finalResult);
-        }
-      }
-      
-      if (modes.includes('add') && additionalChunks > 0) {
-        console.log('Add mode: generating', additionalChunks, 'new chunks');
-        
-        const addPrompt = `${rewriteInstructions}\n\nGenerate ${additionalChunks} additional sections:\n\n${finalResult}`;
-        
-        const response = await fetch('/api/process-text', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            inputText: addPrompt,
-            instructions: `Generate ${additionalChunks} new sections`,
-            contentSource,
-            useContentSource,
-            llmProvider
-          }),
-        });
-        
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        
-        const data = await response.json();
-        finalResult = finalResult + '\n\n' + data.result;
-        setOutputText(finalResult);
-      }
-      
-      // Capture rewrite history for "Rewrite the Rewrite" functionality
-      setRewriteHistory({
-        originalText: documentChunks.join('\n\n'),
-        previousInstructions: rewriteInstructions,
-        currentRewrite: finalResult
-      });
-      
-      // Show the "Rewrite the Rewrite" option after processing
-      setShowRewriteTheRewrite(true);
-      
-      toast({
-        title: "Processing completed",
-        description: `Successfully processed ${modes.join(', ')} modes`,
-      });
-      
-    } catch (error: any) {
-      console.error('Error processing chunks:', error);
-      toast({
-        title: "Processing failed",
-        description: error?.message || 'Failed to process chunks',
-        variant: "destructive"
-      });
-    } finally {
-      setProcessing(false);
-    }
-  }, [documentChunks, rewriteInstructions, contentSource, useContentSource, llmProvider, toast]);
-
-  // Process "Rewrite the Rewrite" functionality
-  const processRewriteTheRewrite = useCallback(async () => {
-    if (!rewriteHistory) return;
+  // Helper function to create meaningful chunks
+  const createMeaningfulChunks = (text: string): string[] => {
+    // Split by paragraphs first, then combine into reasonably sized chunks
+    const paragraphs = text.split(/\n\s*\n/).filter(p => p.trim().length > 0);
+    const chunks: string[] = [];
+    let currentChunk = '';
     
-    try {
-      setProcessing(true);
-      setShowRewriteTheRewrite(false);
+    for (const paragraph of paragraphs) {
+      const trimmedParagraph = paragraph.trim();
+      if (!trimmedParagraph) continue;
       
-      if (!rewriteHistory.currentRewrite) {
-        toast({
-          title: "No content to rewrite",
-          description: "There's no previous rewrite to improve",
-          variant: "destructive"
-        });
+      // Test if adding this paragraph would make chunk too large
+      const testChunk = currentChunk + (currentChunk ? '\n\n' : '') + trimmedParagraph;
+      
+      // Target chunk size: 2000-4000 characters (roughly 300-600 words)
+      if (testChunk.length > 4000 && currentChunk.length > 500) {
+        chunks.push(currentChunk);
+        currentChunk = trimmedParagraph;
+      } else {
+        currentChunk = testChunk;
+      }
+    }
+    
+    // Add the last chunk if it has content
+    if (currentChunk.trim().length > 100) {
+      chunks.push(currentChunk);
+    }
+    
+    return chunks;
+  };
+
+  // Core text processing function
+  const processText = useCallback(async (options: {
+    inputText: string;
+    instructions: string;
+    contentSource: string;
+    useContentSource: boolean;
+    styleSource?: string;
+    useStyleSource?: boolean;
+    llmProvider: LLMProvider;
+    examMode?: boolean;
+  }) => {
+    const response = await apiRequest('POST', '/api/process-text', options);
+    const data = await response.json();
+    return data.result;
+  }, []);
+
+  // Process document function
+  const processDocument = useCallback(async (instructions: string, examMode?: boolean) => {
+    // NEVER prevent processing - always allow the button to work
+    // If no input text, we'll still process with a helpful message
+    if (!inputText.trim()) {
+      // Instead of blocking, set a helpful default input
+      setInputText("Please provide text to process or describe what you need help with.");
+    }
+
+    // Smart instruction handling: use provided instructions, or fall back to last used, or default
+    let finalInstructions = instructions.trim();
+    if (!finalInstructions) {
+      // First try to use last used instructions
+      finalInstructions = lastUsedInstructions.trim();
+      
+      // If still no instructions, generate based on toggle states
+      if (!finalInstructions) {
+        if (examMode) {
+          finalInstructions = "SOLVE ALL MATHEMATICAL PROBLEMS AND ANSWER ALL QUESTIONS. Show complete step-by-step solutions with final answers. Do not just rewrite - SOLVE each problem completely and provide the numerical or algebraic answers.";
+        } else if (homeworkMode) {
+          finalInstructions = "SOLVE ALL MATHEMATICAL PROBLEMS COMPLETELY. Do not explain what needs to be done - ACTUALLY DO IT. For each problem: 1) Solve it step-by-step with actual calculations 2) Show all work 3) Provide the final numerical answer. DO NOT just describe the process - SOLVE each equation, simplify each expression, and give concrete answers.";
+        } else if (useContentSource && useStyleSource) {
+          finalInstructions = "Rewrite this text using the content source as reference material and matching the writing style of the style source.";
+        } else if (useContentSource) {
+          finalInstructions = "Rewrite this text using the content source as reference material.";
+        } else if (useStyleSource) {
+          finalInstructions = "Rewrite this text in the style of the style source.";
+        } else {
+          finalInstructions = "Rewrite well";
+        }
+      }
+    }
+    
+    // Remember these instructions for next time (only if they were explicitly provided)
+    if (instructions.trim()) {
+      setLastUsedInstructions(finalInstructions);
+    }
+
+    // Check if document needs chunking (over 3,000 characters or more than 600 words)
+    const wordCount = inputText.trim().split(/\s+/).length;
+    if (inputText.length > 3000 || wordCount > 600) {
+      // Create meaningful chunks with proper size (target ~500-1000 words per chunk)
+      const chunks = createMeaningfulChunks(inputText);
+      if (chunks.length > 1) {
+        setDocumentChunks(chunks);
+        setShowChunkSelector(true);
+        setRewriteInstructions(finalInstructions);
         return;
       }
-      
-      const refinementPrompt = `${rewriteTheRewriteInstructions}\n\nOriginal instructions: ${rewriteHistory.previousInstructions}\n\nCurrent rewrite to improve:\n\n${rewriteHistory.currentRewrite}`;
-      
-      const response = await fetch('/api/process-text', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          inputText: refinementPrompt,
-          instructions: rewriteTheRewriteInstructions || 'Improve and refine this rewritten content',
-          contentSource,
-          useContentSource,
-          llmProvider
-        }),
-      });
-      
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      
-      const data = await response.json();
-      setOutputText(data.result);
-      
-      // Update rewrite history
-      setRewriteHistory({
-        ...rewriteHistory,
-        currentRewrite: data.result
-      });
-      
-      // Clear the rewrite instructions
-      setRewriteTheRewriteInstructions('');
-      
-      toast({
-        title: "Rewrite refinement completed",
-        description: "Successfully improved the previous rewrite",
-      });
-      
-    } catch (error: any) {
-      console.error('Error processing rewrite refinement:', error);
-      toast({
-        title: "Refinement failed",
-        description: error?.message || 'Failed to refine the rewrite',
-        variant: "destructive"
-      });
-    } finally {
-      setProcessing(false);
-    }
-  }, [rewriteHistory, contentSource, useContentSource, llmProvider, toast]);
-
-  // Main document processing function
-  const processDocument = useCallback(async (instructions: string, examMode?: boolean) => {
-    if (!inputText.trim()) {
-      toast({
-        title: "No content to process",
-        description: "Please add some text to the input area first",
-        variant: "destructive"
-      });
-      return;
     }
 
+    // Auto-disable source options if content is missing (don't block processing)
+    const effectiveUseContentSource = useContentSource && contentSource?.trim();
+    const effectiveUseStyleSource = useStyleSource && styleSource?.trim();
+
+    setProcessing(true);
+    
     try {
-      setProcessing(true);
-      setOutputText('');
-
-      const response = await fetch('/api/process-text', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          inputText: inputText,
-          instructions: instructions || 'Rewrite this text to improve clarity and flow',
-          contentSource,
-          useContentSource,
-          llmProvider
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Processing failed: ${response.status}`);
-      }
-
-      const data = await response.json();
-      setOutputText(data.result);
-
-      // Store last used instructions
-      setLastUsedInstructions(instructions);
-      
-      // Set up rewrite history for "Rewrite the Rewrite" functionality
-      setRewriteHistory({
-        originalText: inputText,
-        previousInstructions: instructions,
-        currentRewrite: data.result
+      const result = await processText({
+        inputText,
+        instructions: finalInstructions,
+        contentSource,
+        useContentSource: Boolean(effectiveUseContentSource),
+        styleSource,
+        useStyleSource: Boolean(effectiveUseStyleSource),
+        llmProvider,
+        examMode: examMode || homeworkMode
       });
       
-      // Show the "Rewrite the Rewrite" option after processing
-      setShowRewriteTheRewrite(true);
-
-      toast({
-        title: "Processing completed",
-        description: "Text has been successfully processed",
-      });
-
+      setOutputText(result);
+      
+      // Add to messages
+      const userMessage: Message = {
+        id: Date.now().toString() + '_user',
+        role: 'user',
+        content: instructions || 'Process this document',
+        timestamp: new Date()
+      };
+      
+      const assistantMessage: Message = {
+        id: Date.now().toString() + '_assistant',
+        role: 'assistant',
+        content: result,
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, userMessage, assistantMessage]);
+      
     } catch (error: any) {
       console.error('Error processing document:', error);
       toast({
         title: "Processing failed",
-        description: error?.message || 'Failed to process text',
+        description: error?.message || 'Unknown error occurred',
         variant: "destructive"
       });
     } finally {
       setProcessing(false);
     }
-  }, [inputText, contentSource, useContentSource, llmProvider, toast]);
+  }, [inputText, contentSource, useContentSource, llmProvider, processText, toast]);
 
-  const processSelectedDocumentChunks = useCallback(async (
-    selectedChunks: string[],
-    instructions: string,
-    modes: { rewrite: boolean; expand: boolean; add: boolean }
-  ) => {
-    if (selectedChunks.length === 0) {
-      toast({
-        title: "No chunks selected",
-        description: "Please select at least one chunk to process",
-        variant: "destructive"
-      });
-      return;
-    }
+  // Process dialogue command - pure passthrough
+  const processDialogueCommand = useCallback(async (userInput: string) => {
+    if (!userInput.trim()) return;
+
+    // Add user message immediately
+    const userMessage: Message = {
+      id: Date.now().toString() + '_user',
+      role: 'user',
+      content: userInput,
+      timestamp: new Date()
+    };
+
+    // Add placeholder assistant message
+    const assistantMessageId = Date.now().toString() + '_assistant';
+    const assistantMessage: Message = {
+      id: assistantMessageId,
+      role: 'assistant',
+      content: 'Processing...',
+      timestamp: new Date()
+    };
+
+    setDialogueMessages(prev => [...prev, userMessage, assistantMessage]);
 
     try {
-      setProcessing(true);
-      setOutputText('');
-
-      const combinedText = selectedChunks.join('\n\n');
+      // Include document context for dialogue with size limits
+      let contextualInput = userInput;
       
-      const response = await fetch('/api/process-chunk', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text: combinedText,
-          instructions: instructions || 'Rewrite this text to improve clarity and flow',
-          contentSource,
-          useContentSource,
-          modes,
-          llmProvider
-        }),
-      });
+      if (inputText.trim() || outputText.trim()) {
+        // Truncate documents to prevent context overflow (max ~8000 chars each)
+        const truncateText = (text: string, maxLength: number = 8000) => {
+          if (text.length <= maxLength) return text;
+          return text.substring(0, maxLength) + "\n\n[Document truncated - showing first " + maxLength + " characters]";
+        };
 
-      if (!response.ok) {
-        throw new Error(`Chunk processing failed: ${response.status}`);
+        const inputExcerpt = inputText.trim() ? truncateText(inputText.trim()) : '';
+        const outputExcerpt = outputText.trim() ? truncateText(outputText.trim()) : '';
+        
+        contextualInput = `Context - Document content available:
+${inputExcerpt ? `INPUT DOCUMENT:\n${inputExcerpt}\n\n` : ''}${outputExcerpt ? `OUTPUT DOCUMENT:\n${outputExcerpt}\n\n` : ''}USER QUESTION: ${userInput}`;
       }
-
-      const data = await response.json();
-      setOutputText(data.result);
-
-      // Store last used instructions
-      setLastUsedInstructions(instructions);
       
-      // Set up rewrite history for "Rewrite the Rewrite" functionality
-      setRewriteHistory({
-        originalText: combinedText,
-        previousInstructions: instructions,
-        currentRewrite: data.result
+      const response = await processText({
+        inputText: contextualInput,
+        instructions: "You are an AI assistant discussing documents with the user. You can see the input and output documents provided in the context. Answer the user's questions about these documents, provide analysis, suggestions, or help as requested. Be helpful and conversational.",
+        contentSource: "",
+        useContentSource: false,
+        llmProvider
       });
-      
-      // Show the "Rewrite the Rewrite" option after processing
-      setShowRewriteTheRewrite(true);
 
-      toast({
-        title: "Chunks processed",
-        description: `Successfully processed ${selectedChunks.length} chunks`,
-      });
+      // Update assistant message with the pure LLM response
+      setDialogueMessages(prev => prev.map(msg => 
+        msg.id === assistantMessageId
+          ? { ...msg, content: response }
+          : msg
+      ));
 
     } catch (error: any) {
-      console.error('Error processing chunks:', error);
-      toast({
-        title: "Chunk processing failed",
-        description: error?.message || 'Failed to process selected chunks',
-        variant: "destructive"
-      });
-    } finally {
-      setProcessing(false);
+      console.error('Error processing dialogue:', error);
+      
+      setDialogueMessages(prev => prev.map(msg => 
+        msg.id === assistantMessageId
+          ? { ...msg, content: `Sorry, I encountered an error: ${error?.message || 'Unknown error'}` }
+          : msg
+      ));
     }
-  }, [contentSource, useContentSource, llmProvider, toast]);
+  }, [llmProvider, processText, setDialogueMessages]);
 
-  const cancelProcessing = useCallback(() => {
-    setProcessing(false);
-  }, []);
-
+  // File upload handlers
   const handleInputFileUpload = useCallback(async (file: File) => {
     try {
       let extractedText = '';
@@ -412,7 +292,9 @@ export function useDocumentProcessor() {
           body: formData,
         });
         
-        if (!response.ok) throw new Error(`PDF processing failed: ${response.statusText}`);
+        if (!response.ok) {
+          throw new Error(`PDF processing failed: ${response.statusText}`);
+        }
         
         const result = await response.json();
         extractedText = result.text;
@@ -428,13 +310,16 @@ export function useDocumentProcessor() {
           body: formData,
         });
         
-        if (!response.ok) throw new Error(`Word document processing failed: ${response.statusText}`);
+        if (!response.ok) {
+          throw new Error(`Word document processing failed: ${response.statusText}`);
+        }
         
         const result = await response.json();
         extractedText = result.text;
       } else if (file.type === 'text/plain') {
         extractedText = await file.text();
       } else if (file.type.startsWith('image/')) {
+        // Handle image files with OCR
         const formData = new FormData();
         formData.append('image', file);
         
@@ -443,7 +328,9 @@ export function useDocumentProcessor() {
           body: formData,
         });
         
-        if (!response.ok) throw new Error(`OCR failed: ${response.statusText}`);
+        if (!response.ok) {
+          throw new Error(`Image OCR failed: ${response.statusText}`);
+        }
         
         const result = await response.json();
         extractedText = result.text;
@@ -451,97 +338,114 @@ export function useDocumentProcessor() {
         throw new Error(`Unsupported file type: ${file.type}`);
       }
       
-      setInputText(prev => prev + (prev ? '\n\n' : '') + extractedText);
+      setInputText(extractedText);
       
       toast({
-        title: "File uploaded",
-        description: `Successfully extracted text from ${file.name}`,
+        title: "File uploaded successfully",
+        description: `Extracted text from ${file.name}`,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading file:', error);
       toast({
         title: "Upload failed",
-        description: error instanceof Error ? error.message : "Failed to process file",
+        description: error?.message || 'Failed to process file',
         variant: "destructive"
       });
     }
-  }, [setInputText, toast]);
+  }, [toast]);
 
   const handleContentSourceFileUpload = useCallback(async (file: File) => {
     try {
-      let extractedText = '';
+      let result;
       
-      if (file.type === 'application/pdf') {
+      if (file.type === 'text/plain') {
+        // Handle text files directly
+        const text = await file.text();
+        result = { text };
+      } else if (file.type === 'application/pdf') {
+        // Handle PDF files
         const formData = new FormData();
         formData.append('pdf', file);
         
         const response = await fetch('/api/process-pdf', {
           method: 'POST',
-          body: formData,
+          body: formData
         });
         
-        if (!response.ok) throw new Error(`PDF processing failed: ${response.statusText}`);
+        if (!response.ok) {
+          throw new Error(`PDF processing failed: ${response.statusText}`);
+        }
         
-        const result = await response.json();
-        extractedText = result.text;
+        result = await response.json();
       } else if (
         file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
         file.type === 'application/msword'
       ) {
+        // Handle Word documents
         const formData = new FormData();
         formData.append('docx', file);
         
         const response = await fetch('/api/process-docx', {
           method: 'POST',
-          body: formData,
+          body: formData
         });
         
-        if (!response.ok) throw new Error(`Word document processing failed: ${response.statusText}`);
+        if (!response.ok) {
+          throw new Error(`Word document processing failed: ${response.statusText}`);
+        }
         
-        const result = await response.json();
-        extractedText = result.text;
-      } else if (file.type === 'text/plain') {
-        extractedText = await file.text();
+        result = await response.json();
       } else {
         throw new Error(`Unsupported file type: ${file.type}`);
       }
       
-      setContentSource(extractedText);
+      // Always set as content source regardless of mode - simplify logic
+      setContentSource(result.text);
+      
+      // Also set as style source if that mode is enabled
+      if (useStyleSource) {
+        setStyleSource(result.text);
+      }
       
       toast({
-        title: "File uploaded",
-        description: `Successfully extracted text from ${file.name}`,
+        title: "Content source uploaded",
+        description: `Extracted ${result.text.length} characters from ${file.name}`,
       });
-    } catch (error) {
-      console.error('Error uploading file:', error);
+    } catch (error: any) {
+      console.error('Error uploading source file:', error);
       toast({
         title: "Upload failed",
-        description: error instanceof Error ? error.message : "Failed to process file",
+        description: error?.message || 'Failed to process file',
         variant: "destructive"
       });
     }
-  }, [setContentSource, toast]);
+  }, [toast, useContentSource, useStyleSource]);
 
   const handleMultipleContentSourceFileUpload = useCallback(async (files: File[]) => {
-    try {
-      let combinedText = '';
-      
-      for (const file of files) {
-        let extractedText = '';
+    // Handle multiple file uploads by concatenating all content
+    let combinedText = '';
+    
+    for (const file of files) {
+      try {
+        let result;
         
-        if (file.type === 'application/pdf') {
+        if (file.type === 'text/plain') {
+          const text = await file.text();
+          result = { text };
+        } else if (file.type === 'application/pdf') {
           const formData = new FormData();
           formData.append('pdf', file);
           
           const response = await fetch('/api/process-pdf', {
             method: 'POST',
-            body: formData,
+            body: formData
           });
           
-          if (!response.ok) throw new Error(`PDF processing failed: ${response.statusText}`);
+          if (!response.ok) {
+            throw new Error(`PDF processing failed: ${response.statusText}`);
+          }
           
-          const result = await response.json();
-          extractedText = result.text;
+          result = await response.json();
         } else if (
           file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
           file.type === 'application/msword'
@@ -551,37 +455,36 @@ export function useDocumentProcessor() {
           
           const response = await fetch('/api/process-docx', {
             method: 'POST',
-            body: formData,
+            body: formData
           });
           
-          if (!response.ok) throw new Error(`Word document processing failed: ${response.statusText}`);
+          if (!response.ok) {
+            throw new Error(`Word document processing failed: ${response.statusText}`);
+          }
           
-          const result = await response.json();
-          extractedText = result.text;
-        } else if (file.type === 'text/plain') {
-          extractedText = await file.text();
+          result = await response.json();
         } else {
           throw new Error(`Unsupported file type: ${file.type}`);
         }
         
-        combinedText += (combinedText ? '\n\n---\n\n' : '') + `[${file.name}]\n\n${extractedText}`;
+        if (result && result.text) {
+          combinedText += (combinedText ? '\n\n--- ' + file.name + ' ---\n\n' : '') + result.text;
+        }
+      } catch (error) {
+        console.error(`Error processing file ${file.name}:`, error);
       }
-      
+    }
+    
+    if (combinedText) {
+      // Set the combined text in content source
       setContentSource(combinedText);
       
       toast({
-        title: "Files uploaded",
-        description: `Successfully processed ${files.length} files`,
-      });
-    } catch (error) {
-      console.error('Error uploading files:', error);
-      toast({
-        title: "Upload failed",
-        description: error instanceof Error ? error.message : "Failed to process files",
-        variant: "destructive"
+        title: "Files uploaded successfully",
+        description: `${files.length} files processed and combined`,
       });
     }
-  }, [setContentSource, toast]);
+  }, [toast]);
 
   const handleAudioTranscription = useCallback(async (file: File) => {
     try {
@@ -590,92 +493,149 @@ export function useDocumentProcessor() {
       
       const response = await fetch('/api/transcribe', {
         method: 'POST',
-        body: formData,
+        body: formData
       });
       
-      if (!response.ok) throw new Error(`Transcription failed: ${response.statusText}`);
-      
       const result = await response.json();
-      
-      setInputText(prev => prev + (prev ? '\n\n' : '') + result.text);
+      setInputText(prev => prev + '\n\n' + result.result);
       
       toast({
         title: "Audio transcribed",
-        description: `Successfully transcribed ${file.name}`,
+        description: "Audio has been transcribed and added to input",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error transcribing audio:', error);
       toast({
         title: "Transcription failed",
-        description: error instanceof Error ? error.message : "Failed to transcribe audio",
+        description: error?.message || 'Failed to transcribe audio',
         variant: "destructive"
       });
-    }
-  }, [setInputText, toast]);
-
-  const detectAIText = useCallback(async (text: string, source?: string) => {
-    try {
-      if (!text.trim()) return;
-      
-      if (source === 'input') {
-        setIsInputDetecting(true);
-      } else if (source === 'output') {
-        setIsOutputDetecting(true);
-      }
-      
-      const response = await fetch('/api/detect-ai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text }),
-      });
-      
-      if (!response.ok) {
-        throw new Error(`AI detection failed: ${response.statusText}`);
-      }
-      
-      const result = await response.json();
-      
-      if (source === 'input') {
-        setInputAIResult(result);
-      } else if (source === 'output') {
-        setOutputAIResult(result);
-      }
-      
-    } catch (error) {
-      console.error('Error detecting AI text:', error);
-      toast({
-        title: "AI detection failed",
-        description: error instanceof Error ? error.message : "Failed to detect AI text",
-        variant: "destructive"
-      });
-    } finally {
-      if (source === 'input') {
-        setIsInputDetecting(false);
-      } else if (source === 'output') {
-        setIsOutputDetecting(false);
-      }
     }
   }, [toast]);
 
+  // Math processing handlers
+  const handleMathPDFUpload = useCallback(async (file: File) => {
+    try {
+      const formData = new FormData();
+      formData.append('pdf', file);
+      
+      const response = await fetch('/api/process-math-pdf', {
+        method: 'POST',
+        body: formData
+      });
+      
+      const result = await response.json();
+      setInputText(result.text);
+      
+      toast({
+        title: "Math PDF processed",
+        description: "Mathematical content extracted successfully",
+      });
+    } catch (error: any) {
+      console.error('Error processing math PDF:', error);
+      toast({
+        title: "Processing failed",
+        description: error?.message || 'Failed to process math PDF',
+        variant: "destructive"
+      });
+    }
+  }, [toast]);
+
+  const handleMathImageUpload = useCallback(async (file: File) => {
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      const response = await fetch('/api/process-math-image', {
+        method: 'POST',
+        body: formData
+      });
+      
+      const result = await response.json();
+      setInputText(prev => prev + '\n\n' + result.text);
+      
+      toast({
+        title: "Math image processed",
+        description: "Mathematical content extracted from image",
+      });
+    } catch (error: any) {
+      console.error('Error processing math image:', error);
+      toast({
+        title: "Processing failed",
+        description: error?.message || 'Failed to process math image',
+        variant: "destructive"
+      });
+    }
+  }, [toast]);
+
+  const enhanceMathFormatting = useCallback(async (text: string) => {
+    try {
+      const response = await apiRequest('POST', '/api/enhance-math', { text });
+      const result = await response.json();
+      return result.enhancedText;
+    } catch (error: any) {
+      console.error('Error enhancing math formatting:', error);
+      throw error;
+    }
+  }, []);
+
+  // AI Detection
+  const detectAIText = useCallback(async (text: string, target: 'input' | 'output') => {
+    if (target === 'input') {
+      setIsInputDetecting(true);
+    } else {
+      setIsOutputDetecting(true);
+    }
+    
+    try {
+      const response = await apiRequest('POST', '/api/detect-ai', { text, llmProvider });
+      const result = await response.json();
+      
+      if (target === 'input') {
+        setInputAIResult(result);
+      } else {
+        setOutputAIResult(result);
+      }
+      
+    } catch (error: any) {
+      console.error('Error detecting AI text:', error);
+      toast({
+        title: "Detection failed",
+        description: error?.message || 'Failed to detect AI text',
+        variant: "destructive"
+      });
+    } finally {
+      if (target === 'input') {
+        setIsInputDetecting(false);
+      } else {
+        setIsOutputDetecting(false);
+      }
+    }
+  }, [llmProvider, toast]);
+
+  // Clear functions
   const clearInput = useCallback(() => {
     setInputText('');
+    setInputAIResult(null);
   }, []);
 
   const clearOutput = useCallback(() => {
     setOutputText('');
+    setOutputAIResult(null);
   }, []);
 
   const clearContentSource = useCallback(() => {
     setContentSource('');
+    setUseContentSource(false);
   }, []);
 
   const clearStyleSource = useCallback(() => {
     setStyleSource('');
+    setUseStyleSource(false);
   }, []);
 
   const clearChat = useCallback(() => {
     setMessages([]);
-    setDialogueMessages([]);
   }, []);
 
   const resetAll = useCallback(() => {
@@ -683,17 +643,303 @@ export function useDocumentProcessor() {
     setOutputText('');
     setContentSource('');
     setStyleSource('');
+    setUseContentSource(false);
+    setUseStyleSource(false);
     setMessages([]);
     setDialogueMessages([]);
+    setInputAIResult(null);
+    setOutputAIResult(null);
+    setSpecialContent('');
+    setShowSpecialContent(false);
   }, []);
 
+
+
+  const processSelectedDocumentChunks = useCallback((instructions: string) => {
+    // Chunk the document for selection - split into proper chunks with good size
+    const text = inputText.trim();
+    if (!text) return;
+    
+    // Split by paragraphs first, then group into reasonable chunks
+    const paragraphs = text.split('\n\n').filter(p => p.trim().length > 0);
+    const chunks = [];
+    let currentChunk = '';
+    
+    for (const paragraph of paragraphs) {
+      if (currentChunk.length + paragraph.length > 2000 && currentChunk.length > 0) {
+        chunks.push(currentChunk.trim());
+        currentChunk = paragraph;
+      } else {
+        currentChunk += (currentChunk ? '\n\n' : '') + paragraph;
+      }
+    }
+    
+    if (currentChunk.trim()) {
+      chunks.push(currentChunk.trim());
+    }
+    
+    console.log('Created chunks:', chunks.length, 'chunks with lengths:', chunks.map(c => c.length));
+    setDocumentChunks(chunks);
+    setShowChunkSelector(true);
+    setRewriteInstructions(instructions);
+  }, [inputText]);
+
+  // Process selected chunks with live streaming updates
+  const processSelectedChunks = useCallback(async (
+    selectedIndices: number[],
+    mode: 'rewrite' | 'add' | 'both',
+    additionalChunks: number = 0
+  ) => {
+    try {
+      console.log('Processing chunks:', { selectedIndices, mode, additionalChunks, documentChunks: documentChunks.length });
+      setShowChunkSelector(false);
+      setProcessing(true);
+      
+      // Clear output and start fresh
+      setOutputText('');
+      
+      if (mode === 'rewrite' && selectedIndices.length > 0) {
+        // Process each chunk individually and stream results
+        console.log('Rewrite mode: processing', selectedIndices.length, 'chunks one by one');
+        
+        for (let i = 0; i < selectedIndices.length; i++) {
+          const chunkIndex = selectedIndices[i];
+          const chunkText = documentChunks[chunkIndex];
+          
+          console.log(`Processing chunk ${i + 1}/${selectedIndices.length} (index ${chunkIndex})`);
+          
+          // Update progress in output box
+          setOutputText(prev => prev + `\n\n[Processing chunk ${i + 1}/${selectedIndices.length}...]\n\n`);
+          
+          try {
+            const response = await fetch('/api/process-text', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                inputText: chunkText,
+                instructions: rewriteInstructions,
+                contentSource,
+                useContentSource,
+                llmProvider
+              }),
+            });
+            
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            const processedChunk = data.result;
+            
+            console.log('Processed chunk result:', processedChunk ? processedChunk.substring(0, 200) + '...' : 'EMPTY');
+            
+            // Replace the processing message with the actual result
+            setOutputText(prev => {
+              console.log('Previous output text:', prev ? prev.substring(0, 100) + '...' : 'EMPTY');
+              const lines = prev.split('\n');
+              // Remove the "Processing..." message
+              const filteredLines = lines.filter(line => !line.includes('[Processing chunk'));
+              const cleanedPrev = filteredLines.join('\n').trim();
+              const newText = cleanedPrev ? cleanedPrev + '\n\n' + processedChunk : processedChunk;
+              console.log('Setting new output text:', newText ? newText.substring(0, 200) + '...' : 'EMPTY');
+              return newText;
+            });
+            
+            console.log(`Completed chunk ${i + 1}/${selectedIndices.length}`);
+            
+          } catch (chunkError: any) {
+            console.error(`Error processing chunk ${chunkIndex}:`, chunkError);
+            setOutputText(prev => prev + `\n\n[Error processing chunk ${i + 1}: ${chunkError.message}]\n\n`);
+          }
+        }
+        
+      } else if (mode === 'add') {
+        // Add new chunks to existing document
+        console.log('Add mode: generating', additionalChunks, 'new chunks');
+        const existingText = documentChunks.join('\n\n');
+        
+        // First show existing content
+        setOutputText(existingText);
+        
+        // Then generate and add new chunks
+        setOutputText(prev => prev + `\n\n[Generating ${additionalChunks} new chunks...]\n\n`);
+        
+        const addPrompt = `${rewriteInstructions}\n\nGenerate ${additionalChunks} additional section(s) that complement this document:\n\n${existingText}`;
+        
+        const response = await fetch('/api/process-text', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            inputText: addPrompt,
+            instructions: `Generate ${additionalChunks} new section(s) based on the provided document`,
+            contentSource,
+            useContentSource,
+            llmProvider
+          }),
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Replace generation message with actual new content
+        setOutputText(prev => {
+          const lines = prev.split('\n');
+          const filteredLines = lines.filter(line => !line.includes('[Generating'));
+          return filteredLines.join('\n') + '\n\n' + data.result;
+        });
+        
+      } else if (mode === 'both') {
+        // Rewrite selected chunks AND add new ones
+        console.log('Both mode: rewriting', selectedIndices.length, 'chunks and adding', additionalChunks, 'new chunks');
+        let workingContent = [...documentChunks];
+        
+        // First show original content
+        setOutputText(workingContent.join('\n\n'));
+        
+        // Process selected chunks one by one
+        if (selectedIndices.length > 0) {
+          for (let i = 0; i < selectedIndices.length; i++) {
+            const chunkIndex = selectedIndices[i];
+            const chunkText = documentChunks[chunkIndex];
+            
+            console.log(`Rewriting chunk ${i + 1}/${selectedIndices.length} (index ${chunkIndex})`);
+            
+            try {
+              const rewriteResponse = await fetch('/api/process-text', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  inputText: chunkText,
+                  instructions: rewriteInstructions,
+                  contentSource,
+                  useContentSource,
+                  llmProvider
+                }),
+              });
+              
+              if (!rewriteResponse.ok) {
+                throw new Error(`HTTP error! status: ${rewriteResponse.status}`);
+              }
+              
+              const rewriteData = await rewriteResponse.json();
+              
+              // Update the specific chunk in working content
+              workingContent[chunkIndex] = rewriteData.result;
+              
+              // Update the output with the new version
+              setOutputText(workingContent.join('\n\n'));
+              
+              console.log(`Completed rewriting chunk ${i + 1}/${selectedIndices.length}`);
+              
+            } catch (chunkError: any) {
+              console.error(`Error rewriting chunk ${chunkIndex}:`, chunkError);
+              workingContent[chunkIndex] = `[Error rewriting chunk: ${chunkError.message}]`;
+              setOutputText(workingContent.join('\n\n'));
+            }
+          }
+        }
+        
+        // Then add new chunks if requested
+        if (additionalChunks > 0) {
+          setOutputText(prev => prev + `\n\n[Generating ${additionalChunks} additional chunks...]\n\n`);
+          
+          const currentText = workingContent.join('\n\n');
+          const addPrompt = `${rewriteInstructions}\n\nGenerate ${additionalChunks} additional section(s) that complement this document:\n\n${currentText}`;
+          
+          const addResponse = await fetch('/api/process-text', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              inputText: addPrompt,
+              instructions: `Generate ${additionalChunks} new section(s) based on the provided document`,
+              contentSource,
+              useContentSource,
+              llmProvider
+            }),
+          });
+          
+          if (!addResponse.ok) {
+            throw new Error(`HTTP error! status: ${addResponse.status}`);
+          }
+          
+          const addData = await addResponse.json();
+          
+          // Replace generation message and add new content
+          setOutputText(prev => {
+            const lines = prev.split('\n');
+            const filteredLines = lines.filter(line => !line.includes('[Generating'));
+            return filteredLines.join('\n') + '\n\n' + addData.result;
+          });
+        }
+      }
+      
+      toast({
+        title: "Chunk processing completed",
+        description: `Successfully processed ${selectedIndices.length} chunks in ${mode} mode`,
+      });
+      
+    } catch (error: any) {
+      console.error('Error processing chunks:', error);
+      toast({
+        title: "Processing failed",
+        description: error?.message || 'Failed to process selected chunks',
+        variant: "destructive"
+      });
+    } finally {
+      setProcessing(false);
+    }
+  }, [documentChunks, rewriteInstructions, contentSource, useContentSource, llmProvider, toast]);
+
+  const cancelProcessing = useCallback(() => {
+    setProcessing(false);
+  }, []);
+
+  // Placeholder functions for synthesis mode
   const processSpecialCommand = useCallback(async (command: string) => {
-    // Special command processing
+    // Simplified implementation
   }, []);
 
-  const processGlobalQuestion = useCallback(async (question: string) => {
-    // Global question processing
+  const processGlobalQuestion = useCallback(async (query: string) => {
+    // Simplified implementation
   }, []);
+
+  // Automatic AI detection with debouncing
+  useEffect(() => {
+    if (!inputText.trim() || inputText.length < 50) {
+      setInputAIResult(null);
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      detectAIText(inputText, 'input');
+    }, 2000); // 2 second debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [inputText, detectAIText]);
+
+  useEffect(() => {
+    if (!outputText.trim() || outputText.length < 50) {
+      setOutputAIResult(null);
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      detectAIText(outputText, 'output');
+    }, 2000); // 2 second debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [outputText, detectAIText]);
 
   return {
     // Core state
@@ -717,21 +963,23 @@ export function useDocumentProcessor() {
     setDialogueMessages,
     processing,
     
-    // Processing functions
+    // Core functions
     processDocument,
+    processDialogueCommand,
     processSelectedDocumentChunks,
     cancelProcessing,
     
-    // File refs
+    // File handling
     inputFileRef,
     contentSourceFileRef,
     audioRef,
-    
-    // File upload handlers
     handleInputFileUpload,
     handleContentSourceFileUpload,
     handleMultipleContentSourceFileUpload,
     handleAudioTranscription,
+    handleMathPDFUpload,
+    handleMathImageUpload,
+    enhanceMathFormatting,
     
     // AI Detection
     isInputDetecting,
@@ -748,7 +996,7 @@ export function useDocumentProcessor() {
     clearChat,
     resetAll,
     
-    // Special processing
+    // Special commands
     processSpecialCommand,
     specialContent,
     setSpecialContent,
@@ -765,27 +1013,20 @@ export function useDocumentProcessor() {
     setShowChunkSelector,
     processSelectedChunks,
     
-    // Synthesis and global features
+    // Synthesis mode
     enableSynthesisMode,
     setEnableSynthesisMode,
     documentMap,
     processGlobalQuestion,
     
-    // Homework mode
+    // Mode states
     homeworkMode,
     setHomeworkMode,
     
-    // Instructions
+    // Instruction memory
     lastUsedInstructions,
+    setLastUsedInstructions,
     rewriteInstructions,
-    setRewriteInstructions,
-    
-    // Rewrite the Rewrite functionality
-    rewriteHistory,
-    showRewriteTheRewrite,
-    setShowRewriteTheRewrite,
-    rewriteTheRewriteInstructions,
-    setRewriteTheRewriteInstructions,
-    processRewriteTheRewrite,
+    setRewriteInstructions
   };
 }
