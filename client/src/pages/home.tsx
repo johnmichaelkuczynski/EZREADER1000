@@ -11,6 +11,7 @@ import { SpecialContentPopup } from "@/components/editor/SpecialContentPopup";
 import { ProcessingStatusBar } from "@/components/editor/ProcessingStatusBar";
 import { EditorToolbar } from "@/components/editor/EditorToolbar";
 import { ChunkSelector } from "@/components/editor/ChunkSelector";
+import { RewriteTheRewrite } from "@/components/editor/RewriteTheRewrite";
 import { useDocumentProcessor, LLMProvider } from "@/hooks/use-document-processor";
 import { useFileOperations } from "@/hooks/use-file-operations";
 import { 
@@ -90,7 +91,14 @@ export default function Home() {
     // Instruction memory
     lastUsedInstructions,
     rewriteInstructions,
-    setRewriteInstructions
+    setRewriteInstructions,
+    // Rewrite the Rewrite functionality
+    rewriteHistory,
+    showRewriteTheRewrite,
+    setShowRewriteTheRewrite,
+    rewriteTheRewriteInstructions,
+    setRewriteTheRewriteInstructions,
+    processRewriteTheRewrite
   } = useDocumentProcessor();
 
   const {
@@ -428,6 +436,17 @@ export default function Home() {
               <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <div className="text-sm text-blue-600">Processing chunks...</div>
               </div>
+            )}
+            
+            {/* Rewrite the Rewrite - shown after processing is complete */}
+            {showRewriteTheRewrite && rewriteHistory && !processing && (
+              <RewriteTheRewrite
+                onRewrite={processRewriteTheRewrite}
+                onCancel={() => setShowRewriteTheRewrite(false)}
+                instructions={rewriteTheRewriteInstructions}
+                setInstructions={setRewriteTheRewriteInstructions}
+                processing={processing}
+              />
             )}
             
             {/* Chat Interface */}
