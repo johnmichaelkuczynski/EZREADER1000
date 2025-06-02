@@ -168,16 +168,25 @@ export function useDocumentProcessor() {
     setProcessing(true);
     
     try {
-      const result = await processText({
-        inputText,
-        instructions: finalInstructions,
-        contentSource,
-        useContentSource: Boolean(effectiveUseContentSource),
-        styleSource,
-        useStyleSource: Boolean(effectiveUseStyleSource),
-        llmProvider: homeworkMode ? 'anthropic' : llmProvider, // Force Anthropic for homework mode
-        examMode: examMode || homeworkMode
-      });
+      let result: string;
+      
+      if (homeworkMode) {
+        // HOMEWORK MODE: Use separate endpoint that bypasses all rewrite logic
+        const { solveHomework } = await import('../lib/api');
+        result = await solveHomework(inputText);
+      } else {
+        // REGULAR MODE: Use normal text processing
+        result = await processText({
+          inputText,
+          instructions: finalInstructions,
+          contentSource,
+          useContentSource: Boolean(effectiveUseContentSource),
+          styleSource,
+          useStyleSource: Boolean(effectiveUseStyleSource),
+          llmProvider,
+          examMode
+        });
+      }
       
       setOutputText(result);
       

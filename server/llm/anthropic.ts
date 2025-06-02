@@ -254,6 +254,33 @@ export async function processTextWithAnthropic(options: ProcessTextOptions): Pro
   }
 }
 
+// PURE HOMEWORK SOLVER - NO REWRITE LOGIC
+export async function solveHomeworkWithAnthropic(assignment: string): Promise<string> {
+  try {
+    const message = await anthropic.messages.create({
+      model: "claude-3-7-sonnet-20250219",
+      system: "You are an expert tutor and academic assistant. Solve the following assignment thoroughly and step-by-step. Provide complete solutions, not just explanations. For math problems, show all work and provide final answers. For written questions, provide comprehensive responses. Actually solve the problems presented.",
+      max_tokens: 4000,
+      messages: [
+        { role: 'user', content: `Please solve the following assignment completely:\n\n${assignment}` }
+      ],
+    });
+    
+    let responseContent = '';
+    if (message.content && message.content.length > 0) {
+      const contentBlock = message.content[0];
+      if ('text' in contentBlock) {
+        responseContent = contentBlock.text;
+      }
+    }
+    
+    return responseContent;
+  } catch (error: any) {
+    console.error("Anthropic homework solving error:", error);
+    throw new Error(`Failed to solve homework with Anthropic: ${error.message}`);
+  }
+}
+
 export async function detectAIWithAnthropic(text: string): Promise<{ isAI: boolean; confidence: number; details: string }> {
   // No need to protect math formulas for AI detection
   try {

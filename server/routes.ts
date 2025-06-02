@@ -12,7 +12,7 @@ import {
 } from "@shared/schema";
 import { stripMarkdown } from "./utils/markdown-stripper";
 import { processTextWithOpenAI, detectAIWithOpenAI, transcribeAudio } from "./llm/openai";
-import { processTextWithAnthropic, detectAIWithAnthropic } from "./llm/anthropic";
+import { processTextWithAnthropic, detectAIWithAnthropic, solveHomeworkWithAnthropic } from "./llm/anthropic";
 import { processTextWithPerplexity, detectAIWithPerplexity } from "./llm/perplexity";
 import { detectAIWithGPTZero } from "./services/gptzero";
 import { searchOnline, fetchWebContent } from "./services/google";
@@ -58,6 +58,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Health check endpoint
   app.get('/api/health', (_req, res) => {
     res.json({ status: 'ok' });
+  });
+
+  // SEPARATE HOMEWORK ENDPOINT - BYPASSES ALL REWRITE LOGIC
+  app.post('/api/solve-homework', async (req: Request, res: Response) => {
+    try {
+      const { assignment } = req.body;
+      
+      const solution = await solveHomeworkWithAnthropic(assignment);
+      
+      res.json({ result: solution });
+    } catch (error: any) {
+      console.error('Error solving homework:', error);
+      res.status(500).json({ 
+        error: 'Failed to solve homework', 
+        details: error.message 
+      });
+    }
   });
 
   // Process text endpoint

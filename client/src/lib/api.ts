@@ -8,6 +8,13 @@ import type {
   SavedInstruction
 } from "@/types";
 
+// SEPARATE HOMEWORK SOLVER - BYPASSES ALL REWRITE LOGIC
+export async function solveHomework(assignment: string): Promise<string> {
+  const response = await apiRequest("POST", "/api/solve-homework", { assignment });
+  const result = await response.json();
+  return result.result;
+}
+
 // Process text with the selected LLM
 export async function processText(data: ProcessTextRequest): Promise<string> {
   const response = await apiRequest("POST", "/api/process-text", data);
