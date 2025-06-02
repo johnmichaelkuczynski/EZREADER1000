@@ -441,8 +441,9 @@ export default function Home() {
             {/* Rewrite the Rewrite - shown after processing is complete */}
             {showRewriteTheRewrite && rewriteHistory && !processing && (
               <RewriteTheRewrite
-                onRewrite={processRewriteTheRewrite}
-                onCancel={() => setShowRewriteTheRewrite(false)}
+                isVisible={showRewriteTheRewrite}
+                onProcess={processRewriteTheRewrite}
+                onClose={() => setShowRewriteTheRewrite(false)}
                 instructions={rewriteTheRewriteInstructions}
                 setInstructions={setRewriteTheRewriteInstructions}
                 processing={processing}
