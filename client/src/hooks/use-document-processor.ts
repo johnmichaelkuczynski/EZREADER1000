@@ -275,20 +275,218 @@ export function useDocumentProcessor() {
   }, []);
 
   const handleInputFileUpload = useCallback(async (file: File) => {
-    // File upload handling
-  }, []);
+    try {
+      let extractedText = '';
+      
+      if (file.type === 'application/pdf') {
+        const formData = new FormData();
+        formData.append('pdf', file);
+        
+        const response = await fetch('/api/process-pdf', {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (!response.ok) throw new Error(`PDF processing failed: ${response.statusText}`);
+        
+        const result = await response.json();
+        extractedText = result.text;
+      } else if (
+        file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+        file.type === 'application/msword'
+      ) {
+        const formData = new FormData();
+        formData.append('docx', file);
+        
+        const response = await fetch('/api/process-docx', {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (!response.ok) throw new Error(`Word document processing failed: ${response.statusText}`);
+        
+        const result = await response.json();
+        extractedText = result.text;
+      } else if (file.type === 'text/plain') {
+        extractedText = await file.text();
+      } else if (file.type.startsWith('image/')) {
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        const response = await fetch('/api/process-image-ocr', {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (!response.ok) throw new Error(`OCR failed: ${response.statusText}`);
+        
+        const result = await response.json();
+        extractedText = result.text;
+      } else {
+        throw new Error(`Unsupported file type: ${file.type}`);
+      }
+      
+      setInputText(prev => prev + (prev ? '\n\n' : '') + extractedText);
+      
+      toast({
+        title: "File uploaded",
+        description: `Successfully extracted text from ${file.name}`,
+      });
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      toast({
+        title: "Upload failed",
+        description: error instanceof Error ? error.message : "Failed to process file",
+        variant: "destructive"
+      });
+    }
+  }, [setInputText, toast]);
 
   const handleContentSourceFileUpload = useCallback(async (file: File) => {
-    // Content source file upload
-  }, []);
+    try {
+      let extractedText = '';
+      
+      if (file.type === 'application/pdf') {
+        const formData = new FormData();
+        formData.append('pdf', file);
+        
+        const response = await fetch('/api/process-pdf', {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (!response.ok) throw new Error(`PDF processing failed: ${response.statusText}`);
+        
+        const result = await response.json();
+        extractedText = result.text;
+      } else if (
+        file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+        file.type === 'application/msword'
+      ) {
+        const formData = new FormData();
+        formData.append('docx', file);
+        
+        const response = await fetch('/api/process-docx', {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (!response.ok) throw new Error(`Word document processing failed: ${response.statusText}`);
+        
+        const result = await response.json();
+        extractedText = result.text;
+      } else if (file.type === 'text/plain') {
+        extractedText = await file.text();
+      } else {
+        throw new Error(`Unsupported file type: ${file.type}`);
+      }
+      
+      setContentSource(extractedText);
+      
+      toast({
+        title: "File uploaded",
+        description: `Successfully extracted text from ${file.name}`,
+      });
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      toast({
+        title: "Upload failed",
+        description: error instanceof Error ? error.message : "Failed to process file",
+        variant: "destructive"
+      });
+    }
+  }, [setContentSource, toast]);
 
   const handleMultipleContentSourceFileUpload = useCallback(async (files: File[]) => {
-    // Multiple file upload
-  }, []);
+    try {
+      let combinedText = '';
+      
+      for (const file of files) {
+        let extractedText = '';
+        
+        if (file.type === 'application/pdf') {
+          const formData = new FormData();
+          formData.append('pdf', file);
+          
+          const response = await fetch('/api/process-pdf', {
+            method: 'POST',
+            body: formData,
+          });
+          
+          if (!response.ok) throw new Error(`PDF processing failed: ${response.statusText}`);
+          
+          const result = await response.json();
+          extractedText = result.text;
+        } else if (
+          file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+          file.type === 'application/msword'
+        ) {
+          const formData = new FormData();
+          formData.append('docx', file);
+          
+          const response = await fetch('/api/process-docx', {
+            method: 'POST',
+            body: formData,
+          });
+          
+          if (!response.ok) throw new Error(`Word document processing failed: ${response.statusText}`);
+          
+          const result = await response.json();
+          extractedText = result.text;
+        } else if (file.type === 'text/plain') {
+          extractedText = await file.text();
+        } else {
+          throw new Error(`Unsupported file type: ${file.type}`);
+        }
+        
+        combinedText += (combinedText ? '\n\n---\n\n' : '') + `[${file.name}]\n\n${extractedText}`;
+      }
+      
+      setContentSource(combinedText);
+      
+      toast({
+        title: "Files uploaded",
+        description: `Successfully processed ${files.length} files`,
+      });
+    } catch (error) {
+      console.error('Error uploading files:', error);
+      toast({
+        title: "Upload failed",
+        description: error instanceof Error ? error.message : "Failed to process files",
+        variant: "destructive"
+      });
+    }
+  }, [setContentSource, toast]);
 
   const handleAudioTranscription = useCallback(async (file: File) => {
-    // Audio transcription
-  }, []);
+    try {
+      const formData = new FormData();
+      formData.append('audio', file);
+      
+      const response = await fetch('/api/transcribe', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) throw new Error(`Transcription failed: ${response.statusText}`);
+      
+      const result = await response.json();
+      
+      setInputText(prev => prev + (prev ? '\n\n' : '') + result.text);
+      
+      toast({
+        title: "Audio transcribed",
+        description: `Successfully transcribed ${file.name}`,
+      });
+    } catch (error) {
+      console.error('Error transcribing audio:', error);
+      toast({
+        title: "Transcription failed",
+        description: error instanceof Error ? error.message : "Failed to transcribe audio",
+        variant: "destructive"
+      });
+    }
+  }, [setInputText, toast]);
 
   const detectAIText = useCallback(async (text: string) => {
     // AI detection functionality
