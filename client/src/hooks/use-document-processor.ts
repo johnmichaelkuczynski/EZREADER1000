@@ -175,7 +175,7 @@ export function useDocumentProcessor() {
         useContentSource: Boolean(effectiveUseContentSource),
         styleSource,
         useStyleSource: Boolean(effectiveUseStyleSource),
-        llmProvider,
+        llmProvider: homeworkMode ? 'anthropic' : llmProvider, // Force Anthropic for homework mode
         examMode: examMode || homeworkMode
       });
       
