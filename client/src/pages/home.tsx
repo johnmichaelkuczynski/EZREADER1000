@@ -264,14 +264,14 @@ export default function Home() {
   };
 
   // Handle processing
-  const handleProcess = (instructions: string, examMode?: boolean) => {
+  const handleProcess = (instructions: string, homeworkMode?: boolean) => {
     // Smart instruction handling: use provided instructions, or fall back to last used, or default
     let finalInstructions = instructions.trim();
     if (!finalInstructions) {
       finalInstructions = lastUsedInstructions.trim() || "Rewrite well";
     }
     
-    processDocument(finalInstructions, examMode);
+    processDocument(finalInstructions, homeworkMode);
   };
 
   // Select an instruction from saved instructions

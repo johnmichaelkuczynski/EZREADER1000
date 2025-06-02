@@ -19,7 +19,7 @@ interface SavedInstruction {
 }
 
 interface EditorToolbarProps {
-  onProcess: (instructions: string, examMode: boolean) => void;
+  onProcess: (instructions: string, homeworkMode: boolean) => void;
   onFindOnline?: () => void;
   onVoiceInput?: () => void;
   onAudioTranscription?: () => void;
@@ -32,8 +32,6 @@ interface EditorToolbarProps {
   setEnableSynthesisMode?: (enabled: boolean) => void;
   rewriteInstructions: string;
   setRewriteInstructions: (instructions: string) => void;
-  examMode: boolean;
-  setExamMode: (enabled: boolean) => void;
   homeworkMode: boolean;
   setHomeworkMode: (enabled: boolean) => void;
   onClearAll?: () => void;
@@ -53,8 +51,6 @@ export function EditorToolbar({
   setEnableSynthesisMode,
   rewriteInstructions,
   setRewriteInstructions,
-  examMode,
-  setExamMode,
   homeworkMode,
   setHomeworkMode,
   onClearAll
@@ -137,19 +133,8 @@ export function EditorToolbar({
         />
       </div>
       
-      {/* Mode Toggles */}
+      {/* Homework Mode Toggle */}
       <div className="flex items-center space-x-6 mb-2">
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="exam-mode"
-            checked={examMode}
-            onCheckedChange={setExamMode}
-          />
-          <Label htmlFor="exam-mode" className="text-sm font-medium">
-            Exam Mode {examMode ? '(Take Test)' : '(Rewrite)'}
-          </Label>
-        </div>
-        
         <div className="flex items-center space-x-2">
           <Switch
             id="homework-mode"
@@ -157,7 +142,7 @@ export function EditorToolbar({
             onCheckedChange={setHomeworkMode}
           />
           <Label htmlFor="homework-mode" className="text-sm font-medium">
-            Homework Mode {homeworkMode ? '(Solve)' : '(Rewrite)'}
+            Homework Mode {homeworkMode ? '(Complete Assignment)' : '(Text Processing)'}
           </Label>
         </div>
       </div>
@@ -181,11 +166,11 @@ export function EditorToolbar({
         <div className="flex items-center gap-3">
           <Button 
             className="bg-primary hover:bg-blue-600 text-white px-4 py-2 rounded-md flex items-center gap-1.5 text-sm font-medium transition-colors"
-            onClick={() => onProcess(rewriteInstructions, examMode)}
+            onClick={() => onProcess(rewriteInstructions, homeworkMode)}
             disabled={false}
           >
             <PlayIcon className="h-4 w-4" />
-            <span>{isProcessing ? 'Processing...' : (examMode ? 'Take Test' : 'Process Text')}</span>
+            <span>{isProcessing ? 'Processing...' : (homeworkMode ? 'Complete Assignment' : 'Process Text')}</span>
           </Button>
           
           <Button 
