@@ -703,7 +703,7 @@ ${inputExcerpt ? `INPUT DOCUMENT:\n${inputExcerpt}\n\n` : ''}${outputExcerpt ? `
     setRewriteInstructions(instructions);
   }, [inputText]);
 
-  // Process selected chunks with live streaming updates
+  // Process selected chunks with multiple modes
   const processSelectedChunks = useCallback(async (
     selectedIndices: number[],
     modes: ('rewrite' | 'add' | 'expand')[],
@@ -717,10 +717,10 @@ ${inputExcerpt ? `INPUT DOCUMENT:\n${inputExcerpt}\n\n` : ''}${outputExcerpt ? `
       // Clear output and start fresh
       setOutputText('');
       let workingContent = [...documentChunks];
+      let finalResult = '';
       
-      // Process each mode sequentially
-      for (const mode of modes) {
-        if (mode === 'rewrite' && selectedIndices.length > 0) {
+      // Process modes sequentially - supports multiple modes now
+      if (modes.includes('rewrite') && selectedIndices.length > 0) {
         // Process each chunk individually and stream results
         console.log('Rewrite mode: processing', selectedIndices.length, 'chunks one by one');
         
@@ -778,6 +778,212 @@ ${inputExcerpt ? `INPUT DOCUMENT:\n${inputExcerpt}\n\n` : ''}${outputExcerpt ? `
         }
         
       } else if (mode === 'add') {
+        // Add new chunks to existing document
+        console.log('Add mode: generating', additionalChunks, 'new chunks');
+        const existingText = documentChunks.join('\n\n');
+        
+        // First show existing content
+        setOutputText(existingText);
+        
+        // Then generate and add new chunks
+        setOutputText(prev => prev + `\n\n[Generating ${additionalChunks} new chunks...]\n\n`);
+        
+        const addPrompt = `${rewriteInstructions}\n\nGenerate ${additionalChunks} additional section(s) that complement this document:\n\n${existingText}`;
+        
+        const response = await fetch('/api/process-text', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            inputText: addPrompt,
+            instructions: `Generate ${additionalChunks} new section(s) based on the provided document`,
+            contentSource,
+            useContentSource,
+            llmProvider
+          }),
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Replace generation message with actual new content
+        setOutputText(prev => {
+          const lines = prev.split('\n');
+          const filteredLines = lines.filter(line => !line.includes('[Generating'));
+          return filteredLines.join('\n') + '\n\n' + data.result;
+        });
+        
+      } else if (mode === 'expand' && selectedIndices.length > 0) {
+        // Expand individual chunks with additional content
+        console.log('Expand mode: expanding', selectedIndices.length, 'chunks individually');
+        let workingContent = [...documentChunks];
+        
+        // First show original content
+        setOutputText(workingContent.join('\n\n'));
+        
+        // Process each selected chunk by expanding it
+        for (let i = 0; i < selectedIndices.length; i++) {
+          const chunkIndex = selectedIndices[i];
+          const chunkText = documentChunks[chunkIndex];
+          
+          console.log(`Expanding chunk ${i + 1}/${selectedIndices.length} (index ${chunkIndex})`);
+          
+          try {
+            const expandPrompt = `${rewriteInstructions}\n\nExpand this section with additional relevant content. Keep the original content and add more details, examples, or related information:\n\n${chunkText}`;
+            
+            const response = await fetch('/api/process-text', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                inputText: expandPrompt,
+                instructions: `Expand this content by adding more details, examples, or related information while keeping the original content`,
+                contentSource,
+                useContentSource,
+                llmProvider
+              }),
+            });
+            
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const expandData = await response.json();
+            
+            // Replace the specific chunk in working content with expanded version
+            workingContent[chunkIndex] = expandData.result;
+            
+            // Update the output with the new version
+            setOutputText(workingContent.join('\n\n'));
+            
+            console.log(`Completed expanding chunk ${i + 1}/${selectedIndices.length}`);
+            
+          } catch (chunkError: any) {
+            console.error(`Error expanding chunk ${chunkIndex}:`, chunkError);
+            workingContent[chunkIndex] = `[Error expanding chunk: ${chunkError.message}]`;
+            setOutputText(workingContent.join('\n\n'));
+          }
+        }
+        
+      } else if (mode === 'both') {
+        // Rewrite selected chunks AND add new ones
+        console.log('Both mode: rewriting', selectedIndices.length, 'chunks and adding', additionalChunks, 'new chunks');
+        let workingContent = [...documentChunks];
+        
+        // First show original content
+        setOutputText(workingContent.join('\n\n'));
+        
+        // First: Rewrite selected chunks
+        for (let i = 0; i < selectedIndices.length; i++) {
+          const chunkIndex = selectedIndices[i];
+          const chunkText = documentChunks[chunkIndex];
+          
+          console.log(`Rewriting chunk ${i + 1}/${selectedIndices.length} (index ${chunkIndex})`);
+          
+          try {
+            const response = await fetch('/api/process-text', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                inputText: chunkText,
+                instructions: rewriteInstructions,
+                contentSource,
+                useContentSource,
+                llmProvider
+              }),
+            });
+            
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const rewriteData = await response.json();
+            
+            // Replace the specific chunk with rewritten version
+            workingContent[chunkIndex] = rewriteData.result;
+            
+            // Update the output with the new version
+            setOutputText(workingContent.join('\n\n'));
+            
+            console.log(`Completed rewriting chunk ${i + 1}/${selectedIndices.length}`);
+            
+          } catch (chunkError: any) {
+            console.error(`Error rewriting chunk ${chunkIndex}:`, chunkError);
+            workingContent[chunkIndex] = `[Error rewriting chunk: ${chunkError.message}]`;
+            setOutputText(workingContent.join('\n\n'));
+          }
+        }
+        
+        // Second: Add new chunks
+        if (additionalChunks > 0) {
+          console.log('Adding', additionalChunks, 'new chunks');
+          
+          const addPrompt = `${rewriteInstructions}\n\nGenerate ${additionalChunks} additional section(s) that complement this document:\n\n${workingContent.join('\n\n')}`;
+          
+          try {
+            const response = await fetch('/api/process-text', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                inputText: addPrompt,
+                instructions: `Generate ${additionalChunks} new section(s) based on the provided document`,
+                contentSource,
+                useContentSource,
+                llmProvider
+              }),
+            });
+            
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const addData = await response.json();
+            
+            // Append new content to the working content
+            setOutputText(prev => prev + '\n\n' + addData.result);
+            
+          } catch (error: any) {
+            console.error('Error adding new chunks:', error);
+            setOutputText(prev => prev + `\n\n[Error adding new chunks: ${error.message}]`);
+          }
+        }
+      }
+      
+      // Capture rewrite history for "Rewrite the Rewrite" functionality
+      setRewriteHistory({
+        originalText: documentChunks.join('\n\n'),
+        previousInstructions: rewriteInstructions,
+        currentRewrite: outputText
+      });
+      
+      // Show the "Rewrite the Rewrite" option after processing
+      setShowRewriteTheRewrite(true);
+      
+      toast({
+        title: "Chunk processing completed",
+        description: `Successfully processed ${selectedIndices.length} chunks in ${mode} mode`,
+      });
+      
+    } catch (error: any) {
+      console.error('Error processing chunks:', error);
+      toast({
+        title: "Processing failed",
+        description: error?.message || 'Failed to process chunks',
+        variant: "destructive"
+      });
+    } finally {
+      setProcessing(false);
+    }
+  }, [documentChunks, rewriteInstructions, contentSource, useContentSource, llmProvider, toast]);
         // Add new chunks to existing document
         console.log('Add mode: generating', additionalChunks, 'new chunks');
         const existingText = documentChunks.join('\n\n');
