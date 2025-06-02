@@ -706,18 +706,21 @@ ${inputExcerpt ? `INPUT DOCUMENT:\n${inputExcerpt}\n\n` : ''}${outputExcerpt ? `
   // Process selected chunks with live streaming updates
   const processSelectedChunks = useCallback(async (
     selectedIndices: number[],
-    mode: 'rewrite' | 'add' | 'both' | 'expand',
+    modes: ('rewrite' | 'add' | 'expand')[],
     additionalChunks: number = 0
   ) => {
     try {
-      console.log('Processing chunks:', { selectedIndices, mode, additionalChunks, documentChunks: documentChunks.length });
+      console.log('Processing chunks:', { selectedIndices, modes, additionalChunks, documentChunks: documentChunks.length });
       setShowChunkSelector(false);
       setProcessing(true);
       
       // Clear output and start fresh
       setOutputText('');
+      let workingContent = [...documentChunks];
       
-      if (mode === 'rewrite' && selectedIndices.length > 0) {
+      // Process each mode sequentially
+      for (const mode of modes) {
+        if (mode === 'rewrite' && selectedIndices.length > 0) {
         // Process each chunk individually and stream results
         console.log('Rewrite mode: processing', selectedIndices.length, 'chunks one by one');
         
@@ -955,6 +958,16 @@ ${inputExcerpt ? `INPUT DOCUMENT:\n${inputExcerpt}\n\n` : ''}${outputExcerpt ? `
           });
         }
       }
+      
+      // Capture rewrite history for chunk processing too
+      setRewriteHistory({
+        originalText: documentChunks.join('\n\n'),
+        previousInstructions: rewriteInstructions,
+        currentRewrite: outputText
+      });
+      
+      // Show the "Rewrite the Rewrite" option after chunk processing
+      setShowRewriteTheRewrite(true);
       
       toast({
         title: "Chunk processing completed",

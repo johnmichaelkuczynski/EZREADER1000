@@ -30,7 +30,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface ChunkSelectorProps {
   chunks: string[];
-  onProcessSelected: (selectedIndices: number[], mode: 'rewrite' | 'add' | 'both' | 'expand', additionalChunks?: number) => void;
+  onProcessSelected: (selectedIndices: number[], modes: ('rewrite' | 'add' | 'expand')[], additionalChunks?: number) => void;
   onCancel: () => void;
 }
 
@@ -57,7 +57,7 @@ export function ChunkSelector({
   const [pageSize, setPageSize] = useState(10);
   const [selectionMode, setSelectionMode] = useState<'individual' | 'range'>('individual');
   const [rangeStart, setRangeStart] = useState<number | null>(null);
-  const [processingMode, setProcessingMode] = useState<'rewrite' | 'add' | 'both' | 'expand'>('rewrite');
+  const [selectedModes, setSelectedModes] = useState<('rewrite' | 'add' | 'expand')[]>(['rewrite']);
   const [additionalChunks, setAdditionalChunks] = useState<number>(1);
   
   // Filter chunks based on search term
@@ -228,16 +228,24 @@ export function ChunkSelector({
   };
 
   const handleProcessSelected = () => {
-    if (processingMode === 'add' || (processingMode === 'both' && selectedChunks.length === 0)) {
-      // For add mode, we don't need selected chunks
-      onProcessSelected(selectedChunks, processingMode, additionalChunks);
-    } else if (processingMode === 'expand' && selectedChunks.length === 0) {
-      return; // Don't process if nothing is selected for expand mode
-    } else if (selectedChunks.length === 0 && processingMode === 'rewrite') {
-      return; // Don't process if nothing is selected for rewrite mode
-    } else {
-      onProcessSelected(selectedChunks, processingMode, additionalChunks);
+    // Check if we have valid selections for the selected modes
+    const needsSelection = selectedModes.filter(mode => mode === 'rewrite' || mode === 'expand');
+    if (needsSelection.length > 0 && selectedChunks.length === 0) {
+      return; // Don't process if rewrite or expand is selected but no chunks are chosen
     }
+    
+    onProcessSelected(selectedChunks, selectedModes, additionalChunks);
+  };
+
+  // Handle mode selection changes
+  const toggleMode = (mode: 'rewrite' | 'add' | 'expand') => {
+    setSelectedModes(prev => {
+      if (prev.includes(mode)) {
+        return prev.filter(m => m !== mode);
+      } else {
+        return [...prev, mode];
+      }
+    });
   };
 
   // Pagination controls
