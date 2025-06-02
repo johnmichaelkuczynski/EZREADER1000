@@ -27,9 +27,6 @@ export function useDocumentProcessor() {
   const [processing, setProcessing] = useState(false);
   const [llmProvider, setLLMProvider] = useState<LLMProvider>('openai');
   
-  // Homework mode state
-  const [homeworkMode, setHomeworkMode] = useState(false);
-  
   // Messages for main processing
   const [messages, setMessages] = useState<Message[]>([]);
   
@@ -63,6 +60,9 @@ export function useDocumentProcessor() {
   // Rewrite instructions for chunking - persist last used instructions
   const [rewriteInstructions, setRewriteInstructions] = useState('');
   const [lastUsedInstructions, setLastUsedInstructions] = useState('');
+  
+  // Homework mode state
+  const [homeworkMode, setHomeworkMode] = useState(false);
   
   // Rewrite history for "Rewrite the Rewrite" functionality
   const [rewriteHistory, setRewriteHistory] = useState<{
@@ -261,6 +261,77 @@ export function useDocumentProcessor() {
     }
   }, [rewriteHistory, contentSource, useContentSource, llmProvider, toast]);
 
+  // Placeholder functions for missing functionality
+  const processDocument = useCallback(async () => {
+    // This would be the main document processing function
+  }, []);
+
+  const processSelectedDocumentChunks = useCallback(async () => {
+    // This would handle document chunk processing
+  }, []);
+
+  const cancelProcessing = useCallback(() => {
+    setProcessing(false);
+  }, []);
+
+  const handleInputFileUpload = useCallback(async (file: File) => {
+    // File upload handling
+  }, []);
+
+  const handleContentSourceFileUpload = useCallback(async (file: File) => {
+    // Content source file upload
+  }, []);
+
+  const handleMultipleContentSourceFileUpload = useCallback(async (files: File[]) => {
+    // Multiple file upload
+  }, []);
+
+  const handleAudioTranscription = useCallback(async (file: File) => {
+    // Audio transcription
+  }, []);
+
+  const detectAIText = useCallback(async (text: string) => {
+    // AI detection functionality
+  }, []);
+
+  const clearInput = useCallback(() => {
+    setInputText('');
+  }, []);
+
+  const clearOutput = useCallback(() => {
+    setOutputText('');
+  }, []);
+
+  const clearContentSource = useCallback(() => {
+    setContentSource('');
+  }, []);
+
+  const clearStyleSource = useCallback(() => {
+    setStyleSource('');
+  }, []);
+
+  const clearChat = useCallback(() => {
+    setMessages([]);
+    setDialogueMessages([]);
+  }, []);
+
+  const resetAll = useCallback(() => {
+    setInputText('');
+    setOutputText('');
+    setContentSource('');
+    setStyleSource('');
+    setMessages([]);
+    setDialogueMessages([]);
+  }, []);
+
+  const processSpecialCommand = useCallback(async (command: string) => {
+    // Special command processing
+  }, []);
+
+  const processGlobalQuestion = useCallback(async (question: string) => {
+    // Global question processing
+  }, []);
+
   return {
     // Core state
     inputText,
@@ -283,6 +354,44 @@ export function useDocumentProcessor() {
     setDialogueMessages,
     processing,
     
+    // Processing functions
+    processDocument,
+    processSelectedDocumentChunks,
+    cancelProcessing,
+    
+    // File refs
+    inputFileRef,
+    contentSourceFileRef,
+    audioRef,
+    
+    // File upload handlers
+    handleInputFileUpload,
+    handleContentSourceFileUpload,
+    handleMultipleContentSourceFileUpload,
+    handleAudioTranscription,
+    
+    // AI Detection
+    isInputDetecting,
+    isOutputDetecting,
+    inputAIResult,
+    outputAIResult,
+    detectAIText,
+    
+    // Clear functions
+    clearInput,
+    clearOutput,
+    clearContentSource,
+    clearStyleSource,
+    clearChat,
+    resetAll,
+    
+    // Special processing
+    processSpecialCommand,
+    specialContent,
+    setSpecialContent,
+    showSpecialContent,
+    setShowSpecialContent,
+    
     // LLM Provider
     llmProvider,
     setLLMProvider,
@@ -292,6 +401,16 @@ export function useDocumentProcessor() {
     showChunkSelector,
     setShowChunkSelector,
     processSelectedChunks,
+    
+    // Synthesis and global features
+    enableSynthesisMode,
+    setEnableSynthesisMode,
+    documentMap,
+    processGlobalQuestion,
+    
+    // Homework mode
+    homeworkMode,
+    setHomeworkMode,
     
     // Instructions
     lastUsedInstructions,
