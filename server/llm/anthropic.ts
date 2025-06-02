@@ -44,17 +44,16 @@ async function processLargeTextWithAnthropic(options: ProcessTextOptions): Promi
   const enhancedInstructions = `NOTE: This is a very large document (${estimateTokenCount(text)} estimated tokens) that has been sampled to include the beginning, end, and some middle sections. The document is separated by "--- SECTION BREAK ---" markers.\n\nOriginal instructions: ${instructions}\n\nPlease process this representative sample of the document according to the instructions. Since this is only a sample of a much larger document, focus on maintaining the overall intent, style, and key points.`;
   
   try {
-    // Process the representative text
-    const { processedText, mathBlocks } = protectMathFormulas(representativeText);
+    // NO MATH PROTECTION - PURE PASSTHROUGH
     
-    let systemPrompt = "You are processing a very large document that has been sampled. Do not modify any content within [[MATH_BLOCK_*]] or [[MATH_INLINE_*]] tokens as they contain special mathematical notation.";
+    let systemPrompt = "You are a helpful assistant. Follow the instructions exactly and return your response as-is without any filtering or modification.";
     
     const message = await anthropic.messages.create({
       model: "claude-3-7-sonnet-20250219",
       system: systemPrompt,
       max_tokens: maxTokens * 2, // Allow more output tokens for comprehensive processing
       messages: [
-        { role: 'user', content: `${enhancedInstructions}\n\nText to transform:\n${processedText}` }
+        { role: 'user', content: `${enhancedInstructions}\n\nText to transform:\n${representativeText}` }
       ],
     });
     
@@ -69,10 +68,8 @@ async function processLargeTextWithAnthropic(options: ProcessTextOptions): Promi
       }
     }
     
-    // Restore math formulas in the processed text
-    const finalResult = restoreMathFormulas(responseContent, mathBlocks);
-    
-    return finalResult;
+    // NO RESTORATION - PURE PASSTHROUGH
+    return responseContent;
   } catch (error: any) {
     console.error("Anthropic large document processing error:", error);
     throw new Error(`Failed to process large text with Anthropic: ${error.message}`);
