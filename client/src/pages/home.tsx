@@ -352,8 +352,6 @@ export default function Home() {
               setEnableSynthesisMode={setEnableSynthesisMode}
               rewriteInstructions={rewriteInstructions}
               setRewriteInstructions={setRewriteInstructions}
-              examMode={examMode}
-              setExamMode={setExamMode}
               homeworkMode={homeworkMode}
               setHomeworkMode={setHomeworkMode}
               onClearAll={resetAll}

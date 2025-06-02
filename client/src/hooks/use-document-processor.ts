@@ -128,9 +128,7 @@ export function useDocumentProcessor() {
       
       // If still no instructions, generate based on toggle states
       if (!finalInstructions) {
-        if (examMode) {
-          finalInstructions = "SOLVE ALL MATHEMATICAL PROBLEMS AND ANSWER ALL QUESTIONS. Show complete step-by-step solutions with final answers. Do not just rewrite - SOLVE each problem completely and provide the numerical or algebraic answers.";
-        } else if (homeworkMode) {
+        if (homeworkMode) {
           finalInstructions = "COMPLETE THIS ASSIGNMENT ENTIRELY. Do not explain or describe - ACTUALLY DO THE WORK. For any subject:\n\n- MATH: Solve all problems step-by-step with final numerical answers\n- SCIENCE: Answer all questions with complete explanations and calculations\n- ESSAYS: Write the full essay with proper structure and arguments\n- RESEARCH: Provide comprehensive research with sources and analysis\n- LANGUAGE: Translate, analyze, or complete language exercises fully\n- PROGRAMMING: Write complete, working code solutions\n- HISTORY: Provide detailed answers with dates, facts, and analysis\n- ANY OTHER SUBJECT: Complete all tasks and provide full solutions\n\nDO THE ACTUAL HOMEWORK - don't just rewrite or explain what needs to be done.";
         } else if (useContentSource && useStyleSource) {
           finalInstructions = "Rewrite this text using the content source as reference material and matching the writing style of the style source.";
