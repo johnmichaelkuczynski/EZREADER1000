@@ -260,6 +260,31 @@ export async function processTextWithOpenAI(options: ProcessTextOptions): Promis
   }
 }
 
+// PURE HOMEWORK SOLVER - NO REWRITE LOGIC
+export async function solveHomeworkWithOpenAI(assignment: string): Promise<string> {
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        { 
+          role: "system", 
+          content: "You are an expert tutor and academic assistant. Solve the following assignment thoroughly and step-by-step. Provide complete solutions, not just explanations. For math problems, show all work and provide final answers. For written questions, provide comprehensive responses. Actually solve the problems presented."
+        },
+        { 
+          role: "user", 
+          content: `Please solve the following assignment completely:\n\n${assignment}`
+        }
+      ],
+      max_tokens: 4000,
+      temperature: 0.7,
+    });
+    return response.choices[0]?.message?.content || '';
+  } catch (error: any) {
+    console.error("OpenAI homework solving error:", error);
+    throw new Error(`Failed to solve homework with OpenAI: ${error.message}`);
+  }
+}
+
 export async function detectAIWithOpenAI(text: string): Promise<{ isAI: boolean; confidence: number; details: string }> {
   try {
     const response = await openai.chat.completions.create({

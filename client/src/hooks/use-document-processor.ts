@@ -173,7 +173,7 @@ export function useDocumentProcessor() {
       if (homeworkMode) {
         // HOMEWORK MODE: Use separate endpoint that bypasses all rewrite logic
         const { solveHomework } = await import('../lib/api');
-        result = await solveHomework(inputText);
+        result = await solveHomework(inputText, llmProvider);
       } else {
         // REGULAR MODE: Use normal text processing
         result = await processText({

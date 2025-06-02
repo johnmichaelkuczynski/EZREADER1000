@@ -11,9 +11,9 @@ import {
   sendEmailSchema 
 } from "@shared/schema";
 import { stripMarkdown } from "./utils/markdown-stripper";
-import { processTextWithOpenAI, detectAIWithOpenAI, transcribeAudio } from "./llm/openai";
+import { processTextWithOpenAI, detectAIWithOpenAI, transcribeAudio, solveHomeworkWithOpenAI } from "./llm/openai";
 import { processTextWithAnthropic, detectAIWithAnthropic, solveHomeworkWithAnthropic } from "./llm/anthropic";
-import { processTextWithPerplexity, detectAIWithPerplexity } from "./llm/perplexity";
+import { processTextWithPerplexity, detectAIWithPerplexity, solveHomeworkWithPerplexity } from "./llm/perplexity";
 import { detectAIWithGPTZero } from "./services/gptzero";
 import { searchOnline, fetchWebContent } from "./services/google";
 import { sendDocumentEmail } from "./services/sendgrid";
@@ -63,9 +63,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // SEPARATE HOMEWORK ENDPOINT - BYPASSES ALL REWRITE LOGIC
   app.post('/api/solve-homework', async (req: Request, res: Response) => {
     try {
-      const { assignment } = req.body;
+      const { assignment, llmProvider = 'anthropic' } = req.body;
       
-      const solution = await solveHomeworkWithAnthropic(assignment);
+      let solution: string;
+      
+      switch (llmProvider) {
+        case 'openai':
+          solution = await solveHomeworkWithOpenAI(assignment);
+          break;
+        case 'anthropic':
+          solution = await solveHomeworkWithAnthropic(assignment);
+          break;
+        case 'perplexity':
+          solution = await solveHomeworkWithPerplexity(assignment);
+          break;
+        default:
+          throw new Error(`Unsupported LLM provider: ${llmProvider}`);
+      }
       
       res.json({ result: solution });
     } catch (error: any) {
