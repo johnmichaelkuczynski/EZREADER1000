@@ -261,10 +261,69 @@ export function useDocumentProcessor() {
     }
   }, [rewriteHistory, contentSource, useContentSource, llmProvider, toast]);
 
-  // Placeholder functions for missing functionality
-  const processDocument = useCallback(async () => {
-    // This would be the main document processing function
-  }, []);
+  // Main document processing function
+  const processDocument = useCallback(async (instructions: string, examMode?: boolean) => {
+    if (!inputText.trim()) {
+      toast({
+        title: "No content to process",
+        description: "Please add some text to the input area first",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setProcessing(true);
+      setOutputText('');
+
+      const response = await fetch('/api/process-text', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          inputText: inputText,
+          instructions: instructions || 'Rewrite this text to improve clarity and flow',
+          contentSource,
+          useContentSource,
+          llmProvider
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Processing failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setOutputText(data.result);
+
+      // Store last used instructions
+      setLastUsedInstructions(instructions);
+      
+      // Set up rewrite history for "Rewrite the Rewrite" functionality
+      setRewriteHistory({
+        originalText: inputText,
+        previousInstructions: instructions,
+        currentRewrite: data.result
+      });
+      
+      // Show the "Rewrite the Rewrite" option after processing
+      setShowRewriteTheRewrite(true);
+
+      toast({
+        title: "Processing completed",
+        description: "Text has been successfully processed",
+      });
+
+    } catch (error: any) {
+      console.error('Error processing document:', error);
+      toast({
+        title: "Processing failed",
+        description: error?.message || 'Failed to process text',
+        variant: "destructive"
+      });
+    } finally {
+      setProcessing(false);
+    }
+  }, [inputText, contentSource, useContentSource, llmProvider, toast]);
 
   const processSelectedDocumentChunks = useCallback(async () => {
     // This would handle document chunk processing
@@ -488,9 +547,49 @@ export function useDocumentProcessor() {
     }
   }, [setInputText, toast]);
 
-  const detectAIText = useCallback(async (text: string) => {
-    // AI detection functionality
-  }, []);
+  const detectAIText = useCallback(async (text: string, source?: string) => {
+    try {
+      if (!text.trim()) return;
+      
+      if (source === 'input') {
+        setIsInputDetecting(true);
+      } else if (source === 'output') {
+        setIsOutputDetecting(true);
+      }
+      
+      const response = await fetch('/api/detect-ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`AI detection failed: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      
+      if (source === 'input') {
+        setInputAIResult(result);
+      } else if (source === 'output') {
+        setOutputAIResult(result);
+      }
+      
+    } catch (error) {
+      console.error('Error detecting AI text:', error);
+      toast({
+        title: "AI detection failed",
+        description: error instanceof Error ? error.message : "Failed to detect AI text",
+        variant: "destructive"
+      });
+    } finally {
+      if (source === 'input') {
+        setIsInputDetecting(false);
+      } else if (source === 'output') {
+        setIsOutputDetecting(false);
+      }
+    }
+  }, [toast]);
 
   const clearInput = useCallback(() => {
     setInputText('');
