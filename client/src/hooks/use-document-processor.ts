@@ -325,9 +325,75 @@ export function useDocumentProcessor() {
     }
   }, [inputText, contentSource, useContentSource, llmProvider, toast]);
 
-  const processSelectedDocumentChunks = useCallback(async () => {
-    // This would handle document chunk processing
-  }, []);
+  const processSelectedDocumentChunks = useCallback(async (
+    selectedChunks: string[],
+    instructions: string,
+    modes: { rewrite: boolean; expand: boolean; add: boolean }
+  ) => {
+    if (selectedChunks.length === 0) {
+      toast({
+        title: "No chunks selected",
+        description: "Please select at least one chunk to process",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setProcessing(true);
+      setOutputText('');
+
+      const combinedText = selectedChunks.join('\n\n');
+      
+      const response = await fetch('/api/process-chunk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: combinedText,
+          instructions: instructions || 'Rewrite this text to improve clarity and flow',
+          contentSource,
+          useContentSource,
+          modes,
+          llmProvider
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Chunk processing failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setOutputText(data.result);
+
+      // Store last used instructions
+      setLastUsedInstructions(instructions);
+      
+      // Set up rewrite history for "Rewrite the Rewrite" functionality
+      setRewriteHistory({
+        originalText: combinedText,
+        previousInstructions: instructions,
+        currentRewrite: data.result
+      });
+      
+      // Show the "Rewrite the Rewrite" option after processing
+      setShowRewriteTheRewrite(true);
+
+      toast({
+        title: "Chunks processed",
+        description: `Successfully processed ${selectedChunks.length} chunks`,
+      });
+
+    } catch (error: any) {
+      console.error('Error processing chunks:', error);
+      toast({
+        title: "Chunk processing failed",
+        description: error?.message || 'Failed to process selected chunks',
+        variant: "destructive"
+      });
+    } finally {
+      setProcessing(false);
+    }
+  }, [contentSource, useContentSource, llmProvider, toast]);
 
   const cancelProcessing = useCallback(() => {
     setProcessing(false);
