@@ -55,3 +55,22 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+// Saved instructions API functions
+export async function getSavedInstructions() {
+  const response = await fetch('/api/saved-instructions', {
+    credentials: 'include',
+  });
+  await throwIfResNotOk(response);
+  return response.json();
+}
+
+export async function saveInstructions(data: { name: string; instructions: string }) {
+  const response = await apiRequest('POST', '/api/saved-instructions', data);
+  return response.json();
+}
+
+export async function deleteSavedInstructions(id: number) {
+  const response = await apiRequest('DELETE', `/api/saved-instructions/${id}`);
+  return response.json();
+}
