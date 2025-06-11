@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -59,7 +59,12 @@ export function EditorToolbar({
   const [instructionName, setInstructionName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
   const { toast } = useToast();
+  
+  // Audio recording refs
+  const mediaRecorder = useRef<MediaRecorder | null>(null);
+  const audioChunks = useRef<BlobPart[]>([]);
   
   // Load saved instructions
   useEffect(() => {
@@ -116,6 +121,141 @@ export function EditorToolbar({
       onInstructionsSelect(instruction.instructions);
     }
   };
+
+  // Audio transcription for instructions input
+  const handleAudioTranscription = async (file: File) => {
+    try {
+      console.log('Starting audio transcription for instructions:', file.name, 'Size:', file.size, 'Type:', file.type);
+      
+      const formData = new FormData();
+      formData.append('audio', file);
+      
+      const response = await fetch('/api/transcribe', {
+        method: 'POST',
+        body: formData
+      });
+      
+      console.log('Transcription response status:', response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Transcription API error:', errorText);
+        throw new Error(`Transcription failed: ${response.status} ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      console.log('Transcription result:', result);
+      
+      if (!result.result) {
+        throw new Error('No transcription text returned from API');
+      }
+      
+      const newText = result.result.trim();
+      if (newText) {
+        setRewriteInstructions(rewriteInstructions ? `${rewriteInstructions} ${newText}` : newText);
+        
+        toast({
+          title: "Audio transcribed",
+          description: `Added ${newText.length} characters to instructions`,
+        });
+      } else {
+        toast({
+          title: "No speech detected",
+          description: "The audio recording appears to be silent",
+          variant: "destructive"
+        });
+      }
+    } catch (error: any) {
+      console.error('Error transcribing audio:', error);
+      toast({
+        title: "Transcription failed",
+        description: error?.message || 'Failed to transcribe audio',
+        variant: "destructive"
+      });
+    }
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          sampleRate: 44100
+        } 
+      });
+      audioChunks.current = [];
+      
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
+      const recorder = new MediaRecorder(stream, { mimeType });
+      mediaRecorder.current = recorder;
+      
+      recorder.addEventListener('dataavailable', (event) => {
+        if (event.data.size > 0) {
+          audioChunks.current.push(event.data);
+        }
+      });
+      
+      recorder.addEventListener('stop', async () => {
+        stream.getTracks().forEach(track => track.stop());
+        
+        if (audioChunks.current.length === 0) {
+          toast({
+            title: "Recording failed",
+            description: "No audio data was recorded",
+            variant: "destructive"
+          });
+          setIsRecording(false);
+          return;
+        }
+        
+        const audioBlob = new Blob(audioChunks.current, { type: mimeType });
+        const audioFile = new File([audioBlob], `recording.${mimeType.split('/')[1]}`, { type: mimeType });
+        
+        console.log('Audio file created:', audioFile.size, 'bytes');
+        
+        try {
+          toast({
+            title: "Transcribing audio",
+            description: "Processing your recording...",
+          });
+          
+          await handleAudioTranscription(audioFile);
+        } catch (error: any) {
+          console.error('Transcription error:', error);
+          toast({
+            title: "Transcription failed",
+            description: error?.message || "Failed to transcribe audio",
+            variant: "destructive"
+          });
+        } finally {
+          setIsRecording(false);
+        }
+      });
+      
+      recorder.start(1000);
+      setIsRecording(true);
+      
+      toast({
+        title: "Recording started",
+        description: "Speak your instructions into the microphone",
+      });
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      toast({
+        title: "Recording failed",
+        description: "Could not access microphone. Please check permissions and try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorder.current && isRecording) {
+      console.log('Stopping recording...');
+      mediaRecorder.current.stop();
+    }
+  };
   
   return (
     <div className="space-y-3 mb-3">
@@ -124,13 +264,25 @@ export function EditorToolbar({
         <Label htmlFor="rewrite-instructions" className="text-sm font-medium mb-2 block">
           Rewrite Instructions
         </Label>
-        <Input
-          id="rewrite-instructions"
-          placeholder="E.g., TAKE THE EXAM AND GET A 100/100, Simplify this text, Make it professional..."
-          value={rewriteInstructions}
-          onChange={(e) => setRewriteInstructions(e.target.value)}
-          className="w-full"
-        />
+        <div className="relative">
+          <Input
+            id="rewrite-instructions"
+            placeholder="E.g., TAKE THE EXAM AND GET A 100/100, Simplify this text, Make it professional..."
+            value={rewriteInstructions}
+            onChange={(e) => setRewriteInstructions(e.target.value)}
+            className="w-full pr-10"
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className={`absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 ${isRecording ? 'text-red-500 hover:text-red-600' : 'text-slate-400 hover:text-slate-600'}`}
+            onClick={isRecording ? stopRecording : startRecording}
+            title={isRecording ? 'Stop recording' : 'Record instructions'}
+          >
+            <MicIcon className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
       
       {/* Homework Mode Toggle */}
