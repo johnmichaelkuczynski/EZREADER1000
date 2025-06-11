@@ -496,6 +496,8 @@ ${inputExcerpt ? `INPUT DOCUMENT:\n${inputExcerpt}\n\n` : ''}${outputExcerpt ? `
 
   const handleAudioTranscription = useCallback(async (file: File) => {
     try {
+      console.log('Starting audio transcription for file:', file.name, 'Size:', file.size, 'Type:', file.type);
+      
       const formData = new FormData();
       formData.append('audio', file);
       
@@ -504,13 +506,36 @@ ${inputExcerpt ? `INPUT DOCUMENT:\n${inputExcerpt}\n\n` : ''}${outputExcerpt ? `
         body: formData
       });
       
-      const result = await response.json();
-      setInputText(prev => prev + '\n\n' + result.result);
+      console.log('Transcription response status:', response.status);
       
-      toast({
-        title: "Audio transcribed",
-        description: "Audio has been transcribed and added to input",
-      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Transcription API error:', errorText);
+        throw new Error(`Transcription failed: ${response.status} ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      console.log('Transcription result:', result);
+      
+      if (!result.result) {
+        throw new Error('No transcription text returned from API');
+      }
+      
+      const newText = result.result.trim();
+      if (newText) {
+        setInputText(prev => prev ? `${prev}\n\n${newText}` : newText);
+        
+        toast({
+          title: "Audio transcribed",
+          description: `Added ${newText.length} characters of transcribed text`,
+        });
+      } else {
+        toast({
+          title: "No speech detected",
+          description: "The audio recording appears to be silent",
+          variant: "destructive"
+        });
+      }
     } catch (error: any) {
       console.error('Error transcribing audio:', error);
       toast({

@@ -242,11 +242,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/transcribe', upload.single('audio'), async (req: Request, res: Response) => {
     try {
       if (!req.file) {
+        console.log('No audio file in request');
         return res.status(400).json({ error: 'No audio file provided' });
       }
       
+      console.log('Audio file received:', {
+        originalname: req.file.originalname,
+        mimetype: req.file.mimetype,
+        size: req.file.buffer.length
+      });
+      
+      if (req.file.buffer.length === 0) {
+        console.log('Empty audio buffer received');
+        return res.status(400).json({ error: 'Empty audio file provided' });
+      }
+      
       const audioBuffer = req.file.buffer;
+      console.log('Starting transcription with buffer size:', audioBuffer.length);
+      
       const transcribedText = await transcribeAudio(audioBuffer);
+      console.log('Transcription completed, text length:', transcribedText.length);
       
       res.json({ result: transcribedText });
     } catch (error: unknown) {

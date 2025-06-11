@@ -155,19 +155,44 @@ export default function Home() {
   // Voice input handlers
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          sampleRate: 44100
+        } 
+      });
       audioChunks.current = [];
       
-      const recorder = new MediaRecorder(stream);
+      // Use compatible MIME type
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
+      const recorder = new MediaRecorder(stream, { mimeType });
       mediaRecorder.current = recorder;
       
       recorder.addEventListener('dataavailable', (event) => {
-        audioChunks.current.push(event.data);
+        if (event.data.size > 0) {
+          audioChunks.current.push(event.data);
+        }
       });
       
       recorder.addEventListener('stop', async () => {
-        const audioBlob = new Blob(audioChunks.current, { type: 'audio/mp3' });
-        const audioFile = new File([audioBlob], "recording.mp3", { type: "audio/mp3" });
+        // Stop all tracks
+        stream.getTracks().forEach(track => track.stop());
+        
+        if (audioChunks.current.length === 0) {
+          toast({
+            title: "Recording failed",
+            description: "No audio data was recorded",
+            variant: "destructive"
+          });
+          setIsRecording(false);
+          return;
+        }
+        
+        const audioBlob = new Blob(audioChunks.current, { type: mimeType });
+        const audioFile = new File([audioBlob], `recording.${mimeType.split('/')[1]}`, { type: mimeType });
+        
+        console.log('Audio file created:', audioFile.size, 'bytes');
         
         try {
           toast({
@@ -189,13 +214,19 @@ export default function Home() {
         }
       });
       
-      recorder.start();
+      // Start recording with time slices for better data collection
+      recorder.start(1000);
       setIsRecording(true);
+      
+      toast({
+        title: "Recording started",
+        description: "Speak into your microphone",
+      });
     } catch (error) {
       console.error('Error starting recording:', error);
       toast({
         title: "Recording failed",
-        description: "Could not access microphone. Please check permissions.",
+        description: "Could not access microphone. Please check permissions and try again.",
         variant: "destructive"
       });
     }
@@ -203,9 +234,9 @@ export default function Home() {
 
   const stopRecording = () => {
     if (mediaRecorder.current && isRecording) {
+      console.log('Stopping recording...');
       mediaRecorder.current.stop();
-      // Stream is stopped in the 'stop' event handler above
-      mediaRecorder.current.stream.getTracks().forEach(track => track.stop());
+      // Stream cleanup is handled in the 'stop' event handler
     }
   };
 

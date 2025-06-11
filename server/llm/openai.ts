@@ -333,8 +333,11 @@ export async function detectAIWithOpenAI(text: string): Promise<{ isAI: boolean;
 
 export async function transcribeAudio(audioBuffer: Buffer): Promise<string> {
   try {
+    console.log('OpenAI transcription starting with buffer size:', audioBuffer.length);
+    
     const formData = new FormData();
-    formData.append('file', new Blob([audioBuffer]), 'audio.wav');
+    // Use webm format for better compatibility with browser recordings
+    formData.append('file', new Blob([audioBuffer], { type: 'audio/webm' }), 'audio.webm');
     formData.append('model', 'whisper-1');
 
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
@@ -345,11 +348,17 @@ export async function transcribeAudio(audioBuffer: Buffer): Promise<string> {
       body: formData,
     });
 
+    console.log('OpenAI transcription response status:', response.status);
+
     if (!response.ok) {
-      throw new Error(`OpenAI transcription failed: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('OpenAI transcription error response:', errorText);
+      throw new Error(`OpenAI transcription failed: ${response.status} ${response.statusText}`);
     }
 
     const result = await response.json();
+    console.log('OpenAI transcription result:', { textLength: result.text?.length || 0 });
+    
     return result.text || '';
   } catch (error: any) {
     console.error("OpenAI transcription error:", error);
