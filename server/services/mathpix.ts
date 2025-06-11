@@ -27,7 +27,7 @@ function formatMathForMathJax(latexText: string): string {
   formatted = formatted.replace(/\\frac{([^}]+)}{([^}]+)}/g, '\\frac{$1}{$2}');
   
   // Ensure proper spacing around math blocks
-  formatted = formatted.replace(/(\\\[[\s\S]*?\\\])/g, '\n\n$1\n\n');
+  formatted = formatted.replace(/(\\\[[^]*?\\\])/g, '\n\n$1\n\n');
   formatted = formatted.replace(/(\\\(.*?\\\))/g, ' $1 ');
   
   // Clean up excessive whitespace
