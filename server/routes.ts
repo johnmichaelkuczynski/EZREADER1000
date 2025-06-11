@@ -393,36 +393,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Azure OpenAI image processing endpoint
+  // Math image processing endpoint using Mathpix
   app.post('/api/process-math-image', upload.single('image'), async (req: Request, res: Response) => {
     try {
       if (!req.file) {
         return res.status(400).json({ error: "No image file provided" });
       }
 
-      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/bmp'];
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/bmp', 'image/webp'];
       if (!allowedTypes.includes(req.file.mimetype)) {
-        return res.status(400).json({ error: "Unsupported image format. Please use JPG, PNG, GIF, or BMP." });
+        return res.status(400).json({ error: "Unsupported image format. Please use JPG, PNG, GIF, BMP, or WebP." });
       }
 
-      console.log('Processing image with Azure OpenAI:', req.file.originalname, 'Type:', req.file.mimetype, 'Size:', req.file.size);
+      console.log('Processing math image with Mathpix:', req.file.originalname, 'Type:', req.file.mimetype, 'Size:', req.file.size);
       
-      const extractedText = await processMathImageWithAzure(req.file.buffer, req.file.mimetype);
+      const { extractTextFromImageWithMathpix } = await import('./services/mathpix');
+      const result = await extractTextFromImageWithMathpix(req.file.buffer, req.file.mimetype);
       
-      if (!extractedText || extractedText.trim().length === 0) {
-        return res.status(400).json({ error: "Could not extract text from image using Azure OpenAI" });
+      if (!result.text || result.text.trim().length === 0) {
+        return res.status(400).json({ error: "Could not extract text from image" });
       }
 
-      console.log('Azure OpenAI extracted text length:', extractedText.length);
+      console.log('Mathpix extracted text length:', result.text.length);
       
       res.json({ 
-        text: extractedText,
+        text: result.text,
+        confidence: result.confidence,
         filename: req.file.originalname,
-        source: 'azure-openai'
+        source: 'mathpix'
       });
     } catch (error: any) {
-      console.error('Azure OpenAI image processing error:', error);
-      res.status(500).json({ error: error.message || "Failed to process image with Azure OpenAI" });
+      console.error('Mathpix image processing error:', error);
+      res.status(500).json({ error: error.message || "Failed to process math image" });
     }
   });
 
