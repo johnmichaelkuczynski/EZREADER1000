@@ -28,7 +28,7 @@ const upload = multer({
     fileSize: 50 * 1024 * 1024, // 50MB max file size
   },
   fileFilter: (req, file, cb) => {
-    // Accept PDF, Word documents, text files, and images
+    // Accept PDF, Word documents, text files, images, and audio files
     const allowedTypes = [
       'application/pdf',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -39,14 +39,21 @@ const upload = multer({
       'image/png',
       'image/gif',
       'image/bmp',
-      'image/tiff'
+      'image/tiff',
+      'audio/webm',
+      'audio/mp4',
+      'audio/mpeg',
+      'audio/wav',
+      'audio/ogg',
+      'audio/m4a',
+      'audio/aac'
     ];
     
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
       console.log('Rejected file type:', file.mimetype, 'for file:', file.originalname);
-      cb(new Error(`Unsupported file type: ${file.mimetype}`), false);
+      cb(null, false);
     }
   }
 });
