@@ -176,6 +176,7 @@ export function EditorToolbar({
   };
 
   const startRecording = async () => {
+    console.log('Starting recording for rewrite instructions...');
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
@@ -184,22 +185,27 @@ export function EditorToolbar({
           sampleRate: 44100
         } 
       });
+      console.log('Microphone access granted');
       audioChunks.current = [];
       
       const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
+      console.log('Using MIME type:', mimeType);
       const recorder = new MediaRecorder(stream, { mimeType });
       mediaRecorder.current = recorder;
       
       recorder.addEventListener('dataavailable', (event) => {
+        console.log('Audio data available:', event.data.size, 'bytes');
         if (event.data.size > 0) {
           audioChunks.current.push(event.data);
         }
       });
       
       recorder.addEventListener('stop', async () => {
+        console.log('Recording stopped for instructions');
         stream.getTracks().forEach(track => track.stop());
         
         if (audioChunks.current.length === 0) {
+          console.error('No audio chunks recorded');
           toast({
             title: "Recording failed",
             description: "No audio data was recorded",
@@ -212,7 +218,7 @@ export function EditorToolbar({
         const audioBlob = new Blob(audioChunks.current, { type: mimeType });
         const audioFile = new File([audioBlob], `recording.${mimeType.split('/')[1]}`, { type: mimeType });
         
-        console.log('Audio file created:', audioFile.size, 'bytes');
+        console.log('Audio file created for instructions:', audioFile.size, 'bytes');
         
         try {
           toast({
@@ -222,7 +228,7 @@ export function EditorToolbar({
           
           await handleAudioTranscription(audioFile);
         } catch (error: any) {
-          console.error('Transcription error:', error);
+          console.error('Transcription error in instructions:', error);
           toast({
             title: "Transcription failed",
             description: error?.message || "Failed to transcribe audio",
@@ -240,8 +246,9 @@ export function EditorToolbar({
         title: "Recording started",
         description: "Speak your instructions into the microphone",
       });
+      console.log('Recording started successfully for instructions');
     } catch (error) {
-      console.error('Error starting recording:', error);
+      console.error('Error starting recording for instructions:', error);
       toast({
         title: "Recording failed",
         description: "Could not access microphone. Please check permissions and try again.",
