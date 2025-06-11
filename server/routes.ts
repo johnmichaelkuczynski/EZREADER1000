@@ -267,8 +267,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const audioBuffer = req.file.buffer;
       console.log('Starting transcription with buffer size:', audioBuffer.length);
       
-      const { transcribeAudioWithGladia } = await import('./services/gladia');
-      const transcribedText = await transcribeAudioWithGladia(audioBuffer);
+      const { transcribeAudioWithAzure } = await import('./services/azure-transcription');
+      const transcribedText = await transcribeAudioWithAzure(audioBuffer);
       console.log('Transcription completed, text length:', transcribedText.length);
       
       res.json({ result: transcribedText });
