@@ -597,16 +597,25 @@ export default function Home() {
           
           <div className="grid gap-4 py-4">
             <div className="flex gap-2">
-              <Input
-                placeholder="Enter search query..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleSearch();
-                  }
-                }}
-              />
+              <div className="flex-1 relative">
+                <Input
+                  placeholder="Enter search query..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleSearch();
+                    }
+                  }}
+                  className="pr-10"
+                />
+                <div className="absolute right-1 top-1/2 -translate-y-1/2">
+                  <VoiceInput
+                    onTranscription={(text) => setSearchQuery(searchQuery ? `${searchQuery} ${text}` : text)}
+                    className="h-8 w-8"
+                  />
+                </div>
+              </div>
               <Button onClick={handleSearch} disabled={isSearching}>
                 {isSearching ? 'Searching...' : 'Search'}
               </Button>

@@ -6,8 +6,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Message } from '@/types';
-import { Trash2, Mic, Send, ArrowDown } from 'lucide-react';
+import { Trash2, Send, ArrowDown } from 'lucide-react';
 import { MathRenderer } from './MathRenderer';
+import { VoiceInput } from '@/components/ui/voice-input';
 
 interface ChatInterfaceProps {
   messages: Message[];
@@ -27,10 +28,7 @@ export function ChatInterface({
   onSendToInput
 }: ChatInterfaceProps) {
   const [inputValue, setInputValue] = useState('');
-  const [isRecording, setIsRecording] = useState(false);
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  const mediaRecorder = useRef<MediaRecorder | null>(null);
-  const audioChunks = useRef<BlobPart[]>([]);
   
   // Scroll to bottom of chat when messages change
   useEffect(() => {
@@ -49,47 +47,6 @@ export function ChatInterface({
     setInputValue('');
   };
   
-  // Voice input handlers
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      audioChunks.current = [];
-      
-      const recorder = new MediaRecorder(stream);
-      mediaRecorder.current = recorder;
-      
-      recorder.addEventListener('dataavailable', (event) => {
-        audioChunks.current.push(event.data);
-      });
-      
-      recorder.addEventListener('stop', () => {
-        const audioBlob = new Blob(audioChunks.current);
-        const audioUrl = URL.createObjectURL(audioBlob);
-        
-        // Here we would typically send this audio for transcription
-        // But for simplicity we're just setting a placeholder message
-        setInputValue('Speech recognition in progress...');
-        
-        // Clean up
-        URL.revokeObjectURL(audioUrl);
-        setIsRecording(false);
-      });
-      
-      recorder.start();
-      setIsRecording(true);
-    } catch (error) {
-      console.error('Error starting recording:', error);
-      setIsRecording(false);
-    }
-  };
-  
-  const stopRecording = () => {
-    if (mediaRecorder.current && isRecording) {
-      mediaRecorder.current.stop();
-      mediaRecorder.current.stream.getTracks().forEach(track => track.stop());
-    }
-  };
-  
   // Character count
   const characterCount = inputValue.length;
   
@@ -101,49 +58,46 @@ export function ChatInterface({
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="p-1 text-slate-400 hover:text-slate-600 transition-colors"
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-slate-400 hover:text-slate-600 transition-colors h-6 w-6 p-0"
                   onClick={onClearChat}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Clear chat</TooltipContent>
+              <TooltipContent>Clear Chat</TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </div>
       </div>
       
+      {/* Message Container */}
       <div 
-        className="chat-container overflow-y-auto p-4" 
         ref={chatContainerRef}
+        className="max-h-96 overflow-y-auto p-3 space-y-3"
       >
         {messages.map((message) => (
-          <div 
-            key={message.id}
-            className={`flex mb-4 ${message.role === 'user' ? 'justify-end' : ''}`}
-          >
+          <div key={message.id} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             {message.role === 'assistant' && (
-              <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0 mr-3">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-indigo-600" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M13 7H7v6h6V7z" />
-                  <path fillRule="evenodd" d="M7 2a1 1 0 012 0v1h2V2a1 1 0 112 0v1h2a2 2 0 012 2v2h1a1 1 0 110 2h-1v2h1a1 1 0 110 2h-1v2a2 2 0 01-2 2h-2v1a1 1 0 11-2 0v-1H9v1a1 1 0 11-2 0v-1H5a2 2 0 01-2-2v-2H2a1 1 0 110-2h1V9H2a1 1 0 010-2h1V5a2 2 0 012-2h2V2zM5 5h10v10H5V5z" clipRule="evenodd" />
+              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 mr-3">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z" />
+                  <path d="M15 7v2a4 4 0 01-4 4H9.828l-1.766 1.767c.28.149.599.233.938.233h2l3 3v-3h2a2 2 0 002-2V9a2 2 0 00-2-2h-1z" />
                 </svg>
               </div>
             )}
             
-            <div className={`${
+            <div className={`group relative max-w-xs lg:max-w-md px-3 py-2 rounded-lg ${
               message.role === 'user' 
-                ? 'bg-primary text-white' 
-                : 'bg-slate-100 text-slate-800'
-              } rounded-lg p-3 max-w-[85%] group relative`}
-            >
-              {message.role === 'assistant' ? (
-                <div className="relative">
-                  <MathRenderer content={message.content} className="text-sm bg-transparent border-0 p-0" />
-                  {onSendToInput && (
+                ? 'bg-blue-500 text-white' 
+                : 'bg-gray-100 text-gray-700'
+            }`}>
+              {message.content.includes('$') || message.content.includes('\\') ? (
+                <div className="text-sm">
+                  <MathRenderer content={message.content} />
+                  {onSendToInput && message.role === 'assistant' && (
                     <Button
                       variant="ghost"
                       size="sm"
@@ -187,22 +141,11 @@ export function ChatInterface({
               }}
             />
             <div className="absolute right-3 bottom-3 flex gap-1">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="icon" 
-                      className="text-slate-400 hover:text-slate-600 transition-colors h-6 w-6 p-0"
-                      onClick={isRecording ? stopRecording : startRecording}
-                    >
-                      <Mic className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>{isRecording ? 'Stop recording' : 'Voice input'}</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <VoiceInput
+                onTranscription={(text) => setInputValue(inputValue ? `${inputValue} ${text}` : text)}
+                className="h-6 w-6 p-0"
+                size="sm"
+              />
             </div>
           </div>
           <Button 
@@ -221,14 +164,10 @@ export function ChatInterface({
                 checked={reprocessOutput}
                 onCheckedChange={(checked) => onReprocessOutputChange(!!checked)}
               />
-              <Label htmlFor="reprocess-output" className="text-xs text-slate-500">
-                Reprocess output
-              </Label>
+              <Label htmlFor="reprocess-output" className="text-sm">Send output to input box after processing</Label>
             </div>
           </div>
-          <div className="text-xs text-slate-500">
-            {characterCount} characters
-          </div>
+          <span className="text-xs text-slate-400">{characterCount} characters</span>
         </div>
       </div>
     </Card>
