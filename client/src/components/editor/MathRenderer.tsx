@@ -23,11 +23,106 @@ export function MathRenderer({ content, className = "" }: MathRendererProps) {
     checkMathJax();
   }, []);
 
+  // Function to process content and wrap LaTeX expressions properly
+  const processContent = (text: string): string => {
+    let processed = text;
+    
+    console.log('Original content:', text.substring(0, 200) + '...');
+    
+    // If already has math delimiters, return as is
+    if (processed.includes('\\(') && processed.includes('\\)')) {
+      console.log('Content already has math delimiters');
+      return processed;
+    }
+    
+    // Split content into lines for better processing
+    const lines = processed.split('\n');
+    const processedLines = lines.map(line => {
+      let processedLine = line;
+      
+      // Skip if line already has math delimiters
+      if (processedLine.includes('\\(') || processedLine.includes('$$')) {
+        return processedLine;
+      }
+      
+      // Look for mathematical expressions and wrap them
+      
+      // Handle complete mathematical statements (equations)
+      if (/e\s*=\s*\\sum/.test(processedLine)) {
+        processedLine = processedLine.replace(/(e\s*=\s*\\sum[^.]*)/g, '$$$$1$$');
+      }
+      
+      // Handle sum expressions with complex subscripts/superscripts
+      processedLine = processedLine.replace(/\\sum_\{[^}]*\}\^\{[^}]*\}[^.]*?(?=\s|$|\.)/g, (match) => {
+        return '\\(' + match.trim() + '\\)';
+      });
+      
+      // Handle limit expressions
+      processedLine = processedLine.replace(/\\lim_\{[^}]*\}[^.]*?(?=\s|$|\.)/g, (match) => {
+        return '\\(' + match.trim() + '\\)';
+      });
+      
+      // Handle fraction expressions
+      processedLine = processedLine.replace(/\\frac\{[^}]*\}\{[^}]*\}/g, (match) => {
+        return '\\(' + match + '\\)';
+      });
+      
+      // Handle individual mathematical symbols and expressions
+      const mathPatterns = [
+        /\\infty(?![a-zA-Z])/g,
+        /\\alpha(?![a-zA-Z])/g,
+        /\\beta(?![a-zA-Z])/g,
+        /\\gamma(?![a-zA-Z])/g,
+        /\\delta(?![a-zA-Z])/g,
+        /\\epsilon(?![a-zA-Z])/g,
+        /\\theta(?![a-zA-Z])/g,
+        /\\lambda(?![a-zA-Z])/g,
+        /\\mu(?![a-zA-Z])/g,
+        /\\nu(?![a-zA-Z])/g,
+        /\\pi(?![a-zA-Z])/g,
+        /\\rho(?![a-zA-Z])/g,
+        /\\sigma(?![a-zA-Z])/g,
+        /\\tau(?![a-zA-Z])/g,
+        /\\phi(?![a-zA-Z])/g,
+        /\\omega(?![a-zA-Z])/g,
+        /\\sqrt\{[^}]*\}/g,
+        /\\log(?![a-zA-Z])/g,
+        /\\ln(?![a-zA-Z])/g,
+        /\\exp(?![a-zA-Z])/g,
+        /\\sin(?![a-zA-Z])/g,
+        /\\cos(?![a-zA-Z])/g,
+        /\\tan(?![a-zA-Z])/g
+      ];
+      
+      mathPatterns.forEach(pattern => {
+        processedLine = processedLine.replace(pattern, (match) => {
+          return '\\(' + match + '\\)';
+        });
+      });
+      
+      // Handle subscripts and superscripts
+      processedLine = processedLine.replace(/([a-zA-Z])_\{([^}]+)\}/g, '\\($1_{$2}\\)');
+      processedLine = processedLine.replace(/([a-zA-Z])\^\{([^}]+)\}/g, '\\($1^{$2}\\)');
+      processedLine = processedLine.replace(/([a-zA-Z])_([0-9]+)/g, '\\($1_{$2}\\)');
+      processedLine = processedLine.replace(/([a-zA-Z])\^([0-9]+)/g, '\\($1^{$2}\\)');
+      
+      return processedLine;
+    });
+    
+    const result = processedLines.join('\n');
+    console.log('Processed content:', result.substring(0, 200) + '...');
+    
+    return result;
+  };
+
   useEffect(() => {
     if (!isReady || !containerRef.current || !window.MathJax) return;
 
-    // Set the content first
-    containerRef.current.innerHTML = content;
+    // Process the content to ensure proper LaTeX formatting
+    const processedContent = processContent(content);
+    
+    // Set the processed content
+    containerRef.current.innerHTML = processedContent;
 
     // Render math with MathJax
     try {
@@ -35,9 +130,17 @@ export function MathRenderer({ content, className = "" }: MathRendererProps) {
         console.log('MathJax rendering completed');
       }).catch((error: any) => {
         console.warn('MathJax rendering error:', error);
+        // Fallback: show original content if MathJax fails
+        if (containerRef.current) {
+          containerRef.current.innerHTML = content;
+        }
       });
     } catch (error) {
       console.warn('MathJax rendering error:', error);
+      // Fallback: show original content
+      if (containerRef.current) {
+        containerRef.current.innerHTML = content;
+      }
     }
   }, [content, isReady]);
 
