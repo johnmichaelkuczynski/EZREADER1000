@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { Readable } from 'stream';
+import { File as FormDataFile } from 'formdata-node';
 
 /**
  * Transcribe audio using OpenAI Whisper model
@@ -18,18 +18,13 @@ export async function transcribeAudioWithOpenAI(audioBuffer: Buffer): Promise<st
       apiKey: apiKey,
     });
 
-    // Create a readable stream from the buffer
-    const audioStream = new Readable({
-      read() {}
+    // Create a File object from the buffer
+    const audioFile = new FormDataFile([audioBuffer], 'audio.webm', {
+      type: 'audio/webm',
     });
-    audioStream.push(audioBuffer);
-    audioStream.push(null);
-
-    // Add required properties for OpenAI API
-    (audioStream as any).path = 'audio.webm';
 
     const transcription = await openai.audio.transcriptions.create({
-      file: audioStream as any,
+      file: audioFile as any,
       model: 'whisper-1',
       response_format: 'text',
     });
