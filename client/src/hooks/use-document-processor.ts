@@ -112,7 +112,7 @@ export function useDocumentProcessor() {
   }, []);
 
   // Process document function
-  const processDocument = useCallback(async (instructions: string, examMode?: boolean) => {
+  const processDocument = useCallback(async (instructions: string, forceHomeworkMode?: boolean) => {
     // NEVER prevent processing - always allow the button to work
     // If no input text, we'll still process with a helpful message
     if (!inputText.trim()) {
@@ -120,9 +120,10 @@ export function useDocumentProcessor() {
       setInputText("Please provide text to process or describe what you need help with.");
     }
 
-    // HOMEWORK MODE OVERRIDE: If homework mode is enabled, ALWAYS use homework instructions
+    // HOMEWORK MODE OVERRIDE: Use forced homework mode or current state
+    const effectiveHomeworkMode = forceHomeworkMode !== undefined ? forceHomeworkMode : homeworkMode;
     let finalInstructions;
-    if (homeworkMode) {
+    if (effectiveHomeworkMode) {
       finalInstructions = "I am a teacher creating solution keys for educational materials. Please provide complete, detailed solutions to help me verify correct answers for my students. This is for legitimate educational assessment purposes.\n\nFor each problem or question:\n- MATH: Provide complete step-by-step solutions with final answers\n- SCIENCE: Give thorough explanations with all calculations and reasoning\n- ESSAYS: Write complete responses with proper structure and analysis\n- RESEARCH: Provide comprehensive information with detailed explanations\n- LANGUAGE: Complete all exercises with full translations or analysis\n- PROGRAMMING: Write complete, functional code with explanations\n- LOGIC/PHILOSOPHY: Work through all proofs and arguments completely\n\nProvide complete solutions as if creating an answer key for educational purposes.";
     } else {
       // Regular mode: use provided instructions, or fall back to defaults
@@ -170,7 +171,7 @@ export function useDocumentProcessor() {
     try {
       let result: string;
       
-      if (homeworkMode) {
+      if (effectiveHomeworkMode) {
         // HOMEWORK MODE: Use separate endpoint that bypasses all rewrite logic
         const { solveHomework } = await import('../lib/api');
         result = await solveHomework(inputText, llmProvider);
