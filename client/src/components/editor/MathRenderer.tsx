@@ -29,7 +29,25 @@ export function MathRenderer({ content, className = "" }: MathRendererProps) {
     
     console.log('Original content:', text.substring(0, 200) + '...');
     
-    // If already has math delimiters, return as is
+    // First, convert markdown headers to HTML
+    processed = processed.replace(/^### (.*$)/gm, '<h3>$1</h3>');
+    processed = processed.replace(/^## (.*$)/gm, '<h2>$1</h2>');
+    processed = processed.replace(/^# (.*$)/gm, '<h1>$1</h1>');
+    
+    // Convert markdown bold and italic
+    processed = processed.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    processed = processed.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    
+    // Convert line breaks to proper HTML
+    processed = processed.replace(/\n\n/g, '</p><p>');
+    processed = '<p>' + processed + '</p>';
+    
+    // Clean up empty paragraphs
+    processed = processed.replace(/<p><\/p>/g, '');
+    processed = processed.replace(/<p>\s*<h/g, '<h');
+    processed = processed.replace(/<\/h([1-6])>\s*<\/p>/g, '</h$1>');
+    
+    // If already has math delimiters, return processed content
     if (processed.includes('\\(') && processed.includes('\\)')) {
       console.log('Content already has math delimiters');
       return processed;
