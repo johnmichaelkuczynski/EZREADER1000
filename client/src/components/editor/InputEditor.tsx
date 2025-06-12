@@ -8,6 +8,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MathRenderer } from './MathRenderer';
+import { VoiceInput } from '@/components/ui/voice-input';
 
 interface InputEditorProps {
   text: string;
@@ -245,12 +246,20 @@ export function InputEditor({
             className={`editor overflow-y-auto p-0 ${isDragActive ? 'border-2 border-dashed border-blue-300' : ''}`}
           >
             <input {...getInputProps()} />
-            <Textarea
-                className="min-h-[600px] h-full rounded-none border-0 resize-none focus-visible:ring-0"
+            <div className="relative h-full">
+              <Textarea
+                className="min-h-[600px] h-full rounded-none border-0 resize-none focus-visible:ring-0 pr-10"
                 placeholder="Type or paste your text here..."
                 value={text}
                 onChange={(e) => onTextChange(e.target.value)}
               />
+              <div className="absolute right-2 top-2 z-10">
+                <VoiceInput
+                  onTranscription={(voiceText) => onTextChange(text ? `${text} ${voiceText}` : voiceText)}
+                  className="h-8 w-8"
+                />
+              </div>
+            </div>
           </div>
         )}
         

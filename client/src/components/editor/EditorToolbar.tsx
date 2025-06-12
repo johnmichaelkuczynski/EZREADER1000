@@ -7,6 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { Trash2Icon, SaveIcon, LoaderIcon } from 'lucide-react';
 import { getSavedInstructions, saveInstructions, deleteSavedInstructions } from '@/lib/queryClient';
+import { VoiceInput } from '@/components/ui/voice-input';
 
 interface SavedInstruction {
   id: number;
@@ -191,13 +192,21 @@ export function EditorToolbar({
 
         {/* Save new instructions */}
         <div className="flex gap-2">
-          <input
-            type="text"
-            placeholder="Name for these instructions"
-            value={instructionName}
-            onChange={(e) => setInstructionName(e.target.value)}
-            className="flex-1 px-3 py-2 border rounded-md text-sm"
-          />
+          <div className="flex-1 relative">
+            <input
+              type="text"
+              placeholder="Name for these instructions"
+              value={instructionName}
+              onChange={(e) => setInstructionName(e.target.value)}
+              className="w-full px-3 py-2 pr-10 border rounded-md text-sm"
+            />
+            <div className="absolute right-1 top-1/2 -translate-y-1/2">
+              <VoiceInput
+                onTranscription={(text) => setInstructionName(instructionName ? `${instructionName} ${text}` : text)}
+                className="h-8 w-8"
+              />
+            </div>
+          </div>
           <Button
             onClick={handleSaveInstructions}
             disabled={!instructionName.trim() || !currentInstructions.trim() || isSaving}
@@ -237,6 +246,12 @@ export function EditorToolbar({
             onChange={(e) => setRewriteInstructions(e.target.value)}
             className="w-full pr-10"
           />
+          <div className="absolute right-1 top-1 z-10">
+            <VoiceInput
+              onTranscription={(text) => setRewriteInstructions(rewriteInstructions ? `${rewriteInstructions} ${text}` : text)}
+              className="h-8 w-8"
+            />
+          </div>
         </div>
       </div>
       

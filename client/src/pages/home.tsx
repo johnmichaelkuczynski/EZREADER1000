@@ -4,6 +4,7 @@ import { Footer } from "@/components/layout/Footer";
 import { InputEditor } from "@/components/editor/InputEditor";
 import { OutputEditor } from "@/components/editor/OutputEditor";
 import { ContentSourceBox } from "@/components/editor/ContentSourceBox";
+import { VoiceInput } from "@/components/ui/voice-input";
 
 import { ChatInterface } from "@/components/editor/ChatInterface";
 import { DialogueBox } from "@/components/editor/DialogueBox";

@@ -267,8 +267,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const audioBuffer = req.file.buffer;
       console.log('Starting transcription with buffer size:', audioBuffer.length);
       
-      const { transcribeAudioWithAzure } = await import('./services/azure-transcription');
-      const transcribedText = await transcribeAudioWithAzure(audioBuffer);
+      const { transcribeAudioWithOpenAI } = await import('./services/openai-transcription');
+      const transcribedText = await transcribeAudioWithOpenAI(audioBuffer);
       console.log('Transcription completed, text length:', transcribedText.length);
       
       res.json({ result: transcribedText });
