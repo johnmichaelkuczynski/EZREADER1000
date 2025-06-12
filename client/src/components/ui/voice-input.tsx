@@ -127,6 +127,12 @@ export function VoiceInput({ onTranscription, className = '', size = 'sm' }: Voi
   };
 
   const transcribeAudio = async (file: File) => {
+    // Check file size before sending (10MB limit)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      throw new Error(`Audio file too large (${Math.round(file.size / 1024 / 1024)}MB). Maximum size is 10MB.`);
+    }
+    
     const formData = new FormData();
     formData.append('audio', file);
     
@@ -137,7 +143,16 @@ export function VoiceInput({ onTranscription, className = '', size = 'sm' }: Voi
     
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Transcription failed: ${response.status} ${response.statusText}`);
+      let errorMessage = `Transcription failed: ${response.status} ${response.statusText}`;
+      try {
+        const errorJson = JSON.parse(errorText);
+        if (errorJson.error) {
+          errorMessage = errorJson.error;
+        }
+      } catch {
+        // Keep original error message if parsing fails
+      }
+      throw new Error(errorMessage);
     }
     
     const result = await response.json();
@@ -162,16 +177,37 @@ export function VoiceInput({ onTranscription, className = '', size = 'sm' }: Voi
     }
   };
 
+  // Cleanup function to clear timers on unmount
+  React.useEffect(() => {
+    return () => {
+      if (recordingTimer.current) {
+        clearInterval(recordingTimer.current);
+      }
+      if (maxRecordingTime.current) {
+        clearTimeout(maxRecordingTime.current);
+      }
+    };
+  }, []);
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   return (
     <Button
       type="button"
       variant="ghost"
       size={size === 'sm' ? 'icon' : size}
-      className={`${isRecording ? 'text-red-500 hover:text-red-600' : 'text-slate-400 hover:text-slate-600'} ${className}`}
+      className={`${isRecording ? 'text-red-500 hover:text-red-600 animate-pulse' : 'text-slate-400 hover:text-slate-600'} ${className}`}
       onClick={isRecording ? stopRecording : startRecording}
-      title={isRecording ? 'Stop recording' : 'Voice input'}
+      title={isRecording ? `Stop recording (${formatTime(recordingTime)})` : 'Voice input'}
     >
       <MicIcon className={size === 'sm' ? 'h-4 w-4' : 'h-5 w-5'} />
+      {isRecording && size !== 'sm' && (
+        <span className="ml-1 text-xs">{formatTime(recordingTime)}</span>
+      )}
     </Button>
   );
 }
