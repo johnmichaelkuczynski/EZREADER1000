@@ -259,6 +259,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         size: req.file.buffer.length
       });
       
+      // Check file size limit (10MB max for audio)
+      const maxAudioSize = 10 * 1024 * 1024; // 10MB
+      if (req.file.buffer.length > maxAudioSize) {
+        console.log('Audio file too large:', req.file.buffer.length);
+        return res.status(400).json({ 
+          error: `Audio file too large. Maximum size is 10MB, received ${Math.round(req.file.buffer.length / 1024 / 1024)}MB` 
+        });
+      }
+      
       if (req.file.buffer.length === 0) {
         console.log('Empty audio buffer received');
         return res.status(400).json({ error: 'Empty audio file provided' });
@@ -267,14 +276,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const audioBuffer = req.file.buffer;
       console.log('Starting transcription with buffer size:', audioBuffer.length);
       
+      // Set a timeout for transcription (30 seconds)
+      const transcriptionTimeout = 30000;
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Transcription timeout after 30 seconds')), transcriptionTimeout);
+      });
+      
       const { transcribeAudioWithOpenAI } = await import('./services/openai-transcription');
-      const transcribedText = await transcribeAudioWithOpenAI(audioBuffer);
+      const transcriptionPromise = transcribeAudioWithOpenAI(audioBuffer);
+      
+      const transcribedText = await Promise.race([transcriptionPromise, timeoutPromise]) as string;
       console.log('Transcription completed, text length:', transcribedText.length);
       
       res.json({ result: transcribedText });
     } catch (error: unknown) {
       console.error('Error transcribing audio:', error);
-      res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to transcribe audio' });
+      const errorMessage = error instanceof Error ? error.message : 'Failed to transcribe audio';
+      res.status(500).json({ error: errorMessage });
     }
   });
 

@@ -62,7 +62,7 @@ export function OutputEditor({
   const [emailSubject, setEmailSubject] = useState('EZ Reader - Transformed Document');
   const [emailMessage, setEmailMessage] = useState('Here is the transformed document you requested.');
   const [wordCount, setWordCount] = useState(0);
-  const [showMathPreview, setShowMathPreview] = useState(false);
+  const [showMathPreview, setShowMathPreview] = useState(true);
   
   // Calculate word count whenever text changes
   useEffect(() => {
@@ -199,7 +199,7 @@ export function OutputEditor({
       
       <CardContent className="p-0">
         {showMathPreview && text ? (
-          <Tabs defaultValue="edit" className="w-full">
+          <Tabs defaultValue="preview" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mx-4 mt-4 mb-0">
               <TabsTrigger value="edit">Edit</TabsTrigger>
               <TabsTrigger value="preview">Math Preview</TabsTrigger>

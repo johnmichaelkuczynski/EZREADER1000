@@ -11,8 +11,11 @@ interface VoiceInputProps {
 
 export function VoiceInput({ onTranscription, className = '', size = 'sm' }: VoiceInputProps) {
   const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
   const mediaRecorder = useRef<MediaRecorder | null>(null);
   const audioChunks = useRef<Blob[]>([]);
+  const recordingTimer = useRef<NodeJS.Timeout | null>(null);
+  const maxRecordingTime = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
 
   const startRecording = async () => {
@@ -72,10 +75,28 @@ export function VoiceInput({ onTranscription, className = '', size = 'sm' }: Voi
       
       recorder.start(1000);
       setIsRecording(true);
+      setRecordingTime(0);
+      
+      // Start recording timer
+      recordingTimer.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+      
+      // Auto-stop after 2 minutes to prevent large files
+      maxRecordingTime.current = setTimeout(() => {
+        if (isRecording) {
+          stopRecording();
+          toast({
+            title: "Recording stopped",
+            description: "Maximum recording time (2 minutes) reached",
+            variant: "destructive"
+          });
+        }
+      }, 120000); // 2 minutes
       
       toast({
         title: "Recording started",
-        description: "Speak into the microphone",
+        description: "Speak into the microphone (max 2 minutes)",
       });
     } catch (error) {
       toast({
@@ -90,6 +111,18 @@ export function VoiceInput({ onTranscription, className = '', size = 'sm' }: Voi
     if (mediaRecorder.current && isRecording) {
       mediaRecorder.current.stop();
       mediaRecorder.current = null;
+      
+      // Clear timers
+      if (recordingTimer.current) {
+        clearInterval(recordingTimer.current);
+        recordingTimer.current = null;
+      }
+      if (maxRecordingTime.current) {
+        clearTimeout(maxRecordingTime.current);
+        maxRecordingTime.current = null;
+      }
+      
+      setRecordingTime(0);
     }
   };
 
