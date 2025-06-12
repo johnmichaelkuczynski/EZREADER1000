@@ -177,6 +177,10 @@ export function useDocumentProcessor() {
         result = await solveHomework(inputText, llmProvider);
       } else {
         // REGULAR MODE: Use normal text processing
+        const examMode = finalInstructions.toLowerCase().includes('exam') || 
+                        finalInstructions.toLowerCase().includes('test') ||
+                        finalInstructions.toLowerCase().includes('quiz');
+        
         result = await processText({
           inputText,
           instructions: finalInstructions,
@@ -185,7 +189,7 @@ export function useDocumentProcessor() {
           styleSource,
           useStyleSource: Boolean(effectiveUseStyleSource),
           llmProvider,
-          examMode
+          examMode: examMode
         });
       }
       
