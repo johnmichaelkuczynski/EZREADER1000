@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 
-export type LLMProvider = 'openai' | 'anthropic' | 'perplexity';
+export type LLMProvider = 'openai' | 'anthropic' | 'perplexity' | 'deepseek';
 
 export interface Message {
   id: string;

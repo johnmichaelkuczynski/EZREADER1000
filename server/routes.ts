@@ -14,6 +14,7 @@ import { stripMarkdown } from "./utils/markdown-stripper";
 import { processTextWithOpenAI, detectAIWithOpenAI, transcribeAudio, solveHomeworkWithOpenAI } from "./llm/openai";
 import { processTextWithAnthropic, detectAIWithAnthropic, solveHomeworkWithAnthropic } from "./llm/anthropic";
 import { processTextWithPerplexity, detectAIWithPerplexity, solveHomeworkWithPerplexity } from "./llm/perplexity";
+import { processTextWithDeepSeek, detectAIWithDeepSeek, solveHomeworkWithDeepSeek } from "./llm/deepseek";
 import { detectAIWithGPTZero } from "./services/gptzero";
 import { searchOnline, fetchWebContent } from "./services/google";
 import { sendDocumentEmail } from "./services/sendgrid";
@@ -84,6 +85,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         case 'perplexity':
           solution = await solveHomeworkWithPerplexity(assignment);
           break;
+        case 'deepseek':
+          solution = await solveHomeworkWithDeepSeek(assignment);
+          break;
         default:
           throw new Error(`Unsupported LLM provider: ${llmProvider}`);
       }
@@ -139,6 +143,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
             useStyleSource: data.useStyleSource,
             examMode: data.examMode
           });
+          break;
+        case 'deepseek':
+          processedText = await processTextWithDeepSeek(
+            data.inputText,
+            data.instructions,
+            data.useContentSource ? data.contentSource : undefined,
+            data.useStyleSource ? data.styleSource : undefined,
+            data.examMode
+          );
           break;
         default:
           throw new Error('Invalid LLM provider');
