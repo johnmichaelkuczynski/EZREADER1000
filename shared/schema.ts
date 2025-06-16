@@ -90,6 +90,7 @@ export const processTextSchema = z.object({
 
 export const detectAiSchema = z.object({
   text: z.string().min(1, "Text is required"),
+  llmProvider: z.enum(["openai", "anthropic", "perplexity", "deepseek"]).optional(),
 });
 
 export const searchOnlineSchema = z.object({

@@ -39,6 +39,7 @@ EZ Reader is a full-stack web application designed for intelligent document proc
 - **OpenAI**: Text processing, AI detection, audio transcription via Whisper
 - **Anthropic**: Advanced text processing with Claude models
 - **Perplexity**: Online search integration and text processing
+- **DeepSeek**: Cost-effective text processing and homework solving capabilities
 - **Azure OpenAI**: Specialized math document processing
 - **Mathpix**: Mathematical content extraction from images
 - **GPTZero**: AI-generated content detection
@@ -110,5 +111,8 @@ Preferred communication style: Simple, everyday language.
 
 ## Changelog
 
-Changelog:
-- June 16, 2025. Initial setup
+- June 16, 2025: Initial setup
+- June 16, 2025: Added DeepSeek as fourth LLM provider with homework solving capabilities
+- June 16, 2025: Implemented 15-second delay between chunk requests to prevent Anthropic rate limiting
+- June 16, 2025: Fixed math rendering system with proper LaTeX formula detection and MathJax integration
+- June 16, 2025: Added comprehensive voice input functionality across all text fields using OpenAI transcription

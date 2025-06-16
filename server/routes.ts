@@ -242,7 +242,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Detect AI-generated content
   app.post('/api/detect-ai', async (req: Request, res: Response) => {
     try {
-      const { text } = detectAiSchema.parse(req.body);
+      const { text, llmProvider } = detectAiSchema.parse(req.body);
       
       // Try GPTZero first, fall back to model-based detection
       try {
@@ -251,8 +251,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch (gptzeroError) {
         console.log("GPTZero failed, falling back to model-based detection:", gptzeroError instanceof Error ? gptzeroError.message : 'GPTZero error');
         
-        // Fall back to OpenAI for detection
-        const result = await detectAIWithOpenAI(text);
+        // Fall back to selected LLM provider for detection
+        let result;
+        switch (llmProvider) {
+          case 'anthropic':
+            result = await detectAIWithAnthropic(text);
+            break;
+          case 'perplexity':
+            result = await detectAIWithPerplexity(text);
+            break;
+          case 'deepseek':
+            result = await detectAIWithDeepSeek(text);
+            break;
+          default:
+            result = await detectAIWithOpenAI(text);
+        }
         res.json(result);
       }
     } catch (error: unknown) {
