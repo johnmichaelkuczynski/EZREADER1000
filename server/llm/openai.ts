@@ -121,6 +121,12 @@ async function processLargeTextWithOpenAI(options: ProcessTextOptions): Promise<
       // NO PROCESSING - PURE PASSTHROUGH
       processedResults.push(result);
       
+      // Add 15-second delay between chunks to prevent rate limiting (except for last chunk)
+      if (i < chunks.length - 1) {
+        console.log(`Waiting 15 seconds before processing next chunk...`);
+        await new Promise(resolve => setTimeout(resolve, 15000));
+      }
+      
     } catch (error: any) {
       console.error(`Error processing chunk ${i + 1}:`, error);
       

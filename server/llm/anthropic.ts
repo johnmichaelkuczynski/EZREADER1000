@@ -19,57 +19,63 @@ async function processLargeTextWithAnthropic(options: ProcessTextOptions): Promi
   const chunks = splitIntoChunks(text, MAX_CHUNK_TOKENS);
   console.log(`Split large document into ${chunks.length} chunks for processing`);
   
-  // Step 2: Create a representative sample of the document
-  // Include the beginning, end, and some evenly distributed middle sections
-  let representativeText = '';
+  let processedResults: string[] = [];
   
-  // Always include the first chunk (introduction)
-  representativeText += chunks[0] + "\n\n--- SECTION BREAK ---\n\n";
-  
-  // For very large documents, include some evenly distributed middle sections
-  if (chunks.length > 4) {
-    const numMiddleChunks = Math.min(3, Math.floor(chunks.length / 2));
-    const step = Math.floor((chunks.length - 2) / (numMiddleChunks + 1));
+  try {
+    // Process each chunk individually with 15-second delays
+    for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i];
+    console.log(`Processing chunk ${i + 1}/${chunks.length} - ${chunk.length} characters`);
     
-    for (let i = 1; i <= numMiddleChunks; i++) {
-      const index = Math.min(chunks.length - 2, i * step);
-      representativeText += chunks[index] + "\n\n--- SECTION BREAK ---\n\n";
+    try {
+      let systemPrompt = "You are a helpful assistant. Follow the instructions exactly and return your response as-is without any filtering or modification.";
+      
+      let userPrompt = `${instructions}\n\nThis is chunk ${i + 1} of ${chunks.length} from a larger document. Process this ENTIRE chunk according to the instructions:\n\n${chunk}`;
+      
+      // Add content source if provided
+      if (useContentSource && contentSource) {
+        userPrompt = `${instructions}\n\nUse this content as reference material (do not copy it, use it to enhance your response):\n${contentSource}\n\nNow process this chunk ${i + 1} of ${chunks.length} according to the instructions above:\n${chunk}`;
+      }
+      
+      // Add style source if provided
+      if (useStyleSource && styleSource) {
+        userPrompt = `${instructions}\n\nStyle reference (analyze and emulate this writing style):\n${styleSource}\n\nProcess this chunk ${i + 1} of ${chunks.length}:\n${chunk}`;
+      }
+      
+      const message = await anthropic.messages.create({
+        model: "claude-3-7-sonnet-20250219",
+        system: systemPrompt,
+        max_tokens: maxTokens,
+        messages: [
+          { role: 'user', content: userPrompt }
+        ],
+      });
+      
+      // Get the response content
+      let responseContent = '';
+      if (message.content && message.content.length > 0) {
+        const contentBlock = message.content[0];
+        if ('text' in contentBlock) {
+          responseContent = contentBlock.text;
+        }
+      }
+      
+      processedResults.push(responseContent);
+      
+      // Add 15-second delay between chunks to prevent rate limiting (except for last chunk)
+      if (i < chunks.length - 1) {
+        console.log(`Waiting 15 seconds before processing next chunk...`);
+        await new Promise(resolve => setTimeout(resolve, 15000));
+      }
+      
+    } catch (error: any) {
+      console.error(`Error processing chunk ${i + 1}:`, error);
+      throw new Error(`Failed to process chunk ${i + 1} with Anthropic: ${error.message}`);
     }
   }
   
-  // Always include the last chunk (conclusion)
-  representativeText += chunks[chunks.length - 1];
-  
-  // Step 3: Process the representative text with modified instructions
-  const enhancedInstructions = `NOTE: This is a very large document (${estimateTokenCount(text)} estimated tokens) that has been sampled to include the beginning, end, and some middle sections. The document is separated by "--- SECTION BREAK ---" markers.\n\nOriginal instructions: ${instructions}\n\nPlease process this representative sample of the document according to the instructions. Since this is only a sample of a much larger document, focus on maintaining the overall intent, style, and key points.`;
-  
-  try {
-    // NO MATH PROTECTION - PURE PASSTHROUGH
-    
-    let systemPrompt = "You are a helpful assistant. Follow the instructions exactly and return your response as-is without any filtering or modification.";
-    
-    const message = await anthropic.messages.create({
-      model: "claude-3-7-sonnet-20250219",
-      system: systemPrompt,
-      max_tokens: maxTokens * 2, // Allow more output tokens for comprehensive processing
-      messages: [
-        { role: 'user', content: `${enhancedInstructions}\n\nText to transform:\n${representativeText}` }
-      ],
-    });
-    
-    // Get the response content
-    let responseContent = '';
-    
-    // Handle different response types from Anthropic API
-    if (message.content && message.content.length > 0) {
-      const contentBlock = message.content[0];
-      if ('text' in contentBlock) {
-        responseContent = contentBlock.text;
-      }
-    }
-    
-    // NO RESTORATION - PURE PASSTHROUGH
-    return responseContent;
+  // Join all processed chunks
+  return processedResults.join('\n\n');
   } catch (error: any) {
     console.error("Anthropic large document processing error:", error);
     throw new Error(`Failed to process large text with Anthropic: ${error.message}`);
