@@ -78,7 +78,7 @@ EZ Reader is a full-stack web application designed for intelligent document proc
 - **Mathpix**: Specialized mathematical content extraction
 - **Google APIs**: Vision OCR and custom search integration
 - **GPTZero**: AI detection service
-- **Plotly**: Interactive data visualization and chart generation
+- **Plotly**: Interactive data visualization with line charts, bar charts, and scatter plots
 
 ### Development Tools
 - **Replit**: Primary development environment with auto-deployment
@@ -117,3 +117,4 @@ Preferred communication style: Simple, everyday language.
 - June 16, 2025: Implemented 15-second delay between chunk requests to prevent Anthropic rate limiting
 - June 16, 2025: Fixed math rendering system with proper LaTeX formula detection and MathJax integration
 - June 16, 2025: Added comprehensive voice input functionality across all text fields using OpenAI transcription
+- June 16, 2025: Implemented Plotly chart generation system with interactive data visualization capabilities
