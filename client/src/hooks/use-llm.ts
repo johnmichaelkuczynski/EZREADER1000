@@ -283,6 +283,11 @@ Please generate ${additionalChunks} new chunk${additionalChunks > 1 ? 's' : ''} 
           onChunkProcessed(result, i + 1, chunks.length);
         }
         
+        // Add 15-second delay between chunks to prevent rate limiting (except for last chunk)
+        if (i < chunks.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 15000));
+        }
+        
         // Update progress
         setProcessing({
           isProcessing: true,

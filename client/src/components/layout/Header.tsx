@@ -51,6 +51,7 @@ export function Header({ llmProvider, onLLMProviderChange }: HeaderProps) {
                   <SelectItem value="openai">OpenAI</SelectItem>
                   <SelectItem value="anthropic">Anthropic</SelectItem>
                   <SelectItem value="perplexity">Perplexity</SelectItem>
+                  <SelectItem value="deepseek">DeepSeek</SelectItem>
                 </SelectContent>
               </Select>
             </div>

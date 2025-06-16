@@ -81,7 +81,7 @@ export const processTextSchema = z.object({
   contentSource: z.string().optional().default(""),
   styleSource: z.string().optional().default(""),
   instructions: z.string().optional().default(""),
-  llmProvider: z.enum(["openai", "anthropic", "perplexity"]),
+  llmProvider: z.enum(["openai", "anthropic", "perplexity", "deepseek"]),
   useContentSource: z.boolean().default(false),
   useStyleSource: z.boolean().default(false),
   reprocessOutput: z.boolean().default(false),

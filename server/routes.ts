@@ -212,6 +212,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             useContentSource: data.useContentSource
           });
           break;
+        case 'deepseek':
+          processedText = await processTextWithDeepSeek(
+            data.inputText,
+            enhancedInstructions,
+            data.useContentSource ? data.contentSource : undefined
+          );
+          break;
         default:
           throw new Error('Invalid LLM provider');
       }
