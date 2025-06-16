@@ -117,4 +117,4 @@ Preferred communication style: Simple, everyday language.
 - June 16, 2025: Implemented 15-second delay between chunk requests to prevent Anthropic rate limiting
 - June 16, 2025: Fixed math rendering system with proper LaTeX formula detection and MathJax integration
 - June 16, 2025: Added comprehensive voice input functionality across all text fields using OpenAI transcription
-- June 16, 2025: Implemented Plotly chart generation system with interactive data visualization capabilities
+- June 16, 2025: Removed all Desmos, Plotly, and GeoGebra chart generation code per user request
