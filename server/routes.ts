@@ -810,5 +810,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Generate scatter plot
+  app.post('/api/generate-scatter-plot', async (req: Request, res: Response) => {
+    try {
+      const { xData, yData, title, xLabel, yLabel } = req.body;
+      
+      if (!xData || !yData || !Array.isArray(xData) || !Array.isArray(yData)) {
+        return res.status(400).json({ error: 'xData and yData arrays are required' });
+      }
+      
+      const result = await createScatterPlot(xData, yData, title, xLabel, yLabel);
+      res.json(result);
+    } catch (error: any) {
+      console.error('Error generating scatter plot:', error);
+      res.status(500).json({ error: error.message || 'Failed to generate scatter plot' });
+    }
+  });
+
   return httpServer;
 }

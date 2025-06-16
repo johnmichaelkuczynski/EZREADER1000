@@ -1,4 +1,4 @@
-import fetch from 'node-fetch';
+// Use built-in fetch for Node.js 18+
 
 const PLOTLY_API_URL = 'https://api.plot.ly/v2';
 
