@@ -21,6 +21,7 @@ import { sendDocumentEmail } from "./services/sendgrid";
 import { extractTextFromPDF } from "./services/pdf-processor";
 import { extractTextFromImageWithMathpix } from "./services/mathpix";
 import { processMathPDFWithAzure, processMathImageWithAzure, enhanceMathFormatting } from "./services/azure-math";
+import { testPlotlyConnection, createLineChart, createBarChart, createScatterPlot, createHistogram } from "./services/plotly";
 
 // Configure multer storage
 const upload = multer({
@@ -758,6 +759,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('Error processing image with Mathpix OCR:', error);
       res.status(500).json({ error: error.message || "Failed to extract text from image" });
+    }
+  });
+
+  // Test Plotly API connection
+  app.post('/api/test-plotly', async (req: Request, res: Response) => {
+    try {
+      const result = await testPlotlyConnection();
+      res.json(result);
+    } catch (error: any) {
+      console.error('Error testing Plotly connection:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: error.message || 'Failed to test Plotly connection' 
+      });
+    }
+  });
+
+  // Generate line chart
+  app.post('/api/generate-line-chart', async (req: Request, res: Response) => {
+    try {
+      const { xData, yData, title, xLabel, yLabel } = req.body;
+      
+      if (!xData || !yData || !Array.isArray(xData) || !Array.isArray(yData)) {
+        return res.status(400).json({ error: 'xData and yData arrays are required' });
+      }
+      
+      const result = await createLineChart(xData, yData, title, xLabel, yLabel);
+      res.json(result);
+    } catch (error: any) {
+      console.error('Error generating line chart:', error);
+      res.status(500).json({ error: error.message || 'Failed to generate line chart' });
+    }
+  });
+
+  // Generate bar chart
+  app.post('/api/generate-bar-chart', async (req: Request, res: Response) => {
+    try {
+      const { categories, values, title, xLabel, yLabel } = req.body;
+      
+      if (!categories || !values || !Array.isArray(categories) || !Array.isArray(values)) {
+        return res.status(400).json({ error: 'categories and values arrays are required' });
+      }
+      
+      const result = await createBarChart(categories, values, title, xLabel, yLabel);
+      res.json(result);
+    } catch (error: any) {
+      console.error('Error generating bar chart:', error);
+      res.status(500).json({ error: error.message || 'Failed to generate bar chart' });
     }
   });
 
