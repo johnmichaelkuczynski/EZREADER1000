@@ -342,7 +342,7 @@ export async function detectAIWithAnthropic(text: string): Promise<{ isAI: boole
       confidence: Math.max(0, Math.min(1, result.confidence || 0.5)),
       details: result.details || "No analysis details provided"
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Anthropic detection error:", error);
     throw new Error(`Failed to detect AI with Anthropic: ${error.message}`);
   }

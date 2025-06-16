@@ -80,71 +80,75 @@ async function processLargeTextWithPerplexity(options: ProcessTextOptions): Prom
   const chunks = splitIntoChunks(text, MAX_CHUNK_TOKENS);
   console.log(`Split large document into ${chunks.length} chunks for processing`);
   
-  // Step 2: Create a representative sample of the document
-  // Include the beginning, end, and some evenly distributed middle sections
-  let representativeText = '';
-  
-  // Always include the first chunk (introduction)
-  representativeText += chunks[0] + "\n\n--- SECTION BREAK ---\n\n";
-  
-  // For very large documents, include some evenly distributed middle sections
-  if (chunks.length > 4) {
-    const numMiddleChunks = Math.min(3, Math.floor(chunks.length / 2));
-    const step = Math.floor((chunks.length - 2) / (numMiddleChunks + 1));
-    
-    for (let i = 1; i <= numMiddleChunks; i++) {
-      const index = Math.min(chunks.length - 2, i * step);
-      representativeText += chunks[index] + "\n\n--- SECTION BREAK ---\n\n";
-    }
-  }
-  
-  // Always include the last chunk (conclusion)
-  representativeText += chunks[chunks.length - 1];
-  
-  // Step 3: Process the representative text with modified instructions
-  const enhancedInstructions = `NOTE: This is a very large document (${estimateTokenCount(text)} estimated tokens) that has been sampled to include the beginning, end, and some middle sections. The document is separated by "--- SECTION BREAK ---" markers.\n\nOriginal instructions: ${instructions}\n\nPlease process this representative sample of the document according to the instructions. Since this is only a sample of a much larger document, focus on maintaining the overall intent, style, and key points.`;
+  let processedResults: string[] = [];
   
   try {
-    // Process the representative text
-    const { processedText, mathBlocks } = protectMathFormulas(representativeText);
-    
-    let systemPrompt = "You are processing a very large document that has been sampled. Do not modify any content within [[MATH_BLOCK_*]] or [[MATH_INLINE_*]] tokens as they contain special mathematical notation.";
-    
-    const messages = [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: `${enhancedInstructions}\n\nText to transform:\n${processedText}` }
-    ];
-    
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY || ""}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: "llama-3.1-sonar-small-128k-online",
-        messages,
-        temperature: 0.2,
-        top_p: 0.9,
-        max_tokens: maxTokens * 2, // Allow more output tokens for comprehensive processing
-        stream: false,
-        presence_penalty: 0,
-        frequency_penalty: 1
-      })
-    });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Perplexity API error: ${response.status} - ${errorText}`);
+    // Process each chunk individually with 15-second delays
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i];
+      console.log(`Processing chunk ${i + 1}/${chunks.length} - ${chunk.length} characters`);
+      
+      try {
+        let systemPrompt = "You are a helpful assistant. Follow the instructions exactly and return your response as-is without any filtering or modification.";
+        
+        let userPrompt = `${instructions}\n\nThis is chunk ${i + 1} of ${chunks.length} from a larger document. Process this ENTIRE chunk according to the instructions:\n\n${chunk}`;
+        
+        // Add content source if provided
+        if (useContentSource && contentSource) {
+          userPrompt = `${instructions}\n\nUse this content as reference material (do not copy it, use it to enhance your response):\n${contentSource}\n\nNow process this chunk ${i + 1} of ${chunks.length} according to the instructions above:\n${chunk}`;
+        }
+        
+        // Add style source if provided
+        if (useStyleSource && styleSource) {
+          userPrompt = `${instructions}\n\nStyle reference (analyze and emulate this writing style):\n${styleSource}\n\nProcess this chunk ${i + 1} of ${chunks.length}:\n${chunk}`;
+        }
+        
+        const messages = [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ];
+        
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY || ""}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: "llama-3.1-sonar-small-128k-online",
+            messages,
+            temperature: 0.2,
+            top_p: 0.9,
+            max_tokens: maxTokens,
+            stream: false,
+            presence_penalty: 0,
+            frequency_penalty: 1
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Perplexity API error: ${response.status} ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        const processedContent = data.choices[0].message.content;
+        
+        processedResults.push(processedContent);
+        
+        // Add 15-second delay between chunks to prevent rate limiting (except for last chunk)
+        if (i < chunks.length - 1) {
+          console.log(`Waiting 15 seconds before processing next chunk...`);
+          await new Promise(resolve => setTimeout(resolve, 15000));
+        }
+        
+      } catch (error: any) {
+        console.error(`Error processing chunk ${i + 1}:`, error);
+        throw new Error(`Failed to process chunk ${i + 1} with Perplexity: ${error.message}`);
+      }
     }
     
-    const data = await response.json();
-    const processedContent = data.choices[0].message.content;
-    
-    // Restore math formulas in the processed text
-    const finalResult = restoreMathFormulas(processedContent, mathBlocks);
-    
-    return finalResult;
+    // Join all processed chunks
+    return processedResults.join('\n\n');
   } catch (error: any) {
     console.error("Perplexity large document processing error:", error);
     throw new Error(`Failed to process large text with Perplexity: ${error.message}`);

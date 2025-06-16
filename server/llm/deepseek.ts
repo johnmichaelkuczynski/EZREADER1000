@@ -31,6 +31,134 @@ export async function solveHomeworkWithDeepSeek(assignment: string): Promise<str
   }
 }
 
+// Function to estimate token count for DeepSeek models
+function estimateTokenCount(text: string): number {
+  return Math.ceil(text.length / 4);
+}
+
+// Function to split text into chunks for processing
+function splitIntoChunks(text: string, maxChunkTokens: number = 32000): string[] {
+  const chunks: string[] = [];
+  const paragraphs = text.split(/\n\s*\n/);
+  let currentChunk = '';
+  let currentTokenCount = 0;
+  
+  for (const paragraph of paragraphs) {
+    const paragraphTokens = estimateTokenCount(paragraph);
+    
+    if (currentTokenCount + paragraphTokens > maxChunkTokens) {
+      if (currentChunk) {
+        chunks.push(currentChunk);
+        currentChunk = paragraph;
+        currentTokenCount = paragraphTokens;
+      } else {
+        // Single paragraph is too large, split it further
+        const sentences = paragraph.split(/(?<=[.!?])\s+/);
+        let sentenceChunk = '';
+        let sentenceTokenCount = 0;
+        
+        for (const sentence of sentences) {
+          const sentenceTokens = estimateTokenCount(sentence);
+          
+          if (sentenceTokenCount + sentenceTokens > maxChunkTokens && sentenceChunk) {
+            chunks.push(sentenceChunk);
+            sentenceChunk = sentence;
+            sentenceTokenCount = sentenceTokens;
+          } else {
+            sentenceChunk += (sentenceChunk ? ' ' : '') + sentence;
+            sentenceTokenCount += sentenceTokens;
+          }
+        }
+        
+        if (sentenceChunk) {
+          chunks.push(sentenceChunk);
+        }
+      }
+    } else {
+      currentChunk += (currentChunk ? '\n\n' : '') + paragraph;
+      currentTokenCount += paragraphTokens;
+    }
+  }
+  
+  if (currentChunk) {
+    chunks.push(currentChunk);
+  }
+  
+  return chunks;
+}
+
+// Process large text with chunk-by-chunk approach and 15-second delays
+async function processLargeTextWithDeepSeek(
+  text: string,
+  instructions: string,
+  contentSource?: string,
+  styleSource?: string,
+  examMode: boolean = false
+): Promise<string> {
+  const maxTokens = 4000;
+  
+  console.log("Processing large document with DeepSeek chunk-by-chunk approach");
+  
+  const MAX_CHUNK_TOKENS = 32000;
+  const chunks = splitIntoChunks(text, MAX_CHUNK_TOKENS);
+  console.log(`Split large document into ${chunks.length} chunks for processing`);
+  
+  let processedResults: string[] = [];
+  
+  try {
+    // Process each chunk individually with 15-second delays
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i];
+      console.log(`Processing chunk ${i + 1}/${chunks.length} - ${chunk.length} characters`);
+      
+      try {
+        let systemPrompt = "You are a helpful assistant. Follow the instructions exactly and return your response as-is without any filtering or modification.";
+        
+        let userPrompt = `${instructions}\n\nThis is chunk ${i + 1} of ${chunks.length} from a larger document. Process this ENTIRE chunk according to the instructions:\n\n${chunk}`;
+        
+        // Add content source if provided
+        if (contentSource?.trim()) {
+          userPrompt = `${instructions}\n\nUse this content as reference material (do not copy it, use it to enhance your response):\n${contentSource}\n\nNow process this chunk ${i + 1} of ${chunks.length} according to the instructions above:\n${chunk}`;
+        }
+        
+        // Add style source if provided
+        if (styleSource?.trim()) {
+          userPrompt = `${instructions}\n\nStyle reference (analyze and emulate this writing style):\n${styleSource}\n\nProcess this chunk ${i + 1} of ${chunks.length}:\n${chunk}`;
+        }
+        
+        const response = await deepseek.chat.completions.create({
+          model: "deepseek-chat",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt }
+          ],
+          max_tokens: maxTokens,
+          temperature: 0.7,
+        });
+        
+        const result = response.choices[0]?.message?.content || '';
+        processedResults.push(result);
+        
+        // Add 15-second delay between chunks to prevent rate limiting (except for last chunk)
+        if (i < chunks.length - 1) {
+          console.log(`Waiting 15 seconds before processing next chunk...`);
+          await new Promise(resolve => setTimeout(resolve, 15000));
+        }
+        
+      } catch (error: any) {
+        console.error(`Error processing chunk ${i + 1}:`, error);
+        throw new Error(`Failed to process chunk ${i + 1} with DeepSeek: ${error.message}`);
+      }
+    }
+    
+    // Join all processed chunks
+    return processedResults.join('\n\n');
+  } catch (error: any) {
+    console.error("DeepSeek large document processing error:", error);
+    throw new Error(`Failed to process large text with DeepSeek: ${error.message}`);
+  }
+}
+
 // REGULAR REWRITE MODE: Standard processing for normal-sized documents
 export async function processTextWithDeepSeek(
   text: string, 
@@ -45,6 +173,15 @@ export async function processTextWithDeepSeek(
   // For homework mode, use the homework solver instead
   if (instructions.includes("I am a teacher creating solution keys")) {
     return solveHomeworkWithDeepSeek(text);
+  }
+  
+  // Check if document is too large and needs chunking
+  const estimatedTokens = estimateTokenCount(text);
+  const MAX_INPUT_TOKENS = 100000; // DeepSeek's context limit with buffer
+  
+  if (estimatedTokens > MAX_INPUT_TOKENS) {
+    console.log(`Document exceeds token limit (${estimatedTokens} tokens). Using chunk processing approach.`);
+    return await processLargeTextWithDeepSeek(text, instructions, contentSource, styleSource, examMode);
   }
   
   // REGULAR REWRITE MODE: Standard processing for normal-sized documents
