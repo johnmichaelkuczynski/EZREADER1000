@@ -337,8 +337,8 @@ export async function detectAIWithPerplexity(text: string): Promise<{ isAI: bool
       confidence: Math.max(0, Math.min(1, result.confidence || 0.5)),
       details: result.details || "No analysis details provided"
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Perplexity detection error:", error);
-    throw new Error(`Failed to detect AI with Perplexity: ${error.message}`);
+    throw new Error(`Failed to detect AI with Perplexity: ${error?.message || 'Unknown error'}`);
   }
 }
