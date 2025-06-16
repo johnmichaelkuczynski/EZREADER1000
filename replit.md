@@ -78,6 +78,7 @@ EZ Reader is a full-stack web application designed for intelligent document proc
 - **Mathpix**: Specialized mathematical content extraction
 - **Google APIs**: Vision OCR and custom search integration
 - **GPTZero**: AI detection service
+- **Plotly**: Interactive data visualization and chart generation
 
 ### Development Tools
 - **Replit**: Primary development environment with auto-deployment
