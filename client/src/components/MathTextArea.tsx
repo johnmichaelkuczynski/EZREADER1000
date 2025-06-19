@@ -30,18 +30,18 @@ export function MathTextArea({
   const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
   const previewRef = useRef<HTMLDivElement>(null);
 
+  const { renderMath } = useMathJax();
+
   // Render MathJax when in preview mode
   useEffect(() => {
-    if (viewMode === 'preview' && previewRef.current && window.MathJax) {
-      // Clear previous content
+    if (viewMode === 'preview' && previewRef.current) {
+      // Clear previous content and set new content
       previewRef.current.innerHTML = processTextForMathJax(value);
       
-      // Trigger MathJax rendering
-      window.MathJax.typesetPromise([previewRef.current]).catch((err: any) => {
-        console.warn('MathJax rendering error:', err);
-      });
+      // Trigger MathJax rendering using the hook
+      renderMath(previewRef.current);
     }
-  }, [viewMode, value]);
+  }, [viewMode, value, renderMath]);
 
   const processTextForMathJax = (text: string): string => {
     if (!text) return '';
@@ -64,18 +64,27 @@ export function MathTextArea({
     return text
       // Fix common LaTeX formatting issues
       .replace(/\\log_(\w+)/g, '\\log_{$1}')
-      .replace(/\\sum([^_\s])/g, '\\sum $1')
+      .replace(/\\sum([^_\s{])/g, '\\sum $1')
       .replace(/log₂/g, '\\log_2')
       .replace(/([a-zA-Z])₂/g, '$1_2')
-      // Fix broken math expressions
+      // Fix broken math expressions from corrupted processing
       .replace(/lo\s*g₂/g, '\\log_2')
+      .replace(/\s*g₂\s*/g, '\\log_2 ')
+      .replace(/\\log\s*2/g, '\\log_2')
       .replace(/\\\s*\[/g, '\\[')
       .replace(/\\\s*\]/g, '\\]')
+      // Fix sum notation corruption
+      .replace(/∑\s*p\(x\)/g, '\\sum p(x)')
+      .replace(/−∑/g, '-\\sum')
+      // Fix corrupted math block markers
+      .replace(/\[\[MATH_BLOC.*?\]\]/g, '')
+      .replace(/\[\[\/MATH_BLOC.*?\]\]/g, '')
       // Ensure proper spacing around operators
       .replace(/([a-zA-Z])(=)/g, '$1 $2 ')
       .replace(/(=)([a-zA-Z])/g, '$1 $2')
-      .replace(/([a-zA-Z])(-)/g, '$1 $2 ')
-      .replace(/(-)([a-zA-Z])/g, '$1 $2');
+      // Fix entropy formula specifically
+      .replace(/H\(X\)\s*=\s*-\s*∑\s*p\(x\)\s*log₂\s*p\(x\)/g, 'H(X) = -\\sum p(x) \\log_2 p(x)')
+      .replace(/H\(X\)\s*=\s*−∑p\(x\)lo\s*g₂\s*p\(x\)/g, 'H(X) = -\\sum p(x) \\log_2 p(x)');
   };
 
   const handleInputChange = (newValue: string) => {

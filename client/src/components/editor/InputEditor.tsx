@@ -248,18 +248,16 @@ export function InputEditor({
           >
             <input {...getInputProps()} />
             <div className="relative h-full">
-              <Textarea
-                className="min-h-[600px] h-full rounded-none border-0 resize-none focus-visible:ring-0 pr-10"
-                placeholder="Type or paste your text here..."
+              <MathTextArea
                 value={text}
-                onChange={(e) => onTextChange(e.target.value)}
+                onChange={onTextChange}
+                placeholder="Type or paste your text here..."
+                className="min-h-[600px]"
+                showVoiceInput={true}
+                onVoiceInput={() => {
+                  // Voice input handled by MathTextArea internally
+                }}
               />
-              <div className="absolute right-2 top-2 z-10">
-                <VoiceInput
-                  onTranscription={(voiceText) => onTextChange(text ? `${text} ${voiceText}` : voiceText)}
-                  className="h-8 w-8"
-                />
-              </div>
             </div>
           </div>
         )}
