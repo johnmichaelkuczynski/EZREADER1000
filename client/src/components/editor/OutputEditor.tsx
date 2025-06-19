@@ -23,7 +23,6 @@ import { useState, useEffect, useRef } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MathRenderer } from './MathRenderer';
-import { MathTextArea } from '@/components/MathTextArea';
 
 interface OutputEditorProps {
   text: string;
@@ -199,15 +198,54 @@ export function OutputEditor({
       </div>
       
       <CardContent className="p-0">
-        <div className="editor overflow-y-auto p-0">
-          <MathTextArea
-            value={text}
-            onChange={onTextChange}
-            placeholder="Processed text appears here..."
-            className="min-h-[600px]"
-            readOnly={false}
-          />
-        </div>
+        {showMathPreview && text ? (
+          <Tabs defaultValue="preview" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mx-4 mt-4 mb-0">
+              <TabsTrigger value="edit">Edit</TabsTrigger>
+              <TabsTrigger value="preview">Math Preview</TabsTrigger>
+            </TabsList>
+            <TabsContent value="edit" className="mt-0">
+              <div className="editor overflow-y-auto p-0">
+                <Textarea
+                  className="min-h-[600px] h-full rounded-none border-0 resize-none focus-visible:ring-0"
+                  placeholder="Processed text appears here..."
+                  value={text}
+                  onChange={(e) => onTextChange(e.target.value)}
+                />
+              </div>
+            </TabsContent>
+            <TabsContent value="preview" className="mt-0">
+              <div className="min-h-[600px] border border-gray-200 rounded-none overflow-hidden">
+                <MathRenderer content={text} className="min-h-[600px] w-full overflow-x-auto" />
+              </div>
+            </TabsContent>
+          </Tabs>
+        ) : (
+          <div className="editor overflow-y-auto p-0 relative">
+            {text ? (
+              <>
+                <Textarea
+                  className="min-h-[600px] h-full rounded-none border-0 resize-none focus-visible:ring-0 pr-16"
+                  placeholder="Processed text appears here... Click to edit directly"
+                  value={text}
+                  onChange={(e) => onTextChange(e.target.value)}
+                  style={{
+                    whiteSpace: 'pre-wrap',
+                    fontFamily: 'Georgia, serif'
+                  }}
+                />
+                <div className="absolute top-4 right-4 text-xs text-gray-400 bg-white/80 px-2 py-1 rounded shadow-sm">
+                  Click to edit
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full min-h-[600px] text-center p-6">
+                <p className="text-slate-500">Processed text will appear here</p>
+                <p className="text-xs text-slate-400 mt-2">Your content will be processed and ready for editing</p>
+              </div>
+            )}
+          </div>
+        )}
         
         {/* AI Detection Results */}
         {outputAIResult && (
