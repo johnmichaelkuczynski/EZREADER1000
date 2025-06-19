@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MathRenderer } from './MathRenderer';
 import { VoiceInput } from '@/components/ui/voice-input';
+import { MathTextArea } from '@/components/MathTextArea';
 
 interface InputEditorProps {
   text: string;
