@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { ProcessTextOptions } from './openai';
-import { protectMathFormulas, restoreMathFormulas, protectMathAndStructure, restoreMathAndFormatting } from "../utils/math-formula-protection";
+import { protectMathExpressions, restoreMathExpressions } from "../utils/math-renderer";
 
 // Utility function to estimate token count for Anthropic models
 function estimateTokenCount(text: string): number {
