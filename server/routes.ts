@@ -21,6 +21,7 @@ import { sendDocumentEmail } from "./services/sendgrid";
 import { extractTextFromPDF } from "./services/pdf-processor";
 import { extractTextFromImageWithMathpix } from "./services/mathpix";
 import { processMathPDFWithAzure, processMathImageWithAzure, enhanceMathFormatting } from "./services/azure-math";
+import { protectMathExpressions, restoreMathExpressions, prepareMathForHTML, safeMathChunking } from "./utils/math-renderer";
 
 
 // Configure multer storage
@@ -159,7 +160,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Return LLM output exactly as received - NO FILTERING OR PROCESSING
-      res.json({ result: processedText });
+      // Apply proper math formatting for HTML display
+      const finalText = prepareMathForHTML(processedText);
+      
+      res.json({ result: finalText });
     } catch (error: unknown) {
       if (error instanceof z.ZodError) {
         res.status(400).json({ error: fromZodError(error).message });
@@ -224,9 +228,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           throw new Error('Invalid LLM provider');
       }
       
-      // Return LLM output exactly as received - NO FILTERING OR PROCESSING
+      // Apply proper math formatting for HTML display
+      const finalText = prepareMathForHTML(processedText);
+      
       res.json({ 
-        result: processedText,
+        result: finalText,
         chunkIndex: data.chunkIndex,
         totalChunks: data.totalChunks
       });

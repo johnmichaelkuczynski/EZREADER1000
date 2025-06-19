@@ -4,12 +4,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { Eye, Edit, Mic } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useMathJax } from '@/hooks/use-mathjax';
 
-declare global {
-  interface Window {
-    MathJax?: any;
-  }
-}
+
 
 interface MathTextAreaProps {
   value: string;
