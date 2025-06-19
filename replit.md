@@ -119,3 +119,4 @@ Preferred communication style: Simple, everyday language.
 - June 16, 2025: Added comprehensive voice input functionality across all text fields using OpenAI transcription
 - June 16, 2025: Removed all Desmos, Plotly, and GeoGebra chart generation code per user request
 - June 18, 2025: Confirmed successful operation of homework solving functionality with mathematical content processing
+- June 19, 2025: Removed all content filtering from LLM providers to enable unrestricted academic and philosophical content processing
