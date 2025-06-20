@@ -507,16 +507,22 @@ export default function Home() {
                 setDialogueMessages(prev => [...prev, userMessage, assistantMessage]);
 
                 try {
-                  // Direct API call for passthrough
-                  const response = await fetch('/api/process-text', {
+                  // Use chat endpoint with conversation memory
+                  const conversationHistory = dialogueMessages
+                    .filter(msg => msg.content !== 'Processing...')
+                    .map(msg => ({
+                      role: msg.role,
+                      content: msg.content
+                    }));
+
+                  const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                      inputText: userInput,
-                      instructions: "",
-                      contentSource: "",
-                      useContentSource: false,
-                      llmProvider
+                      message: userInput,
+                      conversationHistory,
+                      llmProvider,
+                      contextDocument: inputText || outputText || undefined
                     })
                   });
 
@@ -529,7 +535,7 @@ export default function Home() {
                   // Update assistant message with response
                   setDialogueMessages(prev => prev.map(msg => 
                     msg.id === assistantMessageId
-                      ? { ...msg, content: data.result }
+                      ? { ...msg, content: data.response }
                       : msg
                   ));
 

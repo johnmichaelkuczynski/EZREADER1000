@@ -1,4 +1,4 @@
-export type LLMProvider = "openai" | "anthropic" | "perplexity";
+export type LLMProvider = "openai" | "anthropic" | "perplexity" | "deepseek";
 
 export interface Message {
   id: string;
