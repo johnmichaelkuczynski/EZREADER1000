@@ -102,3 +102,15 @@ export const sendEmailSchema = z.object({
   subject: z.string().min(1, "Subject is required"),
   text: z.string().min(1, "Email body is required"),
 });
+
+export const chatMessageSchema = z.object({
+  role: z.enum(["user", "assistant"]),
+  content: z.string(),
+});
+
+export const chatRequestSchema = z.object({
+  message: z.string().min(1, "Message is required"),
+  conversationHistory: z.array(chatMessageSchema).default([]),
+  llmProvider: z.enum(["openai", "anthropic", "perplexity", "deepseek"]),
+  contextDocument: z.string().optional(),
+});

@@ -8,7 +8,8 @@ import {
   processTextSchema, 
   detectAiSchema, 
   searchOnlineSchema, 
-  sendEmailSchema 
+  sendEmailSchema,
+  chatRequestSchema 
 } from "@shared/schema";
 import { stripMarkdown } from "./utils/markdown-stripper";
 import { processTextWithOpenAI, detectAIWithOpenAI, transcribeAudio, solveHomeworkWithOpenAI } from "./llm/openai";
@@ -327,6 +328,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Error transcribing audio:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to transcribe audio';
       res.status(500).json({ error: errorMessage });
+    }
+  });
+
+  // Chat endpoint with conversation memory
+  app.post('/api/chat', async (req: Request, res: Response) => {
+    try {
+      const { message, conversationHistory, llmProvider, contextDocument } = chatRequestSchema.parse(req.body);
+      
+      let response;
+      switch (llmProvider) {
+        case 'openai':
+          response = await processChatWithOpenAI(message, conversationHistory, contextDocument);
+          break;
+        case 'anthropic':
+          response = await processChatWithAnthropic(message, conversationHistory, contextDocument);
+          break;
+        case 'perplexity':
+          response = await processChatWithPerplexity(message, conversationHistory, contextDocument);
+          break;
+        case 'deepseek':
+          response = await processChatWithDeepSeek(message, conversationHistory, contextDocument);
+          break;
+        default:
+          throw new Error('Invalid LLM provider');
+      }
+      
+      res.json({ response });
+    } catch (error: unknown) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: fromZodError(error).message });
+      } else {
+        console.error('Error processing chat:', error);
+        res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to process chat' });
+      }
     }
   });
 
