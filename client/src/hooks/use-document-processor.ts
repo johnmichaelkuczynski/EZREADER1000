@@ -224,7 +224,7 @@ export function useDocumentProcessor() {
     }
   }, [inputText, contentSource, useContentSource, llmProvider, processText, toast]);
 
-  // Process dialogue command - pure passthrough
+  // Process dialogue command with conversation memory
   const processDialogueCommand = useCallback(async (userInput: string) => {
     if (!userInput.trim()) return;
 
@@ -248,11 +248,15 @@ export function useDocumentProcessor() {
     setDialogueMessages(prev => [...prev, userMessage, assistantMessage]);
 
     try {
-      // Include document context for dialogue with size limits
-      let contextualInput = userInput;
-      
+      // Prepare conversation history (exclude the current message being processed)
+      const conversationHistory = dialogueMessages.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
+
+      // Prepare context document if available
+      let contextDocument = '';
       if (inputText.trim() || outputText.trim()) {
-        // Truncate documents to prevent context overflow (max ~8000 chars each)
         const truncateText = (text: string, maxLength: number = 8000) => {
           if (text.length <= maxLength) return text;
           return text.substring(0, maxLength) + "\n\n[Document truncated - showing first " + maxLength + " characters]";
@@ -261,22 +265,32 @@ export function useDocumentProcessor() {
         const inputExcerpt = inputText.trim() ? truncateText(inputText.trim()) : '';
         const outputExcerpt = outputText.trim() ? truncateText(outputText.trim()) : '';
         
-        contextualInput = `Context - Document content available:
-${inputExcerpt ? `INPUT DOCUMENT:\n${inputExcerpt}\n\n` : ''}${outputExcerpt ? `OUTPUT DOCUMENT:\n${outputExcerpt}\n\n` : ''}USER QUESTION: ${userInput}`;
+        contextDocument = `Available Documents:
+${inputExcerpt ? `INPUT DOCUMENT:\n${inputExcerpt}\n\n` : ''}${outputExcerpt ? `OUTPUT DOCUMENT:\n${outputExcerpt}\n\n` : ''}`;
       }
-      
-      const response = await processText({
-        inputText: contextualInput,
-        instructions: "You are an AI assistant discussing documents with the user. You can see the input and output documents provided in the context. Answer the user's questions about these documents, provide analysis, suggestions, or help as requested. Be helpful and conversational.",
-        contentSource: "",
-        useContentSource: false,
-        llmProvider
+
+      // Use new chat endpoint with conversation memory
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userInput,
+          conversationHistory,
+          llmProvider,
+          contextDocument: contextDocument || undefined
+        })
       });
 
-      // Update assistant message with the pure LLM response
+      if (!response.ok) {
+        throw new Error(`Chat API error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      // Update assistant message with the response
       setDialogueMessages(prev => prev.map(msg => 
         msg.id === assistantMessageId
-          ? { ...msg, content: response }
+          ? { ...msg, content: data.response }
           : msg
       ));
 
@@ -289,7 +303,7 @@ ${inputExcerpt ? `INPUT DOCUMENT:\n${inputExcerpt}\n\n` : ''}${outputExcerpt ? `
           : msg
       ));
     }
-  }, [llmProvider, processText, setDialogueMessages]);
+  }, [llmProvider, dialogueMessages, inputText, outputText, setDialogueMessages]);
 
   // File upload handlers
   const handleInputFileUpload = useCallback(async (file: File) => {

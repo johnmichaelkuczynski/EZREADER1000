@@ -12,10 +12,10 @@ import {
   chatRequestSchema 
 } from "@shared/schema";
 import { stripMarkdown } from "./utils/markdown-stripper";
-import { processTextWithOpenAI, detectAIWithOpenAI, transcribeAudio, solveHomeworkWithOpenAI } from "./llm/openai";
-import { processTextWithAnthropic, detectAIWithAnthropic, solveHomeworkWithAnthropic } from "./llm/anthropic";
-import { processTextWithPerplexity, detectAIWithPerplexity, solveHomeworkWithPerplexity } from "./llm/perplexity";
-import { processTextWithDeepSeek, detectAIWithDeepSeek, solveHomeworkWithDeepSeek } from "./llm/deepseek";
+import { processTextWithOpenAI, detectAIWithOpenAI, transcribeAudio, solveHomeworkWithOpenAI, processChatWithOpenAI } from "./llm/openai";
+import { processTextWithAnthropic, detectAIWithAnthropic, solveHomeworkWithAnthropic, processChatWithAnthropic } from "./llm/anthropic";
+import { processTextWithPerplexity, detectAIWithPerplexity, solveHomeworkWithPerplexity, processChatWithPerplexity } from "./llm/perplexity";
+import { processTextWithDeepSeek, detectAIWithDeepSeek, solveHomeworkWithDeepSeek, processChatWithDeepSeek } from "./llm/deepseek";
 import { detectAIWithGPTZero } from "./services/gptzero";
 import { searchOnline, fetchWebContent } from "./services/google";
 import { sendDocumentEmail } from "./services/sendgrid";
