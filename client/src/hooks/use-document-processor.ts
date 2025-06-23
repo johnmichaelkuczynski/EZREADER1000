@@ -25,6 +25,7 @@ export function useDocumentProcessor() {
   const [useStyleSource, setUseStyleSource] = useState(false);
   const [reprocessOutput, setReprocessOutput] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [isRewriting, setIsRewriting] = useState(false);
   const [llmProvider, setLLMProvider] = useState<LLMProvider>('openai');
   
   // Homework mode state
@@ -966,6 +967,36 @@ ${inputExcerpt ? `INPUT DOCUMENT:\n${inputExcerpt}\n\n` : ''}${outputExcerpt ? `
     // Simplified implementation
   }, []);
 
+  // Re-rewrite handler
+  const handleRewrite = useCallback(async (text: string, instructions: string) => {
+    setIsRewriting(true);
+    try {
+      const response = await processText({
+        inputText: text,
+        instructions,
+        contentSource: "",
+        useContentSource: false,
+        llmProvider
+      });
+      
+      setOutputText(response);
+      
+      toast({
+        title: "Re-rewrite complete",
+        description: "Your content has been successfully modified.",
+      });
+    } catch (error: any) {
+      console.error('Error rewriting:', error);
+      toast({
+        title: "Re-rewrite failed",
+        description: error?.message || "Failed to rewrite content",
+        variant: "destructive"
+      });
+    } finally {
+      setIsRewriting(false);
+    }
+  }, [llmProvider, processText, toast]);
+
   // Automatic AI detection with debouncing
   useEffect(() => {
     if (!inputText.trim() || inputText.length < 50) {
@@ -1020,6 +1051,8 @@ ${inputExcerpt ? `INPUT DOCUMENT:\n${inputExcerpt}\n\n` : ''}${outputExcerpt ? `
     processDialogueCommand,
     processSelectedDocumentChunks,
     cancelProcessing,
+    handleRewrite,
+    isRewriting,
     
     // File handling
     inputFileRef,

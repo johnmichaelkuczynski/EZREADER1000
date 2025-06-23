@@ -91,7 +91,10 @@ export default function Home() {
     // Instruction memory
     lastUsedInstructions,
     rewriteInstructions,
-    setRewriteInstructions
+    setRewriteInstructions,
+    // Re-rewrite functionality
+    handleRewrite,
+    isRewriting
   } = useDocumentProcessor();
 
   const {
@@ -423,8 +426,10 @@ export default function Home() {
                   return Promise.resolve();
                 }}
                 onSendEmail={sendEmailWithDocument}
+                onRewrite={handleRewrite}
                 isDetecting={isOutputDetecting}
                 isSendingEmail={isSendingEmail}
+                isRewriting={isRewriting}
                 inputText={inputText}
                 outputAIResult={outputAIResult}
               />
