@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Trash2, Copy, Download, Bot, Mail, Eye, EyeOff } from 'lucide-react';
+import { Trash2, Copy, Download, Bot, Mail, Eye, EyeOff, RefreshCw } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -35,8 +35,10 @@ interface OutputEditorProps {
   onExportLaTeX: (text: string) => void;
   onDetectAI: (text: string) => Promise<void>;
   onSendEmail: (to: string, subject: string, message: string, originalText: string, transformedText: string) => Promise<boolean>;
+  onRewrite: (text: string, instructions: string) => Promise<void>;
   isDetecting: boolean;
   isSendingEmail: boolean;
+  isRewriting?: boolean;
   inputText: string;
   outputAIResult?: { isAI: boolean; confidence: number; details: string } | null;
 }
@@ -52,15 +54,19 @@ export function OutputEditor({
   onExportLaTeX,
   onDetectAI,
   onSendEmail,
+  onRewrite,
   isDetecting,
   isSendingEmail,
+  isRewriting = false,
   inputText,
   outputAIResult
 }: OutputEditorProps) {
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [rewriteDialogOpen, setRewriteDialogOpen] = useState(false);
   const [emailTo, setEmailTo] = useState('');
   const [emailSubject, setEmailSubject] = useState('EZ Reader - Transformed Document');
   const [emailMessage, setEmailMessage] = useState('Here is the transformed document you requested.');
+  const [rewriteInstructions, setRewriteInstructions] = useState('');
   const [wordCount, setWordCount] = useState(0);
   const [showMathPreview, setShowMathPreview] = useState(true);
   
@@ -82,6 +88,14 @@ export function OutputEditor({
     if (success) {
       setEmailDialogOpen(false);
     }
+  };
+
+  const handleRewrite = async () => {
+    if (!rewriteInstructions.trim()) return;
+    
+    await onRewrite(text, rewriteInstructions);
+    setRewriteDialogOpen(false);
+    setRewriteInstructions('');
   };
   
   return (
@@ -122,6 +136,23 @@ export function OutputEditor({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Copy</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="p-1 text-slate-400 hover:text-slate-600 transition-colors"
+                  onClick={() => setRewriteDialogOpen(true)}
+                  disabled={!text || isRewriting}
+                >
+                  <RefreshCw className={`h-4 w-4 ${isRewriting ? 'animate-spin' : ''}`} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Re-rewrite with custom instructions</TooltipContent>
             </Tooltip>
           </TooltipProvider>
           
@@ -306,6 +337,43 @@ export function OutputEditor({
             </Button>
             <Button onClick={handleSendEmail} disabled={!emailTo || isSendingEmail}>
               {isSendingEmail ? 'Sending...' : 'Send Email'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Re-rewrite Dialog */}
+      <Dialog open={rewriteDialogOpen} onOpenChange={setRewriteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Re-rewrite Output</DialogTitle>
+            <DialogDescription>
+              Provide instructions to modify the current output without copying/pasting.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="rewrite-instructions">Instructions</Label>
+              <Textarea
+                id="rewrite-instructions"
+                placeholder="e.g., Make it more detailed, change the tone to formal, add examples..."
+                value={rewriteInstructions}
+                onChange={(e) => setRewriteInstructions(e.target.value)}
+                rows={4}
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRewriteDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleRewrite} 
+              disabled={!rewriteInstructions.trim() || isRewriting}
+            >
+              {isRewriting ? 'Rewriting...' : 'Re-rewrite'}
             </Button>
           </DialogFooter>
         </DialogContent>
