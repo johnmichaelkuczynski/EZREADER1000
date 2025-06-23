@@ -122,3 +122,4 @@ Preferred communication style: Simple, everyday language.
 - June 19, 2025: Removed all content filtering from LLM providers to enable unrestricted academic and philosophical content processing
 - June 20, 2025: Fixed critical dialogue system memory issue - implemented conversation history across all LLM providers
 - June 20, 2025: Updated system prompts to work across ALL academic disciplines instead of limiting to specific fields
+- June 20, 2025: Added re-rewrite functionality - users can modify generated output with custom instructions without copying/pasting
