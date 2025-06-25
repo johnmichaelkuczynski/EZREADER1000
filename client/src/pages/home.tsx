@@ -342,6 +342,7 @@ export default function Home() {
               <option value="openai">OpenAI</option>
               <option value="anthropic">Anthropic</option>
               <option value="perplexity">Perplexity</option>
+              <option value="deepseek">DeepSeek</option>
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-700">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">

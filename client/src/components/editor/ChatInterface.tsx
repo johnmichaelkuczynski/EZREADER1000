@@ -6,13 +6,14 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Message } from '@/types';
-import { Trash2, Send, ArrowDown } from 'lucide-react';
+import { Trash2, Send, ArrowDown, Upload, FileText } from 'lucide-react';
 import { MathRenderer } from './MathRenderer';
 import { VoiceInput } from '@/components/ui/voice-input';
+import { useToast } from '@/hooks/use-toast';
 
 interface ChatInterfaceProps {
   messages: Message[];
-  onSendMessage: (content: string) => void;
+  onSendMessage: (content: string, contextDocument?: string) => void;
   onClearChat: () => void;
   reprocessOutput: boolean;
   onReprocessOutputChange: (value: boolean) => void;
@@ -28,7 +29,11 @@ export function ChatInterface({
   onSendToInput
 }: ChatInterfaceProps) {
   const [inputValue, setInputValue] = useState('');
+  const [uploadedDocument, setUploadedDocument] = useState<string>('');
+  const [documentName, setDocumentName] = useState<string>('');
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
   
   // Scroll to bottom of chat when messages change
   useEffect(() => {
@@ -37,13 +42,82 @@ export function ChatInterface({
     }
   }, [messages]);
   
+  // Handle file upload
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Check file type
+    const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: "Unsupported file type",
+        description: "Please upload PDF, DOCX, or TXT files only.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      let response;
+      if (file.type === 'application/pdf') {
+        response = await fetch('/api/process-pdf', {
+          method: 'POST',
+          body: formData
+        });
+      } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+        response = await fetch('/api/process-docx', {
+          method: 'POST',
+          body: formData
+        });
+      } else {
+        // Text file
+        const text = await file.text();
+        setUploadedDocument(text);
+        setDocumentName(file.name);
+        toast({
+          title: "Document uploaded",
+          description: `${file.name} is ready for analysis`
+        });
+        return;
+      }
+
+      if (!response?.ok) {
+        throw new Error('Failed to process document');
+      }
+
+      const data = await response.json();
+      setUploadedDocument(data.text);
+      setDocumentName(file.name);
+      
+      // Automatically send document for analysis
+      onSendMessage(`Please analyze this document: ${file.name}`, data.text);
+      
+      toast({
+        title: "Document uploaded and analyzed",
+        description: `${file.name} has been processed and sent for AI analysis`
+      });
+      
+    } catch (error) {
+      console.error('File upload error:', error);
+      toast({
+        title: "Upload failed",
+        description: "Failed to process the document. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!inputValue.trim()) return;
     
-    onSendMessage(inputValue);
+    onSendMessage(inputValue, uploadedDocument || undefined);
     setInputValue('');
   };
   

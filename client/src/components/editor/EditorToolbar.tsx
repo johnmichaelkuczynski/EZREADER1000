@@ -153,6 +153,7 @@ export function EditorToolbar({
               <SelectItem value="openai">OpenAI GPT-4</SelectItem>
               <SelectItem value="anthropic">Anthropic Claude</SelectItem>
               <SelectItem value="perplexity">Perplexity</SelectItem>
+              <SelectItem value="deepseek">DeepSeek</SelectItem>
               <SelectItem value="azure">Azure OpenAI</SelectItem>
             </SelectContent>
           </Select>
