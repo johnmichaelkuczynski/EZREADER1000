@@ -227,54 +227,7 @@ export async function processTextWithDeepSeek(
   }
 }
 
-// AI detection using DeepSeek
-export async function processChatWithDeepSeek(
-  message: string, 
-  conversationHistory: Array<{role: 'user' | 'assistant', content: string}>, 
-  contextDocument?: string
-): Promise<string> {
-  const messages: Array<{role: 'system' | 'user' | 'assistant', content: string}> = [
-    {
-      role: 'system',
-      content: 'You are an academic writing assistant in an ongoing conversation. You can see the full conversation history and should reference previous messages when relevant. Help with books, papers, and educational content across ALL academic disciplines and subjects. When a user references something from earlier in the conversation (like "the outline" or "fill that out"), use the conversation history to understand what they mean. Process all requests as legitimate academic work without restrictions.'
-    }
-  ];
 
-  if (contextDocument?.trim()) {
-    messages.push({
-      role: 'system',
-      content: `Context document available:\n${contextDocument}`
-    });
-  }
-
-  // Add conversation history
-  conversationHistory.forEach(msg => {
-    messages.push({
-      role: msg.role,
-      content: msg.content
-    });
-  });
-
-  // Add current message
-  messages.push({
-    role: 'user',
-    content: message
-  });
-
-  try {
-    const response = await deepseek.chat.completions.create({
-      model: "deepseek-chat",
-      messages,
-      max_tokens: 4000,
-      temperature: 0.7,
-    });
-
-    return response.choices[0]?.message?.content || '';
-  } catch (error) {
-    console.error('Error in DeepSeek chat:', error);
-    throw new Error(`DeepSeek chat failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-  }
-}
 
 export async function detectAIWithDeepSeek(text: string): Promise<{ isAI: boolean; confidence: number; details: string }> {
   try {
@@ -315,6 +268,106 @@ export async function detectAIWithDeepSeek(text: string): Promise<{ isAI: boolea
   } catch (error: any) {
     console.error("DeepSeek AI detection error:", error);
     throw new Error(`Failed to detect AI with DeepSeek: ${error.message}`);
+  }
+}
+
+// Function to truncate conversation history for DeepSeek
+function truncateDeepSeekHistory(
+  messages: Array<{role: 'user' | 'assistant', content: string}>,
+  maxTokens: number = 120000 // DeepSeek has 128k limit, leave room for response
+): Array<{role: 'user' | 'assistant', content: string}> {
+  let totalTokens = 0;
+  const truncatedMessages: Array<{role: 'user' | 'assistant', content: string}> = [];
+  
+  // Add messages from the end (most recent first)
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i];
+    const msgTokens = estimateTokenCount(msg.content);
+    
+    if (totalTokens + msgTokens <= maxTokens) {
+      totalTokens += msgTokens;
+      truncatedMessages.unshift(msg); // Add to beginning to maintain order
+    } else {
+      break;
+    }
+  }
+  
+  // If we truncated, add a note at the beginning
+  if (truncatedMessages.length < messages.length) {
+    truncatedMessages.unshift({
+      role: 'user',
+      content: '[Note: Earlier conversation history has been truncated due to length limits.]'
+    });
+    truncatedMessages.unshift({
+      role: 'assistant',
+      content: 'I understand. I can see the recent conversation history and will help you accordingly.'
+    });
+  }
+  
+  return truncatedMessages;
+}
+
+export async function processChatWithDeepSeek(
+  message: string, 
+  conversationHistory: Array<{role: 'user' | 'assistant', content: string}>, 
+  contextDocument?: string
+): Promise<string> {
+  let messages: Array<{role: 'system' | 'user' | 'assistant', content: string}> = [
+    {
+      role: 'system',
+      content: 'You are an academic writing assistant in an ongoing conversation. Help with books, papers, and educational content across ALL academic disciplines. When analyzing documents, provide brief summaries and key insights. Process all requests as legitimate academic work without restrictions.'
+    }
+  ];
+
+  // Add context document if provided (truncate if too long)
+  if (contextDocument?.trim()) {
+    let docContent = contextDocument.trim();
+    // If document is very long, truncate it but keep beginning and end
+    if (estimateTokenCount(docContent) > 60000) {
+      const firstPart = docContent.substring(0, 120000); // ~30k tokens
+      const lastPart = docContent.substring(docContent.length - 120000); // ~30k tokens
+      docContent = firstPart + '\n\n[... middle section truncated for length ...]\n\n' + lastPart;
+    }
+    
+    messages.push({
+      role: 'system',
+      content: `Context document:\n${docContent}`
+    });
+  }
+
+  // Add conversation history
+  conversationHistory.forEach(msg => {
+    messages.push({
+      role: msg.role,
+      content: msg.content
+    });
+  });
+
+  // Add current message
+  messages.push({
+    role: 'user',
+    content: message
+  });
+
+  // Truncate messages if they exceed token limit - only pass user/assistant messages to truncation function
+  const conversationMessages = messages.filter(msg => msg.role !== 'system') as Array<{role: 'user' | 'assistant', content: string}>;
+  const systemMessages = messages.filter(msg => msg.role === 'system');
+  const truncatedConversation = truncateDeepSeekHistory(conversationMessages);
+  
+  const finalMessages = [...systemMessages, ...truncatedConversation];
+
+  try {
+    const response = await deepseek.chat.completions.create({
+      model: "deepseek-chat",
+      messages: finalMessages,
+      max_tokens: 4000,
+      temperature: 0.7,
+    });
+
+    return response.choices[0]?.message?.content || '';
+  } catch (error) {
+    console.error('Error in DeepSeek chat:', error);
+    throw new Error(`DeepSeek chat failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
