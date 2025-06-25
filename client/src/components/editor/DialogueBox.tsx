@@ -12,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 
 interface DialogueBoxProps {
   messages: Message[];
-  onSendMessage: (content: string) => void;
+  onSendMessage: (content: string, contextDocument?: string) => void;
   onProcessSpecialCommand: (command: string) => void;
   onReset: () => void;
   inputText: string;

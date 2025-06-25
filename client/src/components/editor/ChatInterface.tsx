@@ -200,11 +200,32 @@ export function ChatInterface({
       </div>
       
       <div className="border-t border-slate-200 p-3">
+        {/* Document upload indicator */}
+        {documentName && (
+          <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded-md flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-blue-600" />
+              <span className="text-sm text-blue-800">Document: {documentName}</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setUploadedDocument('');
+                setDocumentName('');
+              }}
+              className="h-6 w-6 p-0 text-blue-600 hover:text-blue-800"
+            >
+              ×
+            </Button>
+          </div>
+        )}
+        
         <form className="flex items-end gap-2" onSubmit={handleSubmit}>
           <div className="flex-1 relative">
             <Textarea
-              className="w-full border border-slate-200 rounded-lg p-3 pr-12 text-sm focus:outline-none focus:ring-1 focus:ring-primary min-h-[200px] resize-none"
-              placeholder="Type your rewrite instructions here..."
+              className="w-full border border-slate-200 rounded-lg p-3 pr-12 text-sm focus:outline-none focus:ring-1 focus:ring-primary min-h-[80px] resize-none"
+              placeholder="Ask a question, give special commands, or provide new instructions..."
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={(e) => {
@@ -222,13 +243,41 @@ export function ChatInterface({
               />
             </div>
           </div>
-          <Button 
-            type="submit" 
-            className="bg-primary hover:bg-blue-600 text-white p-3 rounded-lg flex-shrink-0 transition-colors h-10 w-10"
-            disabled={!inputValue.trim()}
-          >
-            <Send className="h-4 w-4" />
-          </Button>
+          
+          <div className="flex items-center gap-1">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileUpload}
+              accept=".pdf,.docx,.txt"
+              className="hidden"
+            />
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="h-10 w-10 p-0"
+                  >
+                    <Upload className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Upload document (PDF, DOCX, TXT)</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            <Button 
+              type="submit" 
+              className="bg-primary hover:bg-blue-600 text-white p-3 rounded-lg flex-shrink-0 transition-colors h-10 w-10"
+              disabled={!inputValue.trim()}
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
         </form>
         <div className="flex justify-between mt-1.5">
           <div className="flex items-center">

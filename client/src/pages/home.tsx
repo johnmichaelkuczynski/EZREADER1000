@@ -490,7 +490,7 @@ export default function Home() {
             {/* Dialogue Box - For discussing text and special commands */}
             <DialogueBox
               messages={dialogueMessages}
-              onSendMessage={async (userInput: string) => {
+              onSendMessage={async (userInput: string, contextDocument?: string) => {
                 if (!userInput.trim()) return;
 
                 // Add user message
