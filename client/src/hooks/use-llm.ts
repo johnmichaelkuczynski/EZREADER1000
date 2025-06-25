@@ -4,7 +4,7 @@ import { processText, processChunk } from '@/lib/api';
 import { chunkText, estimateChunkCount } from '@/lib/text-chunker';
 
 export function useLLM() {
-  const [llmProvider, setLLMProvider] = useState<LLMProvider>('openai');
+  const [llmProvider, setLLMProvider] = useState<LLMProvider>('deepseek');
   const [processing, setProcessing] = useState<ProcessingStatus>({
     isProcessing: false,
     currentChunk: 0,

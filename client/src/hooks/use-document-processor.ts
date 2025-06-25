@@ -26,7 +26,7 @@ export function useDocumentProcessor() {
   const [reprocessOutput, setReprocessOutput] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [isRewriting, setIsRewriting] = useState(false);
-  const [llmProvider, setLLMProvider] = useState<LLMProvider>('openai');
+  const [llmProvider, setLLMProvider] = useState<LLMProvider>('deepseek');
   
   // Homework mode state
   const [homeworkMode, setHomeworkMode] = useState(false);

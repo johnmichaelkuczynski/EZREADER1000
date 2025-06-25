@@ -123,3 +123,6 @@ Preferred communication style: Simple, everyday language.
 - June 20, 2025: Fixed critical dialogue system memory issue - implemented conversation history across all LLM providers
 - June 20, 2025: Updated system prompts to work across ALL academic disciplines instead of limiting to specific fields
 - June 20, 2025: Added re-rewrite functionality - users can modify generated output with custom instructions without copying/pasting
+- June 25, 2025: Fixed chat system token limit issues with conversation history truncation and chunking across all LLM providers
+- June 25, 2025: Added document upload functionality to chat interface with automatic analysis and summarization
+- June 25, 2025: Set DeepSeek as default LLM provider for cost-effective processing while maintaining quality
