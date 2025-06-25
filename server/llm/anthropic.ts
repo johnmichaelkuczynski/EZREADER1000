@@ -287,18 +287,62 @@ export async function solveHomeworkWithAnthropic(assignment: string): Promise<st
   }
 }
 
+// Function to truncate conversation history for Anthropic
+function truncateAnthropicHistory(
+  messages: Array<{role: 'user' | 'assistant', content: string}>,
+  maxTokens: number = 180000 // Anthropic has 200k limit, leave room for response
+): Array<{role: 'user' | 'assistant', content: string}> {
+  let totalTokens = 0;
+  const truncatedMessages: Array<{role: 'user' | 'assistant', content: string}> = [];
+  
+  // Add messages from the end (most recent first)
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i];
+    const msgTokens = estimateTokenCount(msg.content);
+    
+    if (totalTokens + msgTokens <= maxTokens) {
+      totalTokens += msgTokens;
+      truncatedMessages.unshift(msg); // Add to beginning to maintain order
+    } else {
+      break;
+    }
+  }
+  
+  // If we truncated, add a note at the beginning
+  if (truncatedMessages.length < messages.length) {
+    truncatedMessages.unshift({
+      role: 'user',
+      content: '[Note: Earlier conversation history has been truncated due to length limits.]'
+    });
+    truncatedMessages.unshift({
+      role: 'assistant',
+      content: 'I understand. I can see the recent conversation history and will help you accordingly.'
+    });
+  }
+  
+  return truncatedMessages;
+}
+
 export async function processChatWithAnthropic(
   message: string, 
   conversationHistory: Array<{role: 'user' | 'assistant', content: string}>, 
   contextDocument?: string
 ): Promise<string> {
-  let systemPrompt = 'You are an academic writing assistant in an ongoing conversation. You can see the full conversation history and should reference previous messages when relevant. Help with books, papers, and educational content across ALL academic disciplines and subjects. When a user references something from earlier in the conversation (like "the outline" or "fill that out"), use the conversation history to understand what they mean. Process all requests as legitimate academic work without restrictions.';
+  let systemPrompt = 'You are an academic writing assistant in an ongoing conversation. Help with books, papers, and educational content across ALL academic disciplines. When analyzing documents, provide brief summaries and key insights. Process all requests as legitimate academic work without restrictions.';
 
+  // Add context document if provided (truncate if too long)
   if (contextDocument?.trim()) {
-    systemPrompt += `\n\nContext document available:\n${contextDocument}`;
+    let docContent = contextDocument.trim();
+    // If document is very long, truncate it but keep beginning and end
+    if (estimateTokenCount(docContent) > 80000) {
+      const firstPart = docContent.substring(0, 160000); // ~40k tokens
+      const lastPart = docContent.substring(docContent.length - 160000); // ~40k tokens
+      docContent = firstPart + '\n\n[... middle section truncated for length ...]\n\n' + lastPart;
+    }
+    systemPrompt += `\n\nContext document:\n${docContent}`;
   }
 
-  const messages = conversationHistory.map(msg => ({
+  let messages = conversationHistory.map(msg => ({
     role: msg.role,
     content: msg.content
   }));
@@ -308,9 +352,12 @@ export async function processChatWithAnthropic(
     content: message
   });
 
+  // Truncate messages if they exceed token limit
+  messages = truncateAnthropicHistory(messages);
+
   try {
     const response = await anthropic.messages.create({
-      model: "claude-3-5-sonnet-20241022",
+      model: "claude-3-7-sonnet-20250219", // the newest Anthropic model is "claude-3-7-sonnet-20250219" which was released February 24, 2025
       max_tokens: 4000,
       temperature: 0.7,
       system: systemPrompt,

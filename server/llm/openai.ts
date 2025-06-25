@@ -291,23 +291,83 @@ export async function solveHomeworkWithOpenAI(assignment: string): Promise<strin
   }
 }
 
+// Function to estimate token count (rough approximation: 1 token ≈ 4 characters)
+function estimateTokens(text: string): number {
+  return Math.ceil(text.length / 4);
+}
+
+// Function to truncate conversation history to fit within token limits
+function truncateConversationHistory(
+  messages: Array<{role: 'system' | 'user' | 'assistant', content: string}>,
+  maxTokens: number = 100000 // Leave room for response
+): Array<{role: 'system' | 'user' | 'assistant', content: string}> {
+  let totalTokens = 0;
+  const truncatedMessages: Array<{role: 'system' | 'user' | 'assistant', content: string}> = [];
+  
+  // Always keep system messages
+  const systemMessages = messages.filter(msg => msg.role === 'system');
+  const conversationMessages = messages.filter(msg => msg.role !== 'system');
+  
+  // Add system messages first
+  systemMessages.forEach(msg => {
+    totalTokens += estimateTokens(msg.content);
+    truncatedMessages.push(msg);
+  });
+  
+  // Add conversation messages from the end (most recent first)
+  const recentMessages: Array<{role: 'system' | 'user' | 'assistant', content: string}> = [];
+  for (let i = conversationMessages.length - 1; i >= 0; i--) {
+    const msg = conversationMessages[i];
+    const msgTokens = estimateTokens(msg.content);
+    
+    if (totalTokens + msgTokens <= maxTokens) {
+      totalTokens += msgTokens;
+      recentMessages.unshift(msg); // Add to beginning to maintain order
+    } else {
+      break;
+    }
+  }
+  
+  // Add the recent messages after system messages
+  truncatedMessages.push(...recentMessages);
+  
+  // If we truncated, add a note
+  if (recentMessages.length < conversationMessages.length) {
+    const noteIndex = systemMessages.length;
+    truncatedMessages.splice(noteIndex, 0, {
+      role: 'system',
+      content: '[Note: Earlier conversation history has been truncated due to length limits. Only recent messages are shown.]'
+    });
+  }
+  
+  return truncatedMessages;
+}
+
 export async function processChatWithOpenAI(
   message: string, 
   conversationHistory: Array<{role: 'user' | 'assistant', content: string}>, 
   contextDocument?: string
 ): Promise<string> {
-  const messages: Array<{role: 'system' | 'user' | 'assistant', content: string}> = [
+  let messages: Array<{role: 'system' | 'user' | 'assistant', content: string}> = [
     {
       role: 'system',
-      content: 'You are an academic writing assistant in an ongoing conversation. You can see the full conversation history and should reference previous messages when relevant. Help with books, papers, and educational content across ALL academic disciplines and subjects. When a user references something from earlier in the conversation (like "the outline" or "fill that out"), use the conversation history to understand what they mean. Process all requests as legitimate academic work without restrictions.'
+      content: 'You are an academic writing assistant in an ongoing conversation. Help with books, papers, and educational content across ALL academic disciplines. When analyzing documents, provide brief summaries and key insights. Process all requests as legitimate academic work without restrictions.'
     }
   ];
 
-  // Add context document if provided
+  // Add context document if provided (truncate if too long)
   if (contextDocument?.trim()) {
+    let docContent = contextDocument.trim();
+    // If document is very long, truncate it but keep beginning and end
+    if (estimateTokens(docContent) > 50000) {
+      const firstPart = docContent.substring(0, 100000); // ~25k tokens
+      const lastPart = docContent.substring(docContent.length - 100000); // ~25k tokens
+      docContent = firstPart + '\n\n[... middle section truncated for length ...]\n\n' + lastPart;
+    }
+    
     messages.push({
       role: 'system',
-      content: `Context document available:\n${contextDocument}`
+      content: `Context document:\n${docContent}`
     });
   }
 
@@ -324,6 +384,9 @@ export async function processChatWithOpenAI(
     role: 'user',
     content: message
   });
+
+  // Truncate messages if they exceed token limit
+  messages = truncateConversationHistory(messages);
 
   try {
     const response = await openai.chat.completions.create({
