@@ -22,23 +22,36 @@ export function MathGraphRenderer({ content, onContentUpdate }: MathGraphRendere
   }, [content]);
 
   const processGraphs = async () => {
-    // Find graph placeholders in content
-    const graphPattern = /\[RENDER_GRAPH:([^\]]+)\]/g;
-    const matches = Array.from(content.matchAll(graphPattern));
+    // Find graph placeholders in content - support multiple formats
+    const renderGraphPattern = /\[RENDER_GRAPH:([^\]]+)\]/g;
+    const graphDescPattern = /\[Graph of f\(x\) = ([^,\[\]]+?)(?:\s+showing[^\]]*?)?\]/g;
+    const graphPattern = /\[GRAPH:([^\]]+)\]/g;
     
-    if (matches.length === 0) return;
+    const renderMatches = Array.from(content.matchAll(renderGraphPattern));
+    const descMatches = Array.from(content.matchAll(graphDescPattern));
+    const graphMatches = Array.from(content.matchAll(graphPattern));
+    
+    const allMatches = [
+      ...renderMatches.map(m => [m[0], m[1]]),
+      ...descMatches.map(m => [m[0], m[1]]),
+      ...graphMatches.map(m => [m[0], m[1]])
+    ];
+    
+    if (allMatches.length === 0) return;
 
     setIsProcessing(true);
     let updatedContent = content;
     const newGraphs: GraphData[] = [];
 
-    for (const match of matches) {
+    for (const match of allMatches) {
       const [placeholder, equation] = match;
       
       // Skip if already processed
       if (processedRef.current.has(placeholder)) continue;
       
       try {
+        console.log(`Processing graph for equation: ${equation.trim()}`);
+        
         // Generate the graph
         const graphResult = await MathGraphing.generateGraph({
           equation: equation.trim(),

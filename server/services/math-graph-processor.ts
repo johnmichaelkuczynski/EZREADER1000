@@ -143,30 +143,36 @@ export class MathGraphProcessor {
    * Add graph generation instructions to LLM prompt
    */
   static enhancePromptForGraphing(originalPrompt: string, text: string): string {
-    const graphInstructions = this.extractGraphInstructions(text);
+    // Always check for mathematical content that might need graphing
+    const hasMathContent = /f\(x\)|y\s*=|graph|plot|function|equation|derivative|integral/i.test(text) || 
+                          /x\^|e\^|sin|cos|tan|log|ln|\+|\-|\*|\//.test(text);
     
-    if (graphInstructions.length === 0) {
+    if (!hasMathContent) {
       return originalPrompt;
     }
 
     const graphingInstruction = `
 
-IMPORTANT GRAPHING INSTRUCTIONS:
-- When you encounter mathematical functions in this problem, you MUST include graphs
-- For any equation like f(x) = [expression], y = [expression], etc., add a graph placeholder immediately after the equation
-- Use this exact format: [GRAPH:equation_here]
-- Examples:
-  * After "f(x) = x^2 + 2x - 1", add: [GRAPH:x^2 + 2x - 1]
-  * After "y = sin(x) + cos(2x)", add: [GRAPH:sin(x) + cos(2x)]
-  * After solving and getting "f(x) = 3x^3 - 2x + 5", add: [GRAPH:3x^3 - 2x + 5]
+CRITICAL GRAPHING REQUIREMENT:
+This problem involves mathematical functions that MUST be graphed. You are REQUIRED to include graph placeholders.
 
-- Include graphs for:
-  * Original functions
-  * Solutions to equations
-  * Derivatives when asked
-  * Any function that needs visualization
+MANDATORY FORMAT FOR ALL MATHEMATICAL FUNCTIONS:
+1. Whenever you write ANY equation with f(x) = [expression] or y = [expression], you MUST immediately add the graph placeholder on the next line
+2. Use EXACTLY this format: [GRAPH:expression]
+3. NO exceptions - every mathematical function must have a graph
 
-This is a homework assignment that requires mathematical graphing. Do not skip the graph placeholders.`;
+EXAMPLES (follow these exactly):
+If you write: "The function f(x) = e^x"
+You MUST add: [GRAPH:e^x]
+
+If you write: "We have y = x^2 + 3x - 2"  
+You MUST add: [GRAPH:x^2 + 3x - 2]
+
+If you write: "The derivative is f'(x) = 2x + 3"
+You MUST add: [GRAPH:2x + 3]
+
+HOMEWORK GRAPHING REQUIREMENT:
+This is homework requiring graphs. Failure to include [GRAPH:expression] placeholders will result in incomplete work. Include graph placeholders for EVERY mathematical function you mention.`;
 
     return originalPrompt + graphingInstruction;
   }

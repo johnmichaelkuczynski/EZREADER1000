@@ -1,5 +1,4 @@
-import functionPlot, { FunctionPlotOptions } from 'function-plot';
-import { evaluate, parse, MathNode } from 'mathjs';
+import { evaluate } from 'mathjs';
 
 export interface GraphConfig {
   equation: string;
@@ -43,66 +42,14 @@ export class MathGraphing {
     const fullConfig = { ...this.defaultConfig, ...config };
     
     try {
-      // Create a temporary container for the graph
-      const container = document.createElement('div');
-      container.style.position = 'absolute';
-      container.style.left = '-9999px';
-      container.style.top = '-9999px';
-      container.style.width = `${fullConfig.width}px`;
-      container.style.height = `${fullConfig.height}px`;
-      document.body.appendChild(container);
-
-      // Prepare the equation for function-plot
-      const plotConfig: FunctionPlotOptions = {
-        target: container,
-        width: fullConfig.width!,
-        height: fullConfig.height!,
-        grid: fullConfig.grid!,
-        xAxis: {
-          domain: [fullConfig.xMin!, fullConfig.xMax!]
-        },
-        yAxis: {
-          domain: [fullConfig.yMin!, fullConfig.yMax!]
-        },
-        data: [{
-          fn: this.convertToJavaScriptFunction(config.equation),
-          color: fullConfig.color!,
-          graphType: 'polyline'
-        }]
-      };
-
-      // Generate the graph
-      functionPlot(plotConfig);
-
-      // Wait for rendering to complete
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      // Extract the SVG
-      const svgElement = container.querySelector('svg');
-      if (!svgElement) {
-        throw new Error('Failed to generate graph SVG');
-      }
-
-      // Add title if provided
-      if (fullConfig.title) {
-        const titleElement = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        titleElement.setAttribute('x', String(fullConfig.width! / 2));
-        titleElement.setAttribute('y', '20');
-        titleElement.setAttribute('text-anchor', 'middle');
-        titleElement.setAttribute('font-family', 'Arial, sans-serif');
-        titleElement.setAttribute('font-size', '14');
-        titleElement.setAttribute('font-weight', 'bold');
-        titleElement.textContent = fullConfig.title;
-        svgElement.insertBefore(titleElement, svgElement.firstChild);
-      }
-
-      const svgString = new XMLSerializer().serializeToString(svgElement);
+      // Generate points for the function
+      const points = this.generateFunctionPoints(config.equation, fullConfig);
       
-      // Clean up
-      document.body.removeChild(container);
-
+      // Create SVG
+      const svg = this.createSVGGraph(points, fullConfig);
+      
       return {
-        svg: svgString,
+        svg,
         equation: config.equation,
         domain: `[${fullConfig.xMin}, ${fullConfig.xMax}]`,
         range: `[${fullConfig.yMin}, ${fullConfig.yMax}]`
@@ -113,24 +60,121 @@ export class MathGraphing {
   }
 
   /**
-   * Convert mathematical notation to JavaScript function syntax
+   * Generate points for mathematical function using Math.js
    */
-  private static convertToJavaScriptFunction(equation: string): string {
-    // Handle common mathematical functions and notation
-    let jsEquation = equation
-      .replace(/\^/g, '**')  // Exponentiation
-      .replace(/sin/g, 'Math.sin')
-      .replace(/cos/g, 'Math.cos')
-      .replace(/tan/g, 'Math.tan')
-      .replace(/log/g, 'Math.log10')
-      .replace(/ln/g, 'Math.log')
-      .replace(/sqrt/g, 'Math.sqrt')
-      .replace(/abs/g, 'Math.abs')
-      .replace(/pi/g, 'Math.PI')
-      .replace(/e(?![a-zA-Z])/g, 'Math.E')  // Don't replace 'e' in words like 'exp'
-      .replace(/exp/g, 'Math.exp');
+  private static generateFunctionPoints(equation: string, config: Partial<GraphConfig>): Array<{x: number, y: number}> {
+    const points: Array<{x: number, y: number}> = [];
+    const stepSize = (config.xMax! - config.xMin!) / 200; // 200 points
+    
+    // Convert equation to evaluable expression
+    const mathExpression = MathGraphing.convertToMathJSExpression(equation);
+    
+    for (let x = config.xMin!; x <= config.xMax!; x += stepSize) {
+      try {
+        const y = evaluate(mathExpression, { x });
+        if (typeof y === 'number' && isFinite(y)) {
+          points.push({ x, y });
+        }
+      } catch (error) {
+        // Skip invalid points
+        continue;
+      }
+    }
+    
+    return points;
+  }
 
-    return jsEquation;
+  /**
+   * Create SVG graph from points
+   */
+  private static createSVGGraph(points: Array<{x: number, y: number}>, config: Partial<GraphConfig>): string {
+    const { width, height, xMin, xMax, yMin, yMax, title, grid, color } = config;
+    
+    // Calculate actual y range from data if not specified
+    let actualYMin = yMin!;
+    let actualYMax = yMax!;
+    
+    if (points.length > 0) {
+      const yValues = points.map(p => p.y);
+      const dataYMin = Math.min(...yValues);
+      const dataYMax = Math.max(...yValues);
+      
+      // Expand range slightly for better visibility
+      const yRange = dataYMax - dataYMin;
+      const padding = yRange * 0.1;
+      actualYMin = Math.min(actualYMin, dataYMin - padding);
+      actualYMax = Math.max(actualYMax, dataYMax + padding);
+    }
+    
+    // SVG coordinate conversion functions
+    const scaleX = (x: number) => ((x - xMin!) / (xMax! - xMin!)) * width!;
+    const scaleY = (y: number) => height! - ((y - actualYMin) / (actualYMax - actualYMin)) * height!;
+    
+    let svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg" style="background: white;">`;
+    
+    // Add grid if enabled
+    if (grid) {
+      svg += '<defs><pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e5e5e5" stroke-width="1"/></pattern></defs>';
+      svg += `<rect width="100%" height="100%" fill="url(#grid)" />`;
+    }
+    
+    // Add axes
+    const centerX = scaleX(0);
+    const centerY = scaleY(0);
+    
+    // X-axis
+    if (actualYMin <= 0 && actualYMax >= 0) {
+      svg += `<line x1="0" y1="${centerY}" x2="${width}" y2="${centerY}" stroke="#666" stroke-width="2"/>`;
+    }
+    
+    // Y-axis  
+    if (xMin! <= 0 && xMax! >= 0) {
+      svg += `<line x1="${centerX}" y1="0" x2="${centerX}" y2="${height}" stroke="#666" stroke-width="2"/>`;
+    }
+    
+    // Add axis labels
+    svg += `<text x="10" y="15" font-family="Arial" font-size="12" fill="#666">f(x) = ${config.equation}</text>`;
+    
+    // Plot the function
+    if (points.length > 1) {
+      let pathData = `M ${scaleX(points[0].x)} ${scaleY(points[0].y)}`;
+      
+      for (let i = 1; i < points.length; i++) {
+        pathData += ` L ${scaleX(points[i].x)} ${scaleY(points[i].y)}`;
+      }
+      
+      svg += `<path d="${pathData}" fill="none" stroke="${color}" stroke-width="2"/>`;
+    }
+    
+    // Add title
+    if (title) {
+      svg += `<text x="${width! / 2}" y="25" text-anchor="middle" font-family="Arial" font-size="14" font-weight="bold" fill="#333">${title}</text>`;
+    }
+    
+    svg += '</svg>';
+    return svg;
+  }
+
+  /**
+   * Convert mathematical notation to Math.js evaluable expression
+   */
+  private static convertToMathJSExpression(equation: string): string {
+    // Math.js handles most mathematical notation naturally
+    let mathExpression = equation.trim();
+    
+    // Handle e^x pattern specifically - convert to exp(x)
+    mathExpression = mathExpression.replace(/e\^([^+\-*/\s]+)/g, 'exp($1)');
+    mathExpression = mathExpression.replace(/e\^\(([^)]+)\)/g, 'exp($1)');
+    
+    // Math.js uses ^ for exponentiation, which it already supports
+    // Replace other common patterns
+    mathExpression = mathExpression
+      .replace(/\bln\(/g, 'log(')        // ln -> log in Math.js
+      .replace(/\bsin\b/g, 'sin')
+      .replace(/\bcos\b/g, 'cos')
+      .replace(/\btan\b/g, 'tan');
+    
+    return mathExpression;
   }
 
   /**
@@ -165,8 +209,8 @@ export class MathGraphing {
    */
   private static isValidMathExpression(expression: string): boolean {
     try {
-      // Try to parse with math.js
-      parse(expression);
+      // Try to evaluate with a test value
+      evaluate(expression, { x: 1 });
       
       // Check if it contains 'x' variable (for functions of x)
       return expression.includes('x');
