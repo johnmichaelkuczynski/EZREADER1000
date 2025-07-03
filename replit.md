@@ -126,3 +126,4 @@ Preferred communication style: Simple, everyday language.
 - June 25, 2025: Fixed chat system token limit issues with conversation history truncation and chunking across all LLM providers
 - June 25, 2025: Added document upload functionality to chat interface with automatic analysis and summarization
 - June 25, 2025: Set DeepSeek as default LLM provider for cost-effective processing while maintaining quality
+- June 26, 2025: Fixed chunk rewriting to eliminate meta-commentary - LLMs now return only processed content without explanations
