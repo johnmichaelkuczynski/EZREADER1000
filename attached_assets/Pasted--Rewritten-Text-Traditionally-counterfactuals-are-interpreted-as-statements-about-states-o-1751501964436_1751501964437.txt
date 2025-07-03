@@ -1,0 +1,20 @@
+### Rewritten Text:  
+
+Traditionally, counterfactuals are interpreted as statements about states of affairs that obtain in possible or alternative worlds. However, when analyzed this way, most counterfactuals prove to be incoherent. Under such an analysis, every counterfactual presupposes the existence of a metaphysically (not merely epistemically) possible world *w* that shares the same laws as the actual world and differs only minimally in its facts (with the differences corresponding to the antecedent and consequent of the counterfactual). Yet, as I demonstrate, this requirement often entails positing worlds whose necessary non-existence can be established through relatively straightforward reasoning.  
+
+Moreover, the possible-worlds analysis of counterfactuals suffers from a hidden circularity. On this view, counterfactuals can only be understood by invoking laws of nature—since the hypothetical world is assumed to operate under the same laws as the actual one (except in the atypical case of counter-nomic conditionals). Yet, it is widely acknowledged that the concept of a law cannot itself be defined without recourse to counterfactuals (a law, among other things, is what supports counterfactual reasoning).  
+
+I propose instead a purely epistemic analysis of counterfactuals, contending that they are, at their core, disguised probability statements. Furthermore, I argue that the relevant notion of probability can be defined strictly in terms of actual occurrences—without reference to what *would* happen or what *must* happen in a nomic sense. Consequently, my account avoids any form of circularity.  
+
+(*Subjunctive Conditionals, Misc*)  
+
+---  
+### Key Improvements:  
+1. **Clarity & Flow** – The revised version breaks down complex ideas into clearer, more logically connected sentences.  
+2. **Conciseness** – Redundant phrasing (e.g., "thus analyzed" appearing twice in quick succession) is eliminated.  
+3. **Structural Logic** – The argument progresses more smoothly:  
+   - Traditional view → Its problems (incoherence, circularity) → Proposed alternative (epistemic/probabilistic).  
+4. **Precision** – Phrases like "crypto-probability propositions" are reworded for accessibility ("disguised probability statements").  
+5. **Formal Consistency** – The LaTeX formatting (*w*) is preserved for technical terms.  
+
+The revised version maintains the original argument's rigor while improving readability and coherence.
