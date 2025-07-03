@@ -23,6 +23,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MathRenderer } from './MathRenderer';
+import { MathGraphRenderer, GraphProcessingIndicator } from '../MathGraphRenderer';
 
 interface OutputEditorProps {
   text: string;
@@ -69,12 +70,21 @@ export function OutputEditor({
   const [rewriteInstructions, setRewriteInstructions] = useState('');
   const [wordCount, setWordCount] = useState(0);
   const [showMathPreview, setShowMathPreview] = useState(true);
+  const [isProcessingGraphs, setIsProcessingGraphs] = useState(false);
   
   // Calculate word count whenever text changes
   useEffect(() => {
     const words = text && text.trim() ? text.trim().split(/\s+/).length : 0;
     setWordCount(words);
   }, [text]);
+
+  // Detect graph placeholders and set processing state
+  useEffect(() => {
+    const hasGraphPlaceholders = /\[RENDER_GRAPH:[^\]]+\]/g.test(text);
+    if (hasGraphPlaceholders && !isProcessingGraphs) {
+      setIsProcessingGraphs(true);
+    }
+  }, [text, isProcessingGraphs]);
   
   const handleSendEmail = async () => {
     const success = await onSendEmail(
@@ -104,6 +114,7 @@ export function OutputEditor({
         <div className="flex items-center gap-2">
           <h2 className="font-semibold">Output</h2>
           <Badge variant="outline" className="ml-2">{wordCount} words</Badge>
+          <GraphProcessingIndicator isProcessing={isProcessingGraphs} />
         </div>
         <div className="flex gap-1">
           <TooltipProvider>
@@ -248,6 +259,13 @@ export function OutputEditor({
             <TabsContent value="preview" className="mt-0">
               <div className="min-h-[600px] border border-gray-200 rounded-none overflow-hidden">
                 <MathRenderer content={text} className="min-h-[600px] w-full overflow-x-auto" />
+                <MathGraphRenderer 
+                  content={text} 
+                  onContentUpdate={(updatedContent) => {
+                    onTextChange(updatedContent);
+                    setIsProcessingGraphs(false);
+                  }}
+                />
               </div>
             </TabsContent>
           </Tabs>

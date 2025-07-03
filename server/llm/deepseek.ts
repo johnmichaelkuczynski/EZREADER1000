@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { MathGraphProcessor, processGraphPlaceholders } from '../services/math-graph-processor';
 
 // Initialize DeepSeek client (uses OpenAI-compatible API)
 const deepseek = new OpenAI({
@@ -9,6 +10,12 @@ const deepseek = new OpenAI({
 // PURE HOMEWORK SOLVER - NO REWRITE LOGIC
 export async function solveHomeworkWithDeepSeek(assignment: string): Promise<string> {
   try {
+    // Enhance prompt with graphing instructions if needed
+    const enhancedPrompt = MathGraphProcessor.enhancePromptForGraphing(
+      `Please solve the following assignment completely:\n\n${assignment}`,
+      assignment
+    );
+
     const response = await deepseek.chat.completions.create({
       model: "deepseek-chat",
       messages: [
@@ -18,13 +25,17 @@ export async function solveHomeworkWithDeepSeek(assignment: string): Promise<str
         },
         { 
           role: "user", 
-          content: `Please solve the following assignment completely:\n\n${assignment}`
+          content: enhancedPrompt
         }
       ],
       max_tokens: 4000,
       temperature: 0.7,
     });
-    return response.choices[0]?.message?.content || '';
+    
+    const result = response.choices[0]?.message?.content || '';
+    
+    // Process graph placeholders in the result
+    return processGraphPlaceholders(result);
   } catch (error: any) {
     console.error("DeepSeek homework solving error:", error);
     throw new Error(`Failed to solve homework with DeepSeek: ${error.message}`);
