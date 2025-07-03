@@ -2,11 +2,15 @@
  * Simple export service without Puppeteer dependencies
  * Creates clean HTML, LaTeX, and other formats for download
  */
+import { stripMarkdown } from '../utils/markdown-stripper';
 
 /**
  * Export content as HTML with embedded MathJax
  */
 export async function exportToHTML(content: string, filename: string): Promise<string> {
+  // Strip markdown formatting for clean HTML output
+  const cleanContent = stripMarkdown(content);
+  
   return `
 <!DOCTYPE html>
 <html>
@@ -49,7 +53,7 @@ export async function exportToHTML(content: string, filename: string): Promise<s
 </head>
 <body>
     <div class="math-content">
-        ${content.replace(/\n/g, '<br>')}
+        ${cleanContent.replace(/\n/g, '<br>')}
     </div>
 </body>
 </html>`;
@@ -60,6 +64,8 @@ export async function exportToHTML(content: string, filename: string): Promise<s
  */
 export async function exportToLaTeX(content: string, filename: string): Promise<string> {
   const documentTitle = filename.replace(/\.[^/.]+$/, "");
+  // Strip markdown formatting for clean LaTeX output
+  const cleanContent = stripMarkdown(content);
   
   return `\\documentclass{article}
 \\usepackage[utf8]{inputenc}
@@ -77,7 +83,7 @@ export async function exportToLaTeX(content: string, filename: string): Promise<
 
 \\maketitle
 
-${content}
+${cleanContent}
 
 \\end{document}`;
 }

@@ -3,6 +3,44 @@ import { jsPDF } from 'jspdf';
 import { Document, Packer, Paragraph, TextRun } from 'docx';
 import { saveAs } from 'file-saver';
 
+// Utility function to strip markdown syntax from text (client-side version)
+function stripMarkdown(text: string): string {
+  if (!text) return '';
+  
+  // Replace headers (### Header)
+  text = text.replace(/#{1,6}\s+/g, '');
+  
+  // Replace bold/italic markers
+  text = text.replace(/(\*\*|\*|__|_)/g, '');
+  
+  // Replace bullet points
+  text = text.replace(/^\s*[\*\-\+]\s+/gm, '• ');
+  
+  // Replace numbered lists
+  text = text.replace(/^\s*\d+\.\s+/gm, '');
+  
+  // Replace blockquotes
+  text = text.replace(/^\s*>\s+/gm, '');
+  
+  // Replace code blocks
+  text = text.replace(/```[\s\S]*?```/g, '');
+  text = text.replace(/`([^`]+)`/g, '$1');
+  
+  // Replace horizontal rules
+  text = text.replace(/^\s*(\*{3,}|_{3,}|-{3,})\s*$/gm, '');
+  
+  // Replace links
+  text = text.replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1');
+  
+  // Replace images
+  text = text.replace(/!\[([^\]]+)\]\([^\)]+\)/g, '');
+  
+  // Clean up multiple consecutive line breaks
+  text = text.replace(/\n{3,}/g, '\n\n');
+  
+  return text;
+}
+
 // Removed PDF.js dependency to use a simpler approach for PDF extraction
 
 // Extract text from a file (PDF or DOCX)
@@ -112,12 +150,15 @@ export function exportToPDF(text: string, filename = 'document.pdf'): void {
 // Export text as DOCX using proper Word document structure
 export async function exportToDOCX(text: string, filename = 'document.docx'): Promise<void> {
   try {
+    // Strip markdown formatting for clean DOCX output
+    const cleanText = stripMarkdown(text);
+    
     // Create proper Word document structure
     const doc = new Document({
       sections: [
         {
           properties: {},
-          children: text.split('\n').map(line => 
+          children: cleanText.split('\n').map(line => 
             new Paragraph({
               children: [new TextRun(line || ' ')], // Use TextRun for proper formatting
             })

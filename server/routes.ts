@@ -547,6 +547,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Content is required' });
       }
       
+      // Strip markdown formatting from content for clean PDF output
+      const cleanContent = stripMarkdown(content);
+      
       // Return HTML content for client-side PDF generation via print dialog
       const htmlContent = `
 <!DOCTYPE html>
@@ -618,7 +621,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 </head>
 <body>
     <div class="math-content">
-        ${content.replace(/\n/g, '<br>')}
+        ${cleanContent.replace(/\n/g, '<br>')}
     </div>
     
     <script>
