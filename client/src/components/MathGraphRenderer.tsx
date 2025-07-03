@@ -67,6 +67,11 @@ export function MathGraphRenderer({ content, onContentUpdate }: MathGraphRendere
         // Create a unique ID for this graph
         const graphId = `graph_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         
+        // Convert equation to LaTeX for proper math rendering
+        const latexEquation = equation.trim()
+          .replace(/e\^([^+\-*/\s()]+)/g, 'e^{$1}')
+          .replace(/\^([^{}\s]+)/g, '^{$1}');
+        
         // Replace placeholder with graph
         const graphHtml = `
 <div class="math-graph" style="margin: 20px 0; text-align: center; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; background: #f8fafc;">
@@ -74,7 +79,7 @@ export function MathGraphRenderer({ content, onContentUpdate }: MathGraphRendere
     ${graphResult.svg}
   </div>
   <p style="margin-top: 12px; font-size: 14px; color: #64748b;">
-    <strong>Equation:</strong> f(x) = ${equation.trim()}<br/>
+    <strong>Equation:</strong> $$f(x) = ${latexEquation}$$<br/>
     <strong>Domain:</strong> ${graphResult.domain} | <strong>Range:</strong> ${graphResult.range || 'Calculated from function'}
   </p>
 </div>`;

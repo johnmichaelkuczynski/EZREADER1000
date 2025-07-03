@@ -132,8 +132,37 @@ export class MathGraphing {
       svg += `<line x1="${centerX}" y1="0" x2="${centerX}" y2="${height}" stroke="#666" stroke-width="2"/>`;
     }
     
-    // Add axis labels
-    svg += `<text x="10" y="15" font-family="Arial" font-size="12" fill="#666">f(x) = ${config.equation}</text>`;
+    // Add axis labels (clean, no math notation in SVG)
+    svg += `<text x="10" y="15" font-family="Arial" font-size="12" fill="#666">Function Graph</text>`;
+    
+    // Add axis markers
+    const numTicks = 5;
+    const xStep = (xMax! - xMin!) / numTicks;
+    const yStep = (actualYMax - actualYMin) / numTicks;
+    
+    // X-axis markers
+    for (let i = 0; i <= numTicks; i++) {
+      const x = xMin! + i * xStep;
+      const screenX = scaleX(x);
+      if (actualYMin <= 0 && actualYMax >= 0) {
+        svg += `<line x1="${screenX}" y1="${centerY - 5}" x2="${screenX}" y2="${centerY + 5}" stroke="#666" stroke-width="1"/>`;
+        if (Math.abs(x) > 0.01) {
+          svg += `<text x="${screenX}" y="${centerY + 20}" text-anchor="middle" font-family="Arial" font-size="10" fill="#666">${x.toFixed(1)}</text>`;
+        }
+      }
+    }
+    
+    // Y-axis markers  
+    for (let i = 0; i <= numTicks; i++) {
+      const y = actualYMin + i * yStep;
+      const screenY = scaleY(y);
+      if (xMin! <= 0 && xMax! >= 0) {
+        svg += `<line x1="${centerX - 5}" y1="${screenY}" x2="${centerX + 5}" y2="${screenY}" stroke="#666" stroke-width="1"/>`;
+        if (Math.abs(y) > 0.01) {
+          svg += `<text x="${centerX - 20}" y="${screenY + 3}" text-anchor="middle" font-family="Arial" font-size="10" fill="#666">${y.toFixed(1)}</text>`;
+        }
+      }
+    }
     
     // Plot the function
     if (points.length > 1) {
@@ -162,9 +191,16 @@ export class MathGraphing {
     // Math.js handles most mathematical notation naturally
     let mathExpression = equation.trim();
     
-    // Handle e^x pattern specifically - convert to exp(x)
-    mathExpression = mathExpression.replace(/e\^([^+\-*/\s]+)/g, 'exp($1)');
-    mathExpression = mathExpression.replace(/e\^\(([^)]+)\)/g, 'exp($1)');
+    console.log('Converting equation:', equation, 'to math expression');
+    
+    // Handle e^x pattern specifically
+    if (mathExpression === 'e^x') {
+      mathExpression = 'exp(x)';
+    } else {
+      // Handle more complex e^x patterns
+      mathExpression = mathExpression.replace(/e\^([^+\-*/\s()]+)/g, 'exp($1)');
+      mathExpression = mathExpression.replace(/e\^\(([^)]+)\)/g, 'exp($1)');
+    }
     
     // Math.js uses ^ for exponentiation, which it already supports
     // Replace other common patterns
@@ -174,7 +210,26 @@ export class MathGraphing {
       .replace(/\bcos\b/g, 'cos')
       .replace(/\btan\b/g, 'tan');
     
+    console.log('Converted to:', mathExpression);
     return mathExpression;
+  }
+
+  /**
+   * Convert mathematical notation to LaTeX format for proper rendering
+   */
+  private static convertToLatexNotation(equation: string): string {
+    let latexEquation = equation.trim();
+    
+    // Convert common patterns to LaTeX
+    latexEquation = latexEquation
+      .replace(/e\^([^+\-*/\s()]+)/g, 'e^{$1}')     // e^x -> e^{x}
+      .replace(/e\^\(([^)]+)\)/g, 'e^{$1}')         // e^(expression) -> e^{expression}
+      .replace(/\^([^{}\s]+)/g, '^{$1}')            // x^2 -> x^{2}
+      .replace(/sqrt\(([^)]+)\)/g, '\\sqrt{$1}')    // sqrt(x) -> \sqrt{x}
+      .replace(/\bpi\b/g, '\\pi')                   // pi -> \pi
+      .replace(/\binfty\b/g, '\\infty');            // infty -> \infty
+    
+    return latexEquation;
   }
 
   /**
