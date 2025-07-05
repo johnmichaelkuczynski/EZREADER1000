@@ -6,7 +6,7 @@ const app = express();
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 
-// Add CORS headers and iframe embedding support
+// FORCE iframe embedding support - override any other middleware
 app.use((req, res, next) => {
   // Allow all origins for CORS
   res.header('Access-Control-Allow-Origin', '*');
@@ -14,18 +14,11 @@ app.use((req, res, next) => {
   res.header('Access-Control-Allow-Headers', '*');
   res.header('Access-Control-Allow-Credentials', 'false');
   
-  // Completely remove any frame restrictions - ensure no X-Frame-Options header
+  // FORCE remove X-Frame-Options header completely
   res.removeHeader('X-Frame-Options');
   
-  // Ultra-permissive CSP specifically for Wix iframe embedding
+  // Set CSP to allow iframe embedding from any domain
   res.header('Content-Security-Policy', "frame-ancestors *");
-  
-  // Additional headers for maximum compatibility
-  res.header('X-Content-Type-Options', 'nosniff');
-  res.header('Referrer-Policy', 'unsafe-url');
-  res.header('Cross-Origin-Embedder-Policy', 'unsafe-none');
-  res.header('Cross-Origin-Opener-Policy', 'unsafe-none');
-  res.header('Cross-Origin-Resource-Policy', 'cross-origin');
   
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
@@ -33,6 +26,26 @@ app.use((req, res, next) => {
   } else {
     next();
   }
+});
+
+// Add final middleware to force remove any X-Frame-Options that might be added later
+app.use((req, res, next) => {
+  const originalEnd = res.end;
+  const originalSend = res.send;
+  
+  res.end = function(chunk, encoding) {
+    res.removeHeader('X-Frame-Options');
+    res.removeHeader('x-frame-options');
+    return originalEnd.call(this, chunk, encoding);
+  };
+  
+  res.send = function(body) {
+    res.removeHeader('X-Frame-Options');
+    res.removeHeader('x-frame-options');
+    return originalSend.call(this, body);
+  };
+  
+  next();
 });
 
 app.use((req, res, next) => {
