@@ -6,26 +6,6 @@ const app = express();
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 
-// Enable iframe embedding while preserving app functionality
-app.use((req, res, next) => {
-  // CORS headers for cross-origin requests
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-  res.header('Access-Control-Allow-Headers', '*');
-  res.header('Access-Control-Allow-Credentials', 'false');
-  
-  // Remove only iframe blocking headers
-  res.removeHeader('X-Frame-Options');
-  res.removeHeader('x-frame-options');
-  
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    res.sendStatus(200);
-  } else {
-    next();
-  }
-});
-
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
