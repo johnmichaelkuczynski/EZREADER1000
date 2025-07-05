@@ -6,7 +6,7 @@ const app = express();
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 
-// Enable full iframe embedding - remove all blocking headers
+// Enable iframe embedding while preserving app functionality
 app.use((req, res, next) => {
   // CORS headers for cross-origin requests
   res.header('Access-Control-Allow-Origin', '*');
@@ -14,11 +14,9 @@ app.use((req, res, next) => {
   res.header('Access-Control-Allow-Headers', '*');
   res.header('Access-Control-Allow-Credentials', 'false');
   
-  // COMPLETELY remove any iframe blocking headers
+  // Remove only iframe blocking headers
   res.removeHeader('X-Frame-Options');
   res.removeHeader('x-frame-options');
-  res.removeHeader('Content-Security-Policy');
-  res.removeHeader('content-security-policy');
   
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
@@ -26,32 +24,6 @@ app.use((req, res, next) => {
   } else {
     next();
   }
-});
-
-// Final safety net to ensure no iframe blocking headers are sent
-app.use((req, res, next) => {
-  const originalEnd = res.end;
-  const originalSend = res.send;
-  
-  res.end = function(...args: any[]) {
-    // Remove all possible iframe blocking headers
-    res.removeHeader('X-Frame-Options');
-    res.removeHeader('x-frame-options');
-    res.removeHeader('Content-Security-Policy');
-    res.removeHeader('content-security-policy');
-    return originalEnd.apply(this, args);
-  };
-  
-  res.send = function(body: any) {
-    // Remove all possible iframe blocking headers
-    res.removeHeader('X-Frame-Options');
-    res.removeHeader('x-frame-options');
-    res.removeHeader('Content-Security-Policy');
-    res.removeHeader('content-security-policy');
-    return originalSend.call(this, body);
-  };
-  
-  next();
 });
 
 app.use((req, res, next) => {
