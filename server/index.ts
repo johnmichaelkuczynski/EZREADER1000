@@ -10,12 +10,18 @@ app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 app.use((req, res, next) => {
   // Allow all origins for CORS
   res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control, Pragma');
+  res.header('Access-Control-Allow-Credentials', 'true');
   
-  // Allow iframe embedding from any domain (remove X-Frame-Options restrictions)
-  res.header('X-Frame-Options', 'ALLOWALL');
-  res.header('Content-Security-Policy', "frame-ancestors *");
+  // Allow iframe embedding from any domain
+  res.removeHeader('X-Frame-Options');
+  res.header('Content-Security-Policy', "frame-ancestors *; default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: *; connect-src *");
+  
+  // Additional headers for iframe compatibility
+  res.header('X-Content-Type-Options', 'nosniff');
+  res.header('Referrer-Policy', 'no-referrer-when-downgrade');
+  res.header('Permissions-Policy', 'camera=*, microphone=*, geolocation=*');
   
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
