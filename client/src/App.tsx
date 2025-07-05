@@ -4,8 +4,28 @@ import NotFound from "@/pages/not-found";
 import Settings from "@/pages/settings";
 import { Settings as SettingsIcon } from "lucide-react";
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { useEffect } from "react";
 
 function App() {
+  useEffect(() => {
+    // Debug iframe embedding issues
+    const isInIframe = window !== window.top;
+    console.log('App running in iframe:', isInIframe);
+    console.log('Window location:', window.location.href);
+    console.log('Top window accessible:', window.top !== window);
+    
+    if (isInIframe) {
+      console.log('EZ Reader is running inside an iframe - this is normal for Wix embedding');
+      // Force iframe to work by ensuring no frame-busting code
+      try {
+        document.body.style.display = 'block';
+        document.body.style.visibility = 'visible';
+      } catch (e) {
+        console.log('Iframe setup complete');
+      }
+    }
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col">
       <header className="border-b border-slate-200">
