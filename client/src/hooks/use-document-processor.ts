@@ -775,6 +775,8 @@ ${inputExcerpt ? `INPUT DOCUMENT:\n${inputExcerpt}\n\n` : ''}${outputExcerpt ? `
                 instructions: rewriteInstructions,
                 contentSource,
                 useContentSource,
+                styleSource,
+                useStyleSource,
                 llmProvider
               }),
             });
@@ -831,6 +833,8 @@ ${inputExcerpt ? `INPUT DOCUMENT:\n${inputExcerpt}\n\n` : ''}${outputExcerpt ? `
             instructions: `Generate ${additionalChunks} new section(s) based on the provided document`,
             contentSource,
             useContentSource,
+            styleSource,
+            useStyleSource,
             llmProvider
           }),
         });
