@@ -6,19 +6,19 @@ const app = express();
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 
-// FORCE iframe embedding support - override any other middleware
+// Enable full iframe embedding - remove all blocking headers
 app.use((req, res, next) => {
-  // Allow all origins for CORS
+  // CORS headers for cross-origin requests
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
   res.header('Access-Control-Allow-Headers', '*');
   res.header('Access-Control-Allow-Credentials', 'false');
   
-  // FORCE remove X-Frame-Options header completely
+  // COMPLETELY remove any iframe blocking headers
   res.removeHeader('X-Frame-Options');
-  
-  // Set CSP to allow iframe embedding from any domain
-  res.header('Content-Security-Policy', "frame-ancestors *");
+  res.removeHeader('x-frame-options');
+  res.removeHeader('Content-Security-Policy');
+  res.removeHeader('content-security-policy');
   
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
@@ -28,20 +28,26 @@ app.use((req, res, next) => {
   }
 });
 
-// Add final middleware to force remove any X-Frame-Options that might be added later
+// Final safety net to ensure no iframe blocking headers are sent
 app.use((req, res, next) => {
   const originalEnd = res.end;
   const originalSend = res.send;
   
-  res.end = function(chunk, encoding) {
+  res.end = function(...args: any[]) {
+    // Remove all possible iframe blocking headers
     res.removeHeader('X-Frame-Options');
     res.removeHeader('x-frame-options');
-    return originalEnd.call(this, chunk, encoding);
+    res.removeHeader('Content-Security-Policy');
+    res.removeHeader('content-security-policy');
+    return originalEnd.apply(this, args);
   };
   
-  res.send = function(body) {
+  res.send = function(body: any) {
+    // Remove all possible iframe blocking headers
     res.removeHeader('X-Frame-Options');
     res.removeHeader('x-frame-options');
+    res.removeHeader('Content-Security-Policy');
+    res.removeHeader('content-security-policy');
     return originalSend.call(this, body);
   };
   
