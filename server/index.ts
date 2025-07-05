@@ -11,17 +11,21 @@ app.use((req, res, next) => {
   // Allow all origins for CORS
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control, Pragma');
-  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Headers', '*');
+  res.header('Access-Control-Allow-Credentials', 'false');
   
-  // Allow iframe embedding from any domain
+  // Completely remove any frame restrictions - ensure no X-Frame-Options header
   res.removeHeader('X-Frame-Options');
-  res.header('Content-Security-Policy', "frame-ancestors *; default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: *; connect-src *");
   
-  // Additional headers for iframe compatibility
+  // Ultra-permissive CSP specifically for Wix iframe embedding
+  res.header('Content-Security-Policy', "frame-ancestors *");
+  
+  // Additional headers for maximum compatibility
   res.header('X-Content-Type-Options', 'nosniff');
-  res.header('Referrer-Policy', 'no-referrer-when-downgrade');
-  res.header('Permissions-Policy', 'camera=*, microphone=*, geolocation=*');
+  res.header('Referrer-Policy', 'unsafe-url');
+  res.header('Cross-Origin-Embedder-Policy', 'unsafe-none');
+  res.header('Cross-Origin-Opener-Policy', 'unsafe-none');
+  res.header('Cross-Origin-Resource-Policy', 'cross-origin');
   
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
