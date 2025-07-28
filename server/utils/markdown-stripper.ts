@@ -37,3 +37,53 @@ export function stripMarkdown(text: string): string {
   
   return text;
 }
+
+/**
+ * Strip markdown while preserving mathematical notation
+ */
+export function preserveMathAndStripMarkdown(text: string): string {
+  if (!text) return '';
+  
+  // First, protect math expressions by temporarily replacing them
+  const mathExpressions: string[] = [];
+  const mathPlaceholder = '___MATH_PLACEHOLDER_';
+  
+  // Protect inline math \( ... \)
+  text = text.replace(/\\\((.*?)\\\)/g, (match, content) => {
+    const index = mathExpressions.length;
+    mathExpressions.push(`\\(${content}\\)`);
+    return `${mathPlaceholder}${index}___`;
+  });
+  
+  // Protect display math \[ ... \]
+  text = text.replace(/\\\[([\s\S]*?)\\\]/g, (match, content) => {
+    const index = mathExpressions.length;
+    mathExpressions.push(`\\[${content}\\]`);
+    return `${mathPlaceholder}${index}___`;
+  });
+  
+  // Protect dollar sign math $ ... $
+  text = text.replace(/\$([^$]+)\$/g, (match, content) => {
+    const index = mathExpressions.length;
+    mathExpressions.push(`\\(${content}\\)`); // Convert to \( \) format for consistency
+    return `${mathPlaceholder}${index}___`;
+  });
+  
+  // Protect double dollar sign math $$ ... $$
+  text = text.replace(/\$\$([\s\S]*?)\$\$/g, (match, content) => {
+    const index = mathExpressions.length;
+    mathExpressions.push(`\\[${content}\\]`); // Convert to \[ \] format for consistency
+    return `${mathPlaceholder}${index}___`;
+  });
+  
+  // Now strip markdown from the protected text
+  text = stripMarkdown(text);
+  
+  // Restore math expressions
+  mathExpressions.forEach((mathExpr, index) => {
+    const placeholder = `${mathPlaceholder}${index}___`;
+    text = text.replace(placeholder, mathExpr);
+  });
+  
+  return text;
+}

@@ -11,7 +11,7 @@ import {
   sendEmailSchema,
   chatRequestSchema 
 } from "@shared/schema";
-import { stripMarkdown } from "./utils/markdown-stripper";
+import { stripMarkdown, preserveMathAndStripMarkdown } from "./utils/markdown-stripper";
 import { processTextWithOpenAI, detectAIWithOpenAI, transcribeAudio, solveHomeworkWithOpenAI, processChatWithOpenAI } from "./llm/openai";
 import { processTextWithAnthropic, detectAIWithAnthropic, solveHomeworkWithAnthropic, processChatWithAnthropic } from "./llm/anthropic";
 import { processTextWithPerplexity, detectAIWithPerplexity, solveHomeworkWithPerplexity, processChatWithPerplexity } from "./llm/perplexity";
@@ -547,8 +547,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Content is required' });
       }
       
-      // Strip markdown formatting from content for clean PDF output
-      const cleanContent = stripMarkdown(content);
+      // Preserve math content but clean up markdown formatting
+      const cleanContent = preserveMathAndStripMarkdown(content);
       
       // Return HTML content for client-side PDF generation via print dialog
       const htmlContent = `
