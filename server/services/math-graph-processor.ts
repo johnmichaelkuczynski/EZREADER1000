@@ -13,38 +13,12 @@ export interface GraphInstruction {
 
 export class MathGraphProcessor {
   /**
-   * Process text to identify mathematical functions and add graph instructions
+   * Process text to identify mathematical functions and add graph instructions (DISABLED)
    */
   static processTextForGraphs(text: string): string {
-    // Look for mathematical functions that should be graphed
-    const graphInstructions = this.extractGraphInstructions(text);
-    
-    if (graphInstructions.length === 0) {
-      return text;
-    }
-
-    let processedText = text;
-
-    // Add graph generation instructions to the text
-    graphInstructions.forEach((instruction, index) => {
-      const graphPlaceholder = `\n\n[GRAPH_${index + 1}:${instruction.equation}:${instruction.type}]\n\n`;
-      
-      // Find the equation in the text and add the graph instruction after it
-      const equationPatterns = [
-        new RegExp(`(f\\(x\\)\\s*=\\s*${this.escapeRegex(instruction.equation)})`, 'gi'),
-        new RegExp(`(y\\s*=\\s*${this.escapeRegex(instruction.equation)})`, 'gi'),
-        new RegExp(`(g\\(x\\)\\s*=\\s*${this.escapeRegex(instruction.equation)})`, 'gi')
-      ];
-
-      for (const pattern of equationPatterns) {
-        if (pattern.test(processedText)) {
-          processedText = processedText.replace(pattern, `$1${graphPlaceholder}`);
-          break;
-        }
-      }
-    });
-
-    return processedText;
+    // DISABLED: This was causing inappropriate graph generation in non-math documents
+    // Return original text without processing
+    return text;
   }
 
   /**
@@ -140,52 +114,20 @@ export class MathGraphProcessor {
   }
 
   /**
-   * Add graph generation instructions to LLM prompt
+   * Add graph generation instructions to LLM prompt (DISABLED)
    */
   static enhancePromptForGraphing(originalPrompt: string, text: string): string {
-    // Always check for mathematical content that might need graphing
-    const hasMathContent = /f\(x\)|y\s*=|graph|plot|function|equation|derivative|integral/i.test(text) || 
-                          /x\^|e\^|sin|cos|tan|log|ln|\+|\-|\*|\//.test(text);
-    
-    if (!hasMathContent) {
-      return originalPrompt;
-    }
-
-    const graphingInstruction = `
-
-CRITICAL GRAPHING REQUIREMENT:
-This problem involves mathematical functions that MUST be graphed. You are REQUIRED to include graph placeholders.
-
-MANDATORY FORMAT FOR ALL MATHEMATICAL FUNCTIONS:
-1. Whenever you write ANY equation with f(x) = [expression] or y = [expression], you MUST immediately add the graph placeholder on the next line
-2. Use EXACTLY this format: [GRAPH:expression]
-3. NO exceptions - every mathematical function must have a graph
-
-EXAMPLES (follow these exactly):
-If you write: "The function f(x) = e^x"
-You MUST add: [GRAPH:e^x]
-
-If you write: "We have y = x^2 + 3x - 2"  
-You MUST add: [GRAPH:x^2 + 3x - 2]
-
-If you write: "The derivative is f'(x) = 2x + 3"
-You MUST add: [GRAPH:2x + 3]
-
-HOMEWORK GRAPHING REQUIREMENT:
-This is homework requiring graphs. Failure to include [GRAPH:expression] placeholders will result in incomplete work. Include graph placeholders for EVERY mathematical function you mention.`;
-
-    return originalPrompt + graphingInstruction;
+    // DISABLED: This was causing inappropriate graph generation in non-math documents
+    // Only return original prompt without adding graphing instructions
+    return originalPrompt;
   }
 }
 
 /**
- * Post-process LLM output to replace graph placeholders with actual graph instructions
+ * Post-process LLM output to replace graph placeholders with actual graph instructions (DISABLED)
  */
 export function processGraphPlaceholders(text: string): string {
-  // Replace [GRAPH:equation] placeholders with instructions for client-side rendering
-  const graphPattern = /\[GRAPH:([^\]]+)\]/g;
-  
-  return text.replace(graphPattern, (match, equation) => {
-    return `\n\n**Graph:**\n[RENDER_GRAPH:${equation.trim()}]\n\n`;
-  });
+  // DISABLED: This was causing inappropriate graph generation in non-math documents
+  // Return original text without processing graph placeholders
+  return text;
 }

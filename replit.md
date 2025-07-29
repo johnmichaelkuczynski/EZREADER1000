@@ -127,3 +127,4 @@ Preferred communication style: Simple, everyday language.
 - June 25, 2025: Added document upload functionality to chat interface with automatic analysis and summarization
 - June 25, 2025: Set DeepSeek as default LLM provider for cost-effective processing while maintaining quality
 - June 26, 2025: Fixed chunk rewriting to eliminate meta-commentary - LLMs now return only processed content without explanations
+- January 29, 2025: CRITICAL FIX - Disabled automatic mathematical graph generation that was incorrectly adding graphs to non-mathematical documents like law tests
