@@ -107,13 +107,18 @@ export function useDocumentProcessor() {
     llmProvider: LLMProvider;
     examMode?: boolean;
   }) => {
+    console.log('processText called with options:', options);
     const response = await apiRequest('POST', '/api/process-text', options);
+    console.log('API response received:', response.status);
     const data = await response.json();
+    console.log('Response data:', data);
     return data.result;
   }, []);
 
   // Process document function
   const processDocument = useCallback(async (instructions: string, forceHomeworkMode?: boolean) => {
+    console.log('processDocument called with:', { instructions, forceHomeworkMode, inputText: inputText.slice(0, 100) + '...' });
+    
     // NEVER prevent processing - always allow the button to work
     // If no input text, we'll still process with a helpful message
     if (!inputText.trim()) {
