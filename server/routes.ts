@@ -23,6 +23,56 @@ import { extractTextFromPDF } from "./services/pdf-processor";
 import { extractTextFromImageWithMathpix } from "./services/mathpix";
 import { processMathPDFWithAzure, processMathImageWithAzure, enhanceMathFormatting } from "./services/azure-math";
 
+// Function to properly process math expressions for PDF export
+function processMathForPDF(text: string): string {
+  let processed = text;
+  
+  // Strip markdown but preserve the raw math content structure
+  processed = preserveMathAndStripMarkdown(processed);
+  
+  // Now wrap common LaTeX patterns in proper delimiters for MathJax
+  
+  // Handle mathematical arrows and symbols
+  processed = processed.replace(/\\rightarrow/g, '\\(\\rightarrow\\)');
+  processed = processed.replace(/\\leftarrow/g, '\\(\\leftarrow\\)');
+  
+  // Handle mathematical sets notation
+  processed = processed.replace(/\\mathbb\{([^}]+)\}/g, '\\(\\mathbb{$1}\\)');
+  processed = processed.replace(/\\mathcal\{([^}]+)\}/g, '\\(\\mathcal{$1}\\)');
+  processed = processed.replace(/\\mathfrak\{([^}]+)\}/g, '\\(\\mathfrak{$1}\\)');
+  
+  // Handle function notation like (C, A) → R
+  processed = processed.replace(/\(([^)]+)\)\s*\\rightarrow\s*\\mathbb\{([^}]+)\}/g, '\\(($1) \\rightarrow \\mathbb{$2}\\)');
+  processed = processed.replace(/\(([^)]+)\)\s*\\rightarrow\s*([A-Z])/g, '\\(($1) \\rightarrow $2\\)');
+  
+  // Handle fractions
+  processed = processed.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '\\(\\frac{$1}{$2}\\)');
+  
+  // Handle sum notation
+  processed = processed.replace(/\\sum_\{([^}]+)\}\^\{([^}]+)\}/g, '\\(\\sum_{$1}^{$2}\\)');
+  processed = processed.replace(/\\sum_\{([^}]+)\}/g, '\\(\\sum_{$1}\\)');
+  
+  // Handle limit notation
+  processed = processed.replace(/\\lim_\{([^}]+)\}/g, '\\(\\lim_{$1}\\)');
+  
+  // Handle Greek letters and other symbols
+  const symbols = ['alpha', 'beta', 'gamma', 'delta', 'epsilon', 'theta', 'lambda', 'mu', 'nu', 'pi', 'rho', 'sigma', 'tau', 'phi', 'omega', 'infty'];
+  symbols.forEach(symbol => {
+    const regex = new RegExp(`\\\\${symbol}(?![a-zA-Z])`, 'g');
+    processed = processed.replace(regex, `\\(\\${symbol}\\)`);
+  });
+  
+  // Handle subscripts and superscripts
+  processed = processed.replace(/([a-zA-Z])_\{([^}]+)\}/g, '\\($1_{$2}\\)');
+  processed = processed.replace(/([a-zA-Z])\^\{([^}]+)\}/g, '\\($1^{$2}\\)');
+  processed = processed.replace(/([a-zA-Z])_([0-9]+)/g, '\\($1_{$2}\\)');
+  processed = processed.replace(/([a-zA-Z])\^([0-9]+)/g, '\\($1^{$2}\\)');
+  
+  // Clean up any double-wrapped expressions
+  processed = processed.replace(/\\(\\((.+?)\\)\\)/g, '\\($2\\)');
+  
+  return processed;
+}
 
 // Configure multer storage
 const upload = multer({
@@ -547,8 +597,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Content is required' });
       }
       
-      // Preserve math content but clean up markdown formatting
-      const cleanContent = preserveMathAndStripMarkdown(content);
+      // Process content to properly wrap math expressions for MathJax
+      const processedContent = processMathForPDF(content);
       
       // Return HTML content for client-side PDF generation via print dialog
       const htmlContent = `
@@ -621,7 +671,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 </head>
 <body>
     <div class="math-content">
-        ${cleanContent.replace(/\n/g, '<br>')}
+        ${processedContent.replace(/\n/g, '<br>')}
     </div>
     
     <script>
