@@ -76,6 +76,29 @@ export function preserveMathAndStripMarkdown(text: string): string {
     return `${mathPlaceholder}${index}ZZZZ`;
   });
   
+  // Handle standalone LaTeX expressions that aren't wrapped yet
+  // Look for common mathematical expressions and wrap them
+  
+  // Handle function notation like (C, A) → R or f: A → B
+  text = text.replace(/\(([^)]+)\)\s*\\rightarrow\s*\\mathbb\{([^}]+)\}/g, (match) => {
+    const index = mathExpressions.length;
+    mathExpressions.push(`\\(${match}\\)`);
+    return `${mathPlaceholder}${index}ZZZZ`;
+  });
+  
+  // Handle mathematical symbols that aren't wrapped
+  text = text.replace(/\\rightarrow/g, (match) => {
+    const index = mathExpressions.length;
+    mathExpressions.push(`\\(${match}\\)`);
+    return `${mathPlaceholder}${index}ZZZZ`;
+  });
+  
+  text = text.replace(/\\mathbb\{([^}]+)\}/g, (match) => {
+    const index = mathExpressions.length;
+    mathExpressions.push(`\\(${match}\\)`);
+    return `${mathPlaceholder}${index}ZZZZ`;
+  });
+  
   // Now strip markdown from the protected text
   text = stripMarkdown(text);
   
