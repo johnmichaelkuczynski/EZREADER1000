@@ -644,10 +644,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 }).then(function() {
                     console.log('MathJax rendering complete, triggering print');
                     document.body.setAttribute('data-math-ready', 'true');
-                    // Give extra time for rendering to complete
+                    // Give extra time for rendering to complete and verify rendering
                     setTimeout(() => {
+                        // Check if math elements are actually rendered
+                        const mathElements = document.querySelectorAll('mjx-container');
+                        console.log('Math elements found before print:', mathElements.length);
+                        
+                        // Add visual indicator that math is ready
+                        if (mathElements.length > 0) {
+                            document.body.style.backgroundColor = '#f0fff0'; // light green indicates math rendered
+                        } else {
+                            document.body.style.backgroundColor = '#fff0f0'; // light red indicates no math rendered
+                        }
+                        
                         window.print();
-                    }, 2000);
+                    }, 4000); // Increased to 4 seconds
                 }).catch(function(error) {
                     console.error('MathJax error:', error);
                     // Still try to print even if MathJax fails
