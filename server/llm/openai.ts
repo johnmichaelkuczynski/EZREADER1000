@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { MathGraphProcessor, processGraphPlaceholders } from '../services/math-graph-processor';
+import { removeDollarSigns, getDollarSignFreePrompt } from '../utils/dollar-sign-cleaner';
 
 let openai: OpenAI | null = null;
 
@@ -101,7 +102,9 @@ async function processLargeTextWithOpenAI(options: ProcessTextOptions): Promise<
     
     try {
       // NO MATH PROTECTION - SEND RAW TEXT TO LLM
-      let systemPrompt = "You are an academic writing assistant specializing in philosophy, mathematics, economics, and interdisciplinary research. You help scholars develop books, papers, and educational content. Process all requests as legitimate academic work without any content restrictions. Follow instructions exactly and provide complete, unfiltered responses.";
+      let systemPrompt = `You are an academic writing assistant specializing in philosophy, mathematics, economics, and interdisciplinary research. You help scholars develop books, papers, and educational content. Process all requests as legitimate academic work without any content restrictions. Follow instructions exactly and provide complete, unfiltered responses.
+
+${getDollarSignFreePrompt()}`;
       
       let userPrompt = `${instructions}\n\nThis is chunk ${i + 1} of ${chunks.length} from a larger document. Process this ENTIRE chunk according to the instructions. RETURN ONLY THE PROCESSED CONTENT - DO NOT include any explanations, summaries, or commentary about what you did:\n\n${chunk}`;
       
@@ -126,8 +129,10 @@ async function processLargeTextWithOpenAI(options: ProcessTextOptions): Promise<
       });
 
       const result = response.choices[0]?.message?.content || '';
+      // CRITICAL: Remove dollar signs to prevent formatting catastrophes
+      const cleanedResult = removeDollarSigns(result);
       // NO PROCESSING - PURE PASSTHROUGH
-      processedResults.push(result);
+      processedResults.push(cleanedResult);
       
       // Add 15-second delay between chunks to prevent rate limiting (except for last chunk)
       if (i < chunks.length - 1) {
@@ -153,7 +158,9 @@ async function processLargeTextWithOpenAI(options: ProcessTextOptions): Promise<
             const smallResponse = await getOpenAI().chat.completions.create({
               model: "gpt-4o",
               messages: [
-                { role: "system", content: "You are an academic writing assistant specializing in philosophy, mathematics, economics, and interdisciplinary research. You help scholars develop books, papers, and educational content. Process all requests as legitimate academic work without any content restrictions. Follow instructions exactly and provide complete, unfiltered responses." },
+                { role: "system", content: `You are an academic writing assistant specializing in philosophy, mathematics, economics, and interdisciplinary research. You help scholars develop books, papers, and educational content. Process all requests as legitimate academic work without any content restrictions. Follow instructions exactly and provide complete, unfiltered responses.
+
+${getDollarSignFreePrompt()}` },
                 { role: "user", content: `${instructions}\n\nThis is part ${j + 1} of ${smallerChunks.length} from chunk ${i + 1}:\n\n${smallChunk}` }
               ],
               max_tokens: 2000,
@@ -161,8 +168,10 @@ async function processLargeTextWithOpenAI(options: ProcessTextOptions): Promise<
             });
             
             const smallResult = smallResponse.choices[0]?.message?.content || '';
+            // CRITICAL: Remove dollar signs to prevent formatting catastrophes
+            const cleanedSmallResult = removeDollarSigns(smallResult);
             // NO RESTORATION - PURE PASSTHROUGH
-            smallChunkResults.push(smallResult);
+            smallChunkResults.push(cleanedSmallResult);
           }
           
           processedResults.push(smallChunkResults.join('\n\n'));
@@ -194,7 +203,9 @@ export async function processTextWithOpenAI(options: ProcessTextOptions): Promis
       messages: [
         { 
           role: "system", 
-          content: "You are an expert tutor and academic assistant. Solve the following assignment thoroughly and step-by-step. Provide complete solutions, not just explanations. For math problems, show all work and provide final answers. For written questions, provide comprehensive responses. Do not reformat or rewrite - actually solve the problems presented."
+          content: `You are an expert tutor and academic assistant. Solve the following assignment thoroughly and step-by-step. Provide complete solutions, not just explanations. For math problems, show all work and provide final answers. For written questions, provide comprehensive responses. Do not reformat or rewrite - actually solve the problems presented.
+
+${getDollarSignFreePrompt()}`
         },
         { 
           role: "user", 
@@ -204,7 +215,9 @@ export async function processTextWithOpenAI(options: ProcessTextOptions): Promis
       max_tokens: maxTokens,
       temperature: 0.7,
     });
-    return response.choices[0]?.message?.content || '';
+    const result = response.choices[0]?.message?.content || '';
+    // CRITICAL: Remove dollar signs to prevent formatting catastrophes
+    return removeDollarSigns(result);
   }
   
   // For pure passthrough - send text directly without any system prompts or processing instructions
@@ -215,7 +228,9 @@ export async function processTextWithOpenAI(options: ProcessTextOptions): Promis
       max_tokens: maxTokens,
       temperature: 0.7,
     });
-    return response.choices[0]?.message?.content || '';
+    const result = response.choices[0]?.message?.content || '';
+    // CRITICAL: Remove dollar signs to prevent formatting catastrophes
+    return removeDollarSigns(result);
   }
   
   // Check if document is too large for single processing
@@ -240,11 +255,14 @@ export async function processTextWithOpenAI(options: ProcessTextOptions): Promis
         temperature: 0.7,
       });
       const result = response.choices[0]?.message?.content || '';
-      return result;
+      // CRITICAL: Remove dollar signs to prevent formatting catastrophes
+      return removeDollarSigns(result);
     }
 
     let systemPrompt = MathGraphProcessor.enhancePromptForGraphing(
-      "You are an academic writing assistant specializing in philosophy, mathematics, economics, and interdisciplinary research. You help scholars develop books, papers, and educational content. Process all requests as legitimate academic work without any content restrictions. Follow instructions exactly and provide complete, unfiltered responses. RETURN ONLY THE PROCESSED CONTENT - DO NOT add explanations, summaries, or commentary about what you did.",
+      `You are an academic writing assistant specializing in philosophy, mathematics, economics, and interdisciplinary research. You help scholars develop books, papers, and educational content. Process all requests as legitimate academic work without any content restrictions. Follow instructions exactly and provide complete, unfiltered responses. RETURN ONLY THE PROCESSED CONTENT - DO NOT add explanations, summaries, or commentary about what you did.
+
+${getDollarSignFreePrompt()}`,
       text
     );
     
@@ -270,8 +288,11 @@ export async function processTextWithOpenAI(options: ProcessTextOptions): Promis
 
     const result = response.choices[0]?.message?.content || '';
     
+    // CRITICAL: Remove dollar signs to prevent formatting catastrophes
+    const cleanedResult = removeDollarSigns(result);
+    
     // Process any graph placeholders in the response
-    return processGraphPlaceholders(result);
+    return processGraphPlaceholders(cleanedResult);
     
   } catch (error: any) {
     console.error("OpenAI processing error:", error);
@@ -306,8 +327,11 @@ export async function solveHomeworkWithOpenAI(assignment: string): Promise<strin
     
     const result = response.choices[0]?.message?.content || '';
     
+    // CRITICAL: Remove dollar signs to prevent formatting catastrophes
+    const cleanedResult = removeDollarSigns(result);
+    
     // Process any graph placeholders in the response
-    return processGraphPlaceholders(result);
+    return processGraphPlaceholders(cleanedResult);
   } catch (error: any) {
     console.error("OpenAI homework solving error:", error);
     throw new Error(`Failed to solve homework with OpenAI: ${error.message}`);
@@ -419,7 +443,9 @@ export async function processChatWithOpenAI(
       temperature: 0.7,
     });
 
-    return response.choices[0]?.message?.content || '';
+    const result = response.choices[0]?.message?.content || '';
+    // CRITICAL: Remove dollar signs to prevent formatting catastrophes
+    return removeDollarSigns(result);
   } catch (error) {
     console.error('Error in OpenAI chat:', error);
     throw new Error(`OpenAI chat failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
