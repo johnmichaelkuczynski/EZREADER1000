@@ -128,3 +128,4 @@ Preferred communication style: Simple, everyday language.
 - June 25, 2025: Set DeepSeek as default LLM provider for cost-effective processing while maintaining quality
 - June 26, 2025: Fixed chunk rewriting to eliminate meta-commentary - LLMs now return only processed content without explanations
 - January 29, 2025: CRITICAL FIX - Disabled automatic mathematical graph generation that was incorrectly adding graphs to non-mathematical documents like law tests
+- February 3, 2025: CRITICAL FIX - Fixed PDF export math rendering issue where LaTeX notation was converted to "MATHPLACEHOLDER" text instead of proper mathematical symbols. Fixed markdown stripping function that was corrupting math placeholders, ensuring PDFs now display correct mathematical notation.

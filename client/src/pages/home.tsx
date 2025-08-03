@@ -300,15 +300,12 @@ export default function Home() {
 
   // Handle processing
   const handleProcess = (instructions: string, homeworkMode?: boolean) => {
-    console.log('handleProcess called with:', { instructions, homeworkMode });
-    
     // Smart instruction handling: use provided instructions, or fall back to last used, or default
     let finalInstructions = instructions.trim();
     if (!finalInstructions) {
       finalInstructions = lastUsedInstructions.trim() || "Rewrite well";
     }
     
-    console.log('Final instructions:', finalInstructions);
     processDocument(finalInstructions, homeworkMode);
   };
 

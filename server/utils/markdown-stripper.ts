@@ -46,34 +46,34 @@ export function preserveMathAndStripMarkdown(text: string): string {
   
   // First, protect math expressions by temporarily replacing them
   const mathExpressions: string[] = [];
-  const mathPlaceholder = '___MATH_PLACEHOLDER_';
+  const mathPlaceholder = 'ZZZMATHHOLDERZZZZ'; // Use format that won't be affected by markdown stripping
   
   // Protect inline math \( ... \)
   text = text.replace(/\\\((.*?)\\\)/g, (match, content) => {
     const index = mathExpressions.length;
     mathExpressions.push(`\\(${content}\\)`);
-    return `${mathPlaceholder}${index}___`;
+    return `${mathPlaceholder}${index}ZZZZ`;
   });
   
   // Protect display math \[ ... \]
   text = text.replace(/\\\[([\s\S]*?)\\\]/g, (match, content) => {
     const index = mathExpressions.length;
     mathExpressions.push(`\\[${content}\\]`);
-    return `${mathPlaceholder}${index}___`;
+    return `${mathPlaceholder}${index}ZZZZ`;
   });
   
   // Protect dollar sign math $ ... $
   text = text.replace(/\$([^$]+)\$/g, (match, content) => {
     const index = mathExpressions.length;
     mathExpressions.push(`\\(${content}\\)`); // Convert to \( \) format for consistency
-    return `${mathPlaceholder}${index}___`;
+    return `${mathPlaceholder}${index}ZZZZ`;
   });
   
   // Protect double dollar sign math $$ ... $$
   text = text.replace(/\$\$([\s\S]*?)\$\$/g, (match, content) => {
     const index = mathExpressions.length;
     mathExpressions.push(`\\[${content}\\]`); // Convert to \[ \] format for consistency
-    return `${mathPlaceholder}${index}___`;
+    return `${mathPlaceholder}${index}ZZZZ`;
   });
   
   // Now strip markdown from the protected text
@@ -81,8 +81,8 @@ export function preserveMathAndStripMarkdown(text: string): string {
   
   // Restore math expressions
   mathExpressions.forEach((mathExpr, index) => {
-    const placeholder = `${mathPlaceholder}${index}___`;
-    text = text.replace(placeholder, mathExpr);
+    const placeholder = `${mathPlaceholder}${index}ZZZZ`;
+    text = text.replaceAll(placeholder, mathExpr);
   });
   
   return text;
