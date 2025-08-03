@@ -2,14 +2,14 @@
  * Simple export service without Puppeteer dependencies
  * Creates clean HTML, LaTeX, and other formats for download
  */
-import { stripMarkdown } from '../utils/markdown-stripper';
+import { preserveMathAndStripMarkdown } from '../utils/markdown-stripper';
 
 /**
  * Export content as HTML with embedded MathJax
  */
 export async function exportToHTML(content: string, filename: string): Promise<string> {
-  // Strip markdown formatting for clean HTML output
-  const cleanContent = stripMarkdown(content);
+  // Strip markdown formatting while preserving math expressions
+  const cleanContent = preserveMathAndStripMarkdown(content);
   
   return `
 <!DOCTYPE html>
@@ -64,8 +64,8 @@ export async function exportToHTML(content: string, filename: string): Promise<s
  */
 export async function exportToLaTeX(content: string, filename: string): Promise<string> {
   const documentTitle = filename.replace(/\.[^/.]+$/, "");
-  // Strip markdown formatting for clean LaTeX output
-  const cleanContent = stripMarkdown(content);
+  // Strip markdown formatting while preserving math expressions
+  const cleanContent = preserveMathAndStripMarkdown(content);
   
   return `\\documentclass{article}
 \\usepackage[utf8]{inputenc}

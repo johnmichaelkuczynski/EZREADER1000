@@ -88,6 +88,11 @@ export function MathRenderer({ content, className = "" }: MathRendererProps) {
       
       // Handle individual mathematical symbols and expressions
       const mathPatterns = [
+        /\\rightarrow(?![a-zA-Z])/g,
+        /\\leftarrow(?![a-zA-Z])/g,
+        /\\mathbb\{[^}]*\}/g,
+        /\\mathcal\{[^}]*\}/g,
+        /\\mathfrak\{[^}]*\}/g,
         /\\infty(?![a-zA-Z])/g,
         /\\alpha(?![a-zA-Z])/g,
         /\\beta(?![a-zA-Z])/g,
@@ -118,6 +123,11 @@ export function MathRenderer({ content, className = "" }: MathRendererProps) {
           return '\\(' + match + '\\)';
         });
       });
+      
+      // Handle mathematical function notation like f: A → B or (C, A) → R
+      processedLine = processedLine.replace(/([a-zA-Z])\s*:\s*([A-Z])\s*\\rightarrow\s*([A-Z])/g, '\\($1: $2 \\rightarrow $3\\)');
+      processedLine = processedLine.replace(/\(([^)]+)\)\s*\\rightarrow\s*\\mathbb\{([^}]+)\}/g, '\\(($1) \\rightarrow \\mathbb{$2}\\)');
+      processedLine = processedLine.replace(/\(([^)]+)\)\s*\\rightarrow\s*([A-Z])/g, '\\(($1) \\rightarrow $2\\)');
       
       // Handle subscripts and superscripts
       processedLine = processedLine.replace(/([a-zA-Z])_\{([^}]+)\}/g, '\\($1_{$2}\\)');
