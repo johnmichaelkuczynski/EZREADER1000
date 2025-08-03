@@ -558,8 +558,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 <head>
     <meta charset="utf-8">
     <title>${filename}</title>
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>
         window.MathJax = {
             tex: {
@@ -570,9 +568,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
             },
             options: {
                 skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+            },
+            startup: {
+                ready: function () {
+                    MathJax.startup.defaultReady();
+                    MathJax.startup.promise.then(function () {
+                        console.log('MathJax initial typesetting complete');
+                        document.body.setAttribute('data-mathjax-ready', 'true');
+                    });
+                }
             }
         };
     </script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <style>
         body {
             font-family: 'Georgia', serif;
@@ -626,19 +635,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     </div>
     
     <script>
-        // Wait for MathJax to finish rendering
-        window.addEventListener('load', function() {
-            if (window.MathJax && window.MathJax.typesetPromise) {
-                window.MathJax.typesetPromise().then(function() {
+        // Wait for MathJax to finish rendering before printing
+        function waitForMathJaxAndPrint() {
+            if (window.MathJax && window.MathJax.startup && window.MathJax.startup.promise) {
+                window.MathJax.startup.promise.then(function() {
+                    // Force another typeset to ensure everything is rendered
+                    return window.MathJax.typesetPromise ? window.MathJax.typesetPromise() : Promise.resolve();
+                }).then(function() {
+                    console.log('MathJax rendering complete, triggering print');
                     document.body.setAttribute('data-math-ready', 'true');
-                    // Auto-trigger print dialog
+                    // Give extra time for rendering to complete
+                    setTimeout(() => {
+                        window.print();
+                    }, 2000);
+                }).catch(function(error) {
+                    console.error('MathJax error:', error);
+                    // Still try to print even if MathJax fails
                     setTimeout(() => window.print(), 1000);
                 });
             } else {
-                document.body.setAttribute('data-math-ready', 'true');
-                setTimeout(() => window.print(), 1000);
+                // Fallback if MathJax is not available
+                setTimeout(() => {
+                    console.log('MathJax not available, printing anyway');
+                    window.print();
+                }, 1000);
             }
-        });
+        }
+        
+        // Start the process when page loads
+        window.addEventListener('load', waitForMathJaxAndPrint);
+        
+        // Also try after a delay in case load event already fired
+        setTimeout(waitForMathJaxAndPrint, 500);
     </script>
 </body>
 </html>`;
