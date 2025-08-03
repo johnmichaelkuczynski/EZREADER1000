@@ -76,26 +76,32 @@ export function preserveMathAndStripMarkdown(text: string): string {
     return `${mathPlaceholder}${index}ZZZZ`;
   });
   
-  // Handle standalone LaTeX expressions that aren't wrapped yet
-  // Look for common mathematical expressions and wrap them
+  // Handle complete mathematical expressions first (most specific to least specific)
   
-  // Handle function notation like (C, A) → R or f: A → B
-  text = text.replace(/\(([^)]+)\)\s*\\rightarrow\s*\\mathbb\{([^}]+)\}/g, (match) => {
+  // Handle function type notation like U(C,A): (C,A) → ℝ
+  text = text.replace(/([A-Z]\([^)]+\)):\s*\(([^)]+)\)\s*\\rightarrow\s*\\mathbb\{([^}]+)\}/g, (match, func, domain, codomain) => {
     const index = mathExpressions.length;
-    mathExpressions.push(`\\(${match}\\)`);
+    mathExpressions.push(`\\(${func}: (${domain}) \\rightarrow \\mathbb{${codomain}}\\)`);
     return `${mathPlaceholder}${index}ZZZZ`;
   });
   
-  // Handle mathematical symbols that aren't wrapped
+  // Handle general function notation like (C, A) → ℝ
+  text = text.replace(/\(([^)]+)\)\s*\\rightarrow\s*\\mathbb\{([^}]+)\}/g, (match, domain, codomain) => {
+    const index = mathExpressions.length;
+    mathExpressions.push(`\\((${domain}) \\rightarrow \\mathbb{${codomain}}\\)`);
+    return `${mathPlaceholder}${index}ZZZZ`;
+  });
+  
+  // Handle remaining standalone LaTeX symbols
+  text = text.replace(/\\mathbb\{([^}]+)\}/g, (match, content) => {
+    const index = mathExpressions.length;
+    mathExpressions.push(`\\(\\mathbb{${content}}\\)`);
+    return `${mathPlaceholder}${index}ZZZZ`;
+  });
+  
   text = text.replace(/\\rightarrow/g, (match) => {
     const index = mathExpressions.length;
-    mathExpressions.push(`\\(${match}\\)`);
-    return `${mathPlaceholder}${index}ZZZZ`;
-  });
-  
-  text = text.replace(/\\mathbb\{([^}]+)\}/g, (match) => {
-    const index = mathExpressions.length;
-    mathExpressions.push(`\\(${match}\\)`);
+    mathExpressions.push(`\\(\\rightarrow\\)`);
     return `${mathPlaceholder}${index}ZZZZ`;
   });
   
