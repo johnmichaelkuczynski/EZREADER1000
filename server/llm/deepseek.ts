@@ -224,18 +224,19 @@ ${getDollarSignFreePrompt()}`;
     userContent += `\n\nReference material to incorporate:\n${contentSource}`;
   }
   
-  // Add style source if provided - ENHANCED MIXING LOGIC
+  // Add style source if provided - PURE STYLE TRANSFER
   if (styleSource?.trim()) {
     systemPrompt += ` 
 
-CRITICAL STYLE MIXING INSTRUCTIONS:
-1. You must BLEND the original content with the style reference
-2. Take the CONCEPTS, IDEAS, and SUBSTANCE from the original text
-3. Apply the WRITING STYLE, TONE, and APPROACH from the style reference
-4. Create a synthesis that preserves the original meaning while adopting the reference style
-5. Do NOT just summarize the style reference - use it as a stylistic template`;
+CRITICAL STYLE TRANSFER INSTRUCTIONS:
+1. PRESERVE the exact content, concepts, ideas, and substance from the original text
+2. ONLY change the writing style, tone, and linguistic approach to match the style reference
+3. Do NOT add new content from the style reference - it is ONLY a style template
+4. Think of this as translating the original text into a different literary style
+5. Keep all technical terms, facts, and specific information exactly as they are
+6. The style reference shows HOW to write, not WHAT to write about`;
     
-    userContent += `\n\nStyle reference (analyze this writing style and apply it to transform the original text):\n${styleSource}`;
+    userContent += `\n\nStyle reference (use ONLY as a writing style template - do NOT incorporate its content):\n${styleSource}`;
   }
 
   try {
