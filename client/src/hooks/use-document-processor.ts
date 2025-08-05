@@ -133,11 +133,11 @@ export function useDocumentProcessor() {
         finalInstructions = lastUsedInstructions.trim();
         if (!finalInstructions) {
           if (useContentSource && useStyleSource) {
-            finalInstructions = "Rewrite this text using the content source as reference material and matching the writing style of the style source.";
+            finalInstructions = "Rewrite well, incorporating content from the uploaded content source and adopting the writing style of the uploaded style source.";
           } else if (useContentSource) {
-            finalInstructions = "Rewrite this text using the content source as reference material.";
+            finalInstructions = "Rewrite well, incorporating content from the uploaded source document.";
           } else if (useStyleSource) {
-            finalInstructions = "Rewrite this text in the style of the style source.";
+            finalInstructions = "Rewrite well in the style of the uploaded source document.";
           } else {
             finalInstructions = "Rewrite well";
           }
