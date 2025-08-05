@@ -37,6 +37,7 @@ const upload = multer({
       'application/pdf',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'application/msword',
+      'application/octet-stream', // Many browsers default to this for .docx files
       'text/plain',
       'image/jpeg',
       'image/jpg',
@@ -53,7 +54,11 @@ const upload = multer({
       'audio/aac'
     ];
     
-    if (allowedTypes.includes(file.mimetype)) {
+    // Check MIME type or file extension for better compatibility
+    const isValidByMime = allowedTypes.includes(file.mimetype);
+    const isValidByExtension = file.originalname.match(/\.(pdf|docx?|txt|jpe?g|png|gif|bmp|tiff?|webm|mp4|mpe?g|wav|ogg|m4a|aac)$/i);
+    
+    if (isValidByMime || isValidByExtension) {
       cb(null, true);
     } else {
       console.log('Rejected file type:', file.mimetype, 'for file:', file.originalname);
@@ -429,6 +434,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       if (!req.file) {
         return res.status(400).json({ error: 'No Word document provided' });
+      }
+      
+      // Accept various MIME types for Word documents (some browsers/systems report different types)
+      const validDocxTypes = [
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/msword',
+        'application/octet-stream' // Many systems default to this for .docx files
+      ];
+      
+      const isValidDocx = validDocxTypes.includes(req.file.mimetype) || 
+                         req.file.originalname.toLowerCase().endsWith('.docx') ||
+                         req.file.originalname.toLowerCase().endsWith('.doc');
+      
+      if (!isValidDocx) {
+        return res.status(400).json({ error: `Unsupported file type: ${req.file.mimetype}. Please upload a Word document (.docx or .doc)` });
       }
       
       console.log('Processing Word document:', req.file.originalname, 'Size:', req.file.size, 'Type:', req.file.mimetype);

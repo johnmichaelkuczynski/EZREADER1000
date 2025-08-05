@@ -224,9 +224,18 @@ ${getDollarSignFreePrompt()}`;
     userContent += `\n\nReference material to incorporate:\n${contentSource}`;
   }
   
-  // Add style source if provided
+  // Add style source if provided - ENHANCED MIXING LOGIC
   if (styleSource?.trim()) {
-    userContent += `\n\nStyle reference (match this writing style):\n${styleSource}`;
+    systemPrompt += ` 
+
+CRITICAL STYLE MIXING INSTRUCTIONS:
+1. You must BLEND the original content with the style reference
+2. Take the CONCEPTS, IDEAS, and SUBSTANCE from the original text
+3. Apply the WRITING STYLE, TONE, and APPROACH from the style reference
+4. Create a synthesis that preserves the original meaning while adopting the reference style
+5. Do NOT just summarize the style reference - use it as a stylistic template`;
+    
+    userContent += `\n\nStyle reference (analyze this writing style and apply it to transform the original text):\n${styleSource}`;
   }
 
   try {

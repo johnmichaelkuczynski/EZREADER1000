@@ -407,7 +407,10 @@ ${inputExcerpt ? `INPUT DOCUMENT:\n${inputExcerpt}\n\n` : ''}${outputExcerpt ? `
         result = await response.json();
       } else if (
         file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
-        file.type === 'application/msword'
+        file.type === 'application/msword' ||
+        file.type === 'application/octet-stream' || // Handle systems that default to octet-stream for .docx
+        file.name.toLowerCase().endsWith('.docx') ||
+        file.name.toLowerCase().endsWith('.doc')
       ) {
         // Handle Word documents
         const formData = new FormData();

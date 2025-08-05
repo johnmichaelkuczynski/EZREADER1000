@@ -477,7 +477,9 @@ export default function Home() {
                   timestamp: new Date()
                 };
                 setMessages(prev => [...prev, newMessage]);
-                processDocument(content);
+                // CRITICAL FIX: Don't call processDocument here - that sends responses to output box
+                // Instead, let the DialogueBox handle its own chat responses
+                // processDocument(content); // REMOVED - this was causing chat responses to appear in output box
               }}
               onClearChat={clearChat}
               reprocessOutput={reprocessOutput}

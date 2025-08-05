@@ -249,8 +249,16 @@ ${getDollarSignFreePrompt()}`,
   }
   
   if (useStyleSource && styleSource) {
-    systemPrompt += " Analyze and emulate the writing style from the provided style reference.";
-    userContent = `Instructions: ${instructions}\n\nStyle reference (analyze and emulate this writing style):\n${styleSource}\n\nText to transform:\n${processedText}`;
+    systemPrompt += ` 
+
+CRITICAL STYLE MIXING INSTRUCTIONS:
+1. You must BLEND the original content with the style reference
+2. Take the CONCEPTS, IDEAS, and SUBSTANCE from the original text
+3. Apply the WRITING STYLE, TONE, and APPROACH from the style reference
+4. Create a synthesis that preserves the original meaning while adopting the reference style
+5. Do NOT just summarize the style reference - use it as a stylistic template`;
+    
+    userContent = `Instructions: ${instructions}\n\nStyle reference (analyze this writing style and apply it to transform the original text):\n${styleSource}\n\nText to transform:\n${processedText}`;
   }
   
   try {
