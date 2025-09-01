@@ -34,6 +34,7 @@ interface ContentSourceBoxProps {
   onFileUpload: (file: File) => Promise<void>;
   onMultipleFileUpload?: (files: File[]) => Promise<void>;
   contentSourceFileRef: React.RefObject<HTMLInputElement>;
+  llmProvider: string;
 }
 
 export function ContentSourceBox({
@@ -46,13 +47,17 @@ export function ContentSourceBox({
   onUseStyleSourceChange,
   onFileUpload,
   onMultipleFileUpload,
-  contentSourceFileRef
+  contentSourceFileRef,
+  llmProvider
 }: ContentSourceBoxProps) {
   const [activeTab, setActiveTab] = useState<ContentSourceTab['id']>('manual');
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<Array<{ title: string; url: string; snippet: string }>>([]);
+  const [queryQuestion, setQueryQuestion] = useState('');
+  const [queryAnswer, setQueryAnswer] = useState('');
+  const [isQuerying, setIsQuerying] = useState(false);
   const { toast } = useToast();
 
   // Derive current usage mode from boolean flags
@@ -177,6 +182,58 @@ export function ContentSourceBox({
       });
     } finally {
       setIsSearching(false);
+    }
+  };
+
+  // Handle content source query
+  const handleQueryContentSource = async () => {
+    if (!queryQuestion.trim()) {
+      toast({
+        title: "Question required",
+        description: "Please enter a question to ask about the content source.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!text.trim()) {
+      toast({
+        title: "Content source required",
+        description: "Please add content to query before asking questions.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setIsQuerying(true);
+      
+      const response = await fetch('/api/query-content-source', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question: queryQuestion,
+          contentSource: text,
+          llmProvider
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Query failed: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      setQueryAnswer(data.answer);
+      
+    } catch (error: any) {
+      console.error('Error querying content source:', error);
+      toast({
+        title: "Query failed",
+        description: error?.message || 'Unknown error occurred',
+        variant: "destructive"
+      });
+    } finally {
+      setIsQuerying(false);
     }
   };
   
@@ -328,6 +385,47 @@ export function ContentSourceBox({
             </div>
           </RadioGroup>
         </div>
+
+        {/* Query Content Source Feature */}
+        {text.trim() && (
+          <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950 rounded-md border border-blue-200 dark:border-blue-800">
+            <Label className="text-sm font-medium text-blue-900 dark:text-blue-100">Query Content Source</Label>
+            <p className="text-xs text-blue-700 dark:text-blue-300 mb-2">Ask questions about your uploaded content</p>
+            
+            <div className="space-y-2">
+              <Input
+                placeholder="What would you like to know about this content?"
+                value={queryQuestion}
+                onChange={(e) => setQueryQuestion(e.target.value)}
+                className="text-sm"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleQueryContentSource();
+                  }
+                }}
+              />
+              
+              <Button
+                onClick={handleQueryContentSource}
+                disabled={isQuerying || !queryQuestion.trim()}
+                size="sm"
+                className="w-full"
+              >
+                {isQuerying ? 'Querying...' : 'Ask Question'}
+              </Button>
+              
+              {queryAnswer && (
+                <div className="mt-2 p-2 bg-white dark:bg-gray-800 rounded border text-sm">
+                  <strong className="text-blue-900 dark:text-blue-100">Answer:</strong>
+                  <div className="mt-1 text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                    {queryAnswer}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </CardContent>
       
       {/* Search Dialog */}

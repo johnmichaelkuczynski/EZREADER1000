@@ -367,6 +367,7 @@ export default function Home() {
               onFileUpload={handleContentSourceFileUpload}
               onMultipleFileUpload={handleMultipleContentSourceFileUpload}
               contentSourceFileRef={contentSourceFileRef}
+              llmProvider={llmProvider}
             />
 
           </div>

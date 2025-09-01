@@ -311,11 +311,23 @@ Style reference (use ONLY as a writing style template - do NOT incorporate its c
 }
 
 // PURE HOMEWORK SOLVER - NO REWRITE LOGIC
-export async function solveHomeworkWithOpenAI(assignment: string): Promise<string> {
+export async function solveHomeworkWithOpenAI(assignment: string, contentSource?: string, styleSource?: string): Promise<string> {
   try {
+    let userContent = `Please solve the following assignment completely:\n\n${assignment}`;
+    
+    // Add content source if provided - FOR HOMEWORK this is crucial!
+    if (contentSource?.trim()) {
+      userContent += `\n\nREFERENCE MATERIAL (use this as the primary source for your solutions):\n${contentSource}`;
+    }
+    
+    // Add style source if provided
+    if (styleSource?.trim()) {
+      userContent += `\n\nSTYLE REFERENCE (adopt this writing style):\n${styleSource}`;
+    }
+    
     // Enhanced prompt with graph generation instructions
     const enhancedPrompt = MathGraphProcessor.enhancePromptForGraphing(
-      "You are an expert tutor and academic assistant. Solve the following assignment thoroughly and step-by-step. Provide complete solutions, not just explanations. For math problems, show all work and provide final answers. For written questions, provide comprehensive responses. Actually solve the problems presented.",
+      "You are an expert tutor and academic assistant. Solve the following assignment thoroughly and step-by-step. Provide complete solutions, not just explanations. For math problems, show all work and provide final answers. For written questions, provide comprehensive responses. Actually solve the problems presented. When reference material is provided, base your solutions primarily on that material.",
       assignment
     );
 
@@ -328,7 +340,7 @@ export async function solveHomeworkWithOpenAI(assignment: string): Promise<strin
         },
         { 
           role: "user", 
-          content: `Please solve the following assignment completely:\n\n${assignment}`
+          content: userContent
         }
       ],
       max_tokens: 4000,
@@ -459,6 +471,35 @@ export async function processChatWithOpenAI(
   } catch (error) {
     console.error('Error in OpenAI chat:', error);
     throw new Error(`OpenAI chat failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+// Query Content Source - NEW FEATURE
+export async function queryContentSourceWithOpenAI(question: string, contentSource: string): Promise<string> {
+  try {
+    const response = await getOpenAI().chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        { 
+          role: "system", 
+          content: `You are an expert research assistant. Answer questions based solely on the provided content source. Be precise and cite specific information from the source. If the answer is not in the source material, clearly state that.
+
+${getDollarSignFreePrompt()}`
+        },
+        { 
+          role: "user", 
+          content: `Content Source:\n${contentSource}\n\nQuestion: ${question}`
+        }
+      ],
+      max_tokens: 4000,
+      temperature: 0.3, // Lower temperature for more factual responses
+    });
+    
+    const result = response.choices[0]?.message?.content || '';
+    return removeDollarSigns(result);
+  } catch (error: any) {
+    console.error("OpenAI content source query error:", error);
+    throw new Error(`Failed to query content source with OpenAI: ${error.message}`);
   }
 }
 

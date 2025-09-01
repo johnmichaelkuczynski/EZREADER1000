@@ -12,10 +12,10 @@ import {
   chatRequestSchema 
 } from "@shared/schema";
 import { stripMarkdown, preserveMathAndStripMarkdown } from "./utils/markdown-stripper";
-import { processTextWithOpenAI, detectAIWithOpenAI, transcribeAudio, solveHomeworkWithOpenAI, processChatWithOpenAI } from "./llm/openai";
-import { processTextWithAnthropic, detectAIWithAnthropic, solveHomeworkWithAnthropic, processChatWithAnthropic } from "./llm/anthropic";
-import { processTextWithPerplexity, detectAIWithPerplexity, solveHomeworkWithPerplexity, processChatWithPerplexity } from "./llm/perplexity";
-import { processTextWithDeepSeek, detectAIWithDeepSeek, solveHomeworkWithDeepSeek, processChatWithDeepSeek } from "./llm/deepseek";
+import { processTextWithOpenAI, detectAIWithOpenAI, transcribeAudio, solveHomeworkWithOpenAI, processChatWithOpenAI, queryContentSourceWithOpenAI } from "./llm/openai";
+import { processTextWithAnthropic, detectAIWithAnthropic, solveHomeworkWithAnthropic, processChatWithAnthropic, queryContentSourceWithAnthropic } from "./llm/anthropic";
+import { processTextWithPerplexity, detectAIWithPerplexity, solveHomeworkWithPerplexity, processChatWithPerplexity, queryContentSourceWithPerplexity } from "./llm/perplexity";
+import { processTextWithDeepSeek, detectAIWithDeepSeek, solveHomeworkWithDeepSeek, processChatWithDeepSeek, queryContentSourceWithDeepSeek } from "./llm/deepseek";
 import { detectAIWithGPTZero } from "./services/gptzero";
 import { searchOnline, fetchWebContent } from "./services/google";
 import { sendDocumentEmail } from "./services/sendgrid";
@@ -79,22 +79,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // SEPARATE HOMEWORK ENDPOINT - BYPASSES ALL REWRITE LOGIC
   app.post('/api/solve-homework', async (req: Request, res: Response) => {
     try {
-      const { assignment, llmProvider = 'anthropic' } = req.body;
+      const { assignment, llmProvider = 'anthropic', contentSource, styleSource } = req.body;
       
       let solution: string;
       
       switch (llmProvider) {
         case 'openai':
-          solution = await solveHomeworkWithOpenAI(assignment);
+          solution = await solveHomeworkWithOpenAI(assignment, contentSource, styleSource);
           break;
         case 'anthropic':
-          solution = await solveHomeworkWithAnthropic(assignment);
+          solution = await solveHomeworkWithAnthropic(assignment, contentSource, styleSource);
           break;
         case 'perplexity':
-          solution = await solveHomeworkWithPerplexity(assignment);
+          solution = await solveHomeworkWithPerplexity(assignment, contentSource, styleSource);
           break;
         case 'deepseek':
-          solution = await solveHomeworkWithDeepSeek(assignment);
+          solution = await solveHomeworkWithDeepSeek(assignment, contentSource, styleSource);
           break;
         default:
           throw new Error(`Unsupported LLM provider: ${llmProvider}`);
@@ -820,6 +820,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: unknown) {
       console.error('Error getting saved instructions:', error);
       res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to get saved instructions' });
+    }
+  });
+
+  // Query Content Source - NEW FEATURE
+  app.post('/api/query-content-source', async (req: Request, res: Response) => {
+    try {
+      const { question, contentSource, llmProvider = 'deepseek' } = req.body;
+      
+      if (!question || !contentSource) {
+        return res.status(400).json({ error: 'Both question and content source are required' });
+      }
+      
+      let answer: string;
+      
+      switch (llmProvider) {
+        case 'openai':
+          answer = await queryContentSourceWithOpenAI(question, contentSource);
+          break;
+        case 'anthropic':
+          answer = await queryContentSourceWithAnthropic(question, contentSource);
+          break;
+        case 'perplexity':
+          answer = await queryContentSourceWithPerplexity(question, contentSource);
+          break;
+        case 'deepseek':
+          answer = await queryContentSourceWithDeepSeek(question, contentSource);
+          break;
+        default:
+          throw new Error(`Unsupported LLM provider: ${llmProvider}`);
+      }
+      
+      res.json({ answer });
+    } catch (error: any) {
+      console.error('Error querying content source:', error);
+      res.status(500).json({ 
+        error: 'Failed to query content source', 
+        details: error.message 
+      });
     }
   });
 

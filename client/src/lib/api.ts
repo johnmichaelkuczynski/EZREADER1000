@@ -9,8 +9,8 @@ import type {
 } from "@/types";
 
 // SEPARATE HOMEWORK SOLVER - BYPASSES ALL REWRITE LOGIC
-export async function solveHomework(assignment: string, llmProvider: string): Promise<string> {
-  const response = await apiRequest("POST", "/api/solve-homework", { assignment, llmProvider });
+export async function solveHomework(assignment: string, llmProvider: string, contentSource?: string, styleSource?: string): Promise<string> {
+  const response = await apiRequest("POST", "/api/solve-homework", { assignment, llmProvider, contentSource, styleSource });
   const result = await response.json();
   return result.result;
 }

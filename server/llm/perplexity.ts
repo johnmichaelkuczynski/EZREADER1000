@@ -269,8 +269,20 @@ CRITICAL STYLE TRANSFER INSTRUCTIONS:
 }
 
 // PURE HOMEWORK SOLVER - NO REWRITE LOGIC
-export async function solveHomeworkWithPerplexity(assignment: string): Promise<string> {
+export async function solveHomeworkWithPerplexity(assignment: string, contentSource?: string, styleSource?: string): Promise<string> {
   try {
+    let userContent = `Please solve the following assignment completely:\n\n${assignment}`;
+    
+    // Add content source if provided - FOR HOMEWORK this is crucial!
+    if (contentSource?.trim()) {
+      userContent += `\n\nREFERENCE MATERIAL (use this as the primary source for your solutions):\n${contentSource}`;
+    }
+    
+    // Add style source if provided
+    if (styleSource?.trim()) {
+      userContent += `\n\nSTYLE REFERENCE (adopt this writing style):\n${styleSource}`;
+    }
+    
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
@@ -282,13 +294,13 @@ export async function solveHomeworkWithPerplexity(assignment: string): Promise<s
         messages: [
           {
             role: 'system',
-            content: `You are an expert tutor and academic assistant. Solve the following assignment thoroughly and step-by-step. Provide complete solutions, not just explanations. For math problems, show all work and provide final answers. For written questions, provide comprehensive responses. Actually solve the problems presented.
+            content: `You are an expert tutor and academic assistant. Solve the following assignment thoroughly and step-by-step. Provide complete solutions, not just explanations. For math problems, show all work and provide final answers. For written questions, provide comprehensive responses. Actually solve the problems presented. When reference material is provided, base your solutions primarily on that material.
 
 ${getDollarSignFreePrompt()}`
           },
           {
             role: 'user',
-            content: `Please solve the following assignment completely:\n\n${assignment}`
+            content: userContent
           }
         ],
         max_tokens: 4000,
@@ -428,6 +440,48 @@ export async function processChatWithPerplexity(
   } catch (error) {
     console.error('Error in Perplexity chat:', error);
     throw new Error(`Perplexity chat failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+// Query Content Source - NEW FEATURE
+export async function queryContentSourceWithPerplexity(question: string, contentSource: string): Promise<string> {
+  try {
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-sonar-small-128k-online',
+        messages: [
+          {
+            role: 'system',
+            content: `You are an expert research assistant. Answer questions based solely on the provided content source. Be precise and cite specific information from the source. If the answer is not in the source material, clearly state that.
+
+${getDollarSignFreePrompt()}`
+          },
+          {
+            role: 'user',
+            content: `Content Source:\n${contentSource}\n\nQuestion: ${question}`
+          }
+        ],
+        max_tokens: 4000,
+        temperature: 0.3, // Lower temperature for more factual responses
+        stream: false
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Perplexity API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    const result = data.choices[0]?.message?.content || '';
+    return removeDollarSigns(result);
+  } catch (error: any) {
+    console.error("Perplexity content source query error:", error);
+    throw new Error(`Failed to query content source with Perplexity: ${error.message}`);
   }
 }
 

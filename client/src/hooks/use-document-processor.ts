@@ -175,7 +175,7 @@ export function useDocumentProcessor() {
       if (effectiveHomeworkMode) {
         // HOMEWORK MODE: Use separate endpoint that bypasses all rewrite logic
         const { solveHomework } = await import('../lib/api');
-        result = await solveHomework(inputText, llmProvider);
+        result = await solveHomework(inputText, llmProvider, effectiveUseContentSource ? contentSource : undefined, effectiveUseStyleSource ? styleSource : undefined);
       } else {
         // REGULAR MODE: Use normal text processing
         const examMode = finalInstructions.toLowerCase().includes('exam') || 
@@ -257,7 +257,7 @@ export function useDocumentProcessor() {
 
       // Prepare context document if available
       let contextDocument = '';
-      if (inputText.trim() || outputText.trim()) {
+      if (inputText.trim() || outputText.trim() || contentSource.trim()) {
         const truncateText = (text: string, maxLength: number = 8000) => {
           if (text.length <= maxLength) return text;
           return text.substring(0, maxLength) + "\n\n[Document truncated - showing first " + maxLength + " characters]";
@@ -265,9 +265,10 @@ export function useDocumentProcessor() {
 
         const inputExcerpt = inputText.trim() ? truncateText(inputText.trim()) : '';
         const outputExcerpt = outputText.trim() ? truncateText(outputText.trim()) : '';
+        const contentExcerpt = contentSource.trim() ? truncateText(contentSource.trim()) : '';
         
         contextDocument = `Available Documents:
-${inputExcerpt ? `INPUT DOCUMENT:\n${inputExcerpt}\n\n` : ''}${outputExcerpt ? `OUTPUT DOCUMENT:\n${outputExcerpt}\n\n` : ''}`;
+${inputExcerpt ? `INPUT DOCUMENT:\n${inputExcerpt}\n\n` : ''}${outputExcerpt ? `OUTPUT DOCUMENT:\n${outputExcerpt}\n\n` : ''}${contentExcerpt ? `CONTENT SOURCE:\n${contentExcerpt}\n\n` : ''}`;
       }
 
       // Use new chat endpoint with conversation memory

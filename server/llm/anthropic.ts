@@ -298,7 +298,7 @@ CRITICAL STYLE TRANSFER INSTRUCTIONS:
 }
 
 // PURE HOMEWORK SOLVER - NO REWRITE LOGIC
-export async function solveHomeworkWithAnthropic(assignment: string): Promise<string> {
+export async function solveHomeworkWithAnthropic(assignment: string, contentSource?: string, styleSource?: string): Promise<string> {
   try {
     const message = await anthropic.messages.create({
       model: "claude-3-7-sonnet-20250219",
@@ -307,7 +307,21 @@ export async function solveHomeworkWithAnthropic(assignment: string): Promise<st
 ${getDollarSignFreePrompt()}`,
       max_tokens: 4000,
       messages: [
-        { role: 'user', content: `Please solve the following assignment completely:\n\n${assignment}` }
+        { role: 'user', content: (() => {
+          let userContent = `Please solve the following assignment completely:\n\n${assignment}`;
+          
+          // Add content source if provided - FOR HOMEWORK this is crucial!
+          if (contentSource?.trim()) {
+            userContent += `\n\nREFERENCE MATERIAL (use this as the primary source for your solutions):\n${contentSource}`;
+          }
+          
+          // Add style source if provided
+          if (styleSource?.trim()) {
+            userContent += `\n\nSTYLE REFERENCE (adopt this writing style):\n${styleSource}`;
+          }
+          
+          return userContent;
+        })() }
       ],
     });
     
@@ -408,6 +422,35 @@ export async function processChatWithAnthropic(
   } catch (error) {
     console.error('Error in Anthropic chat:', error);
     throw new Error(`Anthropic chat failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+// Query Content Source - NEW FEATURE
+export async function queryContentSourceWithAnthropic(question: string, contentSource: string): Promise<string> {
+  try {
+    const message = await anthropic.messages.create({
+      model: "claude-3-7-sonnet-20250219",
+      system: `You are an expert research assistant. Answer questions based solely on the provided content source. Be precise and cite specific information from the source. If the answer is not in the source material, clearly state that.
+
+${getDollarSignFreePrompt()}`,
+      max_tokens: 4000,
+      messages: [
+        { role: 'user', content: `Content Source:\n${contentSource}\n\nQuestion: ${question}` }
+      ],
+    });
+    
+    let responseContent = '';
+    if (message.content && message.content.length > 0) {
+      const contentBlock = message.content[0];
+      if ('text' in contentBlock) {
+        responseContent = contentBlock.text;
+      }
+    }
+    
+    return removeDollarSigns(responseContent);
+  } catch (error: any) {
+    console.error("Anthropic content source query error:", error);
+    throw new Error(`Failed to query content source with Anthropic: ${error.message}`);
   }
 }
 
