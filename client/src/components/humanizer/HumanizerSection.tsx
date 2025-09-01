@@ -527,14 +527,11 @@ export function HumanizerSection({ onSendToInput, initialText }: HumanizerSectio
         }
       }
 
-      // Build style instructions from selected presets
-      const styleInstructions = selectedStylePresets
-        .map(presetId => {
-          const preset = STYLE_PRESETS.find(p => p.id === presetId);
-          return preset ? `${preset.label}: ${preset.description}` : '';
-        })
-        .filter(Boolean)
-        .join('\n');
+      // Map frontend preset IDs to backend preset labels
+      const mappedPresets = selectedStylePresets.map(presetId => {
+        const preset = STYLE_PRESETS.find(p => p.id === presetId);
+        return preset ? preset.label : '';
+      }).filter(Boolean);
 
       const response = await fetch('/api/humanize-text', {
         method: 'POST',
@@ -543,7 +540,7 @@ export function HumanizerSection({ onSendToInput, initialText }: HumanizerSectio
           text,
           styleSource,
           customInstructions,
-          styleInstructions,
+          selectedPresets: mappedPresets,
           llmProvider: selectedLLM
         })
       });

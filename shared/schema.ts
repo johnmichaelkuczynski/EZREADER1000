@@ -114,3 +114,15 @@ export const chatRequestSchema = z.object({
   llmProvider: z.enum(["openai", "anthropic", "perplexity", "deepseek", "azure"]),
   contextDocument: z.string().optional(),
 });
+
+// New rewrite schema for the style-matching humanizer
+export const rewriteSchema = z.object({
+  inputText: z.string().min(1, "Input text is required"),
+  styleText: z.string().optional(),
+  contentMixText: z.string().optional(),
+  customInstructions: z.string().optional(),
+  selectedPresets: z.array(z.string()).optional(),
+  provider: z.enum(["openai", "anthropic", "perplexity", "deepseek"]),
+  selectedChunkIds: z.array(z.string()).optional(),
+  mixingMode: z.enum(["style", "content", "both"]).optional(),
+});

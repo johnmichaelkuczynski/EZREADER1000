@@ -9,7 +9,8 @@ import {
   detectAiSchema, 
   searchOnlineSchema, 
   sendEmailSchema,
-  chatRequestSchema 
+  chatRequestSchema,
+  rewriteSchema 
 } from "@shared/schema";
 import { stripMarkdown, preserveMathAndStripMarkdown } from "./utils/markdown-stripper";
 import { processTextWithOpenAI, detectAIWithOpenAI, transcribeAudio, solveHomeworkWithOpenAI, processChatWithOpenAI, queryContentSourceWithOpenAI } from "./llm/openai";
@@ -22,6 +23,7 @@ import { sendDocumentEmail } from "./services/sendgrid";
 import { extractTextFromPDF } from "./services/pdf-processor";
 import { extractTextFromImageWithMathpix } from "./services/mathpix";
 import { processMathPDFWithAzure, processMathImageWithAzure, enhanceMathFormatting } from "./services/azure-math";
+import { aiProviderService } from "./services/aiProviders";
 
 
 
@@ -570,104 +572,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // AI Text Humanization endpoint
+  // NEW STYLE-MATCHING REWRITE ENDPOINT
+  app.post('/api/rewrite', async (req: Request, res: Response) => {
+    try {
+      const data = rewriteSchema.parse(req.body);
+      
+      // Use the new aiProviderService to perform style-matching rewrite
+      const rewrittenText = await aiProviderService.rewrite(data.provider, {
+        inputText: data.inputText,
+        styleText: data.styleText,
+        contentMixText: data.contentMixText,
+        customInstructions: data.customInstructions,
+        selectedPresets: data.selectedPresets,
+        mixingMode: data.mixingMode
+      });
+
+      // Get AI detection scores for both input and output
+      let inputScore = 0;
+      let outputScore = 0;
+      
+      try {
+        const [inputDetection, outputDetection] = await Promise.allSettled([
+          detectAIWithGPTZero(data.inputText),
+          detectAIWithGPTZero(rewrittenText)
+        ]);
+        
+        if (inputDetection.status === 'fulfilled') {
+          inputScore = inputDetection.value.confidence || 0;
+        }
+        if (outputDetection.status === 'fulfilled') {
+          outputScore = outputDetection.value.confidence || 0;
+        }
+      } catch (detectionError) {
+        console.log('AI detection failed, continuing without scores:', detectionError);
+      }
+
+      res.json({ 
+        rewrittenText,
+        inputAiScore: inputScore,
+        outputAiScore: outputScore,
+        provider: data.provider,
+        inputLength: data.inputText.length,
+        outputLength: rewrittenText.length
+      });
+    } catch (error: unknown) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: fromZodError(error).message });
+      } else {
+        console.error('Error in rewrite endpoint:', error);
+        res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to rewrite text' });
+      }
+    }
+  });
+
+  // UPDATED: Style-Matching Text Rewriter (formerly humanizer)
   app.post('/api/humanize-text', async (req: Request, res: Response) => {
     try {
-      const { text, styleSource, customInstructions = '', styleInstructions = '', llmProvider = 'anthropic' } = req.body;
+      const { text, styleSource, customInstructions = '', selectedPresets = [], llmProvider = 'anthropic' } = req.body;
       
       if (!text || !text.trim()) {
-        return res.status(400).json({ error: "Text to humanize is required" });
+        return res.status(400).json({ error: "Text to rewrite is required" });
       }
 
-      // Build comprehensive humanization prompt
-      let humanizationPrompt = `You are a professional text humanizer. Your goal is to rewrite AI-generated text to make it sound completely human-written while preserving all original meaning and content.
+      // Use the new style-matching aiProviderService instead of old humanization logic
+      const rewrittenText = await aiProviderService.rewrite(llmProvider, {
+        inputText: text,
+        styleText: styleSource || '', // Box B (style source)
+        contentMixText: '', // No Box C for humanizer
+        customInstructions: customInstructions,
+        selectedPresets: selectedPresets,
+        mixingMode: 'style'
+      });
 
-CRITICAL REQUIREMENTS:
-1. Make the text sound natural and human-written
-2. Preserve ALL original meaning, facts, and information
-3. Match the writing style of the provided style source with surgical precision
-4. Apply the specified style techniques to improve naturalness
-5. Do NOT add new information not present in the original text
-6. Do NOT remove important content or context
-
-ORIGINAL TEXT TO HUMANIZE:
-${text}
-
-STYLE SOURCE TO MIMIC:
-${styleSource || 'Use natural, conversational academic writing style'}
-
-CUSTOM INSTRUCTIONS:
-${customInstructions || 'Rewrite to sound completely human while preserving all content'}
-
-STYLE TECHNIQUES TO APPLY:
-${styleInstructions || 'Apply natural human writing patterns'}
-
-OUTPUT INSTRUCTIONS:
-- Return ONLY the humanized text
-- No meta-commentary or explanations
-- Preserve exact meaning while making it sound human-written
-- Match the style source's tone, structure, and voice patterns
-- Apply humanization techniques subtly but effectively`;
-
-      let humanizedText = '';
-
-      // Route to appropriate LLM
-      switch (llmProvider) {
-        case 'openai':
-          humanizedText = await processTextWithOpenAI({
-            text: text,
-            instructions: humanizationPrompt,
-            contentSource: styleSource,
-            useContentSource: !!styleSource
-          });
-          break;
-        case 'anthropic':
-          humanizedText = await processTextWithAnthropic({
-            text: text,
-            instructions: humanizationPrompt,
-            contentSource: styleSource,
-            useContentSource: !!styleSource
-          });
-          break;
-        case 'deepseek':
-          humanizedText = await processTextWithDeepSeek(
-            text,
-            humanizationPrompt,
-            styleSource || undefined
-          );
-          break;
-        case 'perplexity':
-          humanizedText = await processTextWithPerplexity({
-            text: text,
-            instructions: humanizationPrompt,
-            contentSource: styleSource,
-            useContentSource: !!styleSource
-          });
-          break;
-        default:
-          humanizedText = await processTextWithAnthropic({
-            text: text,
-            instructions: humanizationPrompt,
-            contentSource: styleSource,
-            useContentSource: !!styleSource
-          });
+      if (!rewrittenText) {
+        throw new Error('Failed to generate rewritten text');
       }
 
-      if (!humanizedText) {
-        throw new Error('Failed to generate humanized text');
-      }
-
-      console.log(`Text humanized using ${llmProvider}, original length: ${text.length}, humanized length: ${humanizedText.length}`);
+      console.log(`Text rewritten using ${llmProvider}, original length: ${text.length}, rewritten length: ${rewrittenText.length}`);
       
       res.json({ 
-        humanizedText: humanizedText.trim(),
+        humanizedText: rewrittenText.trim(), // Keep same response format for compatibility
         originalLength: text.length,
-        humanizedLength: humanizedText.length,
+        humanizedLength: rewrittenText.length,
         llmProvider 
       });
     } catch (error: any) {
-      console.error('Text humanization error:', error);
-      res.status(500).json({ error: error.message || "Failed to humanize text" });
+      console.error('Text rewrite error:', error);
+      res.status(500).json({ error: error.message || "Failed to rewrite text" });
     }
   });
 
