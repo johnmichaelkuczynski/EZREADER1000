@@ -11,63 +11,65 @@ import { Upload, Download, Copy, RefreshCw, FileText, AlertCircle, ChevronDown, 
 import { useToast } from '@/hooks/use-toast';
 import { useDropzone } from 'react-dropzone';
 
-// Writing samples data structure
+// Writing samples data structure - ACTUAL STYLE SAMPLES
 const WRITING_SAMPLES = {
-  'content-neutral': [
-    {
-      id: 'formal-functional',
-      title: 'Formal and Functional Relationships',
-      content: `There are two broad types of relationships: formal and functional.
-Formal relationships hold between descriptions. A description is any statement that can be true or false.
-Example of a formal relationship: The description that a shape is a square cannot be true unless the description that it has four equal sides is true. Therefore, a shape's being a square depends on its having four equal sides.
-
-Functional relationships hold between events or conditions. (An event is anything that happens in time.)
-Example of a functional relationship: A plant cannot grow without water. Therefore, a plant's growth depends on its receiving water.
-
-The first type is structural, i.e., it holds between statements about features.
-The second is operational, i.e., it holds between things in the world as they act or change.
-
-Descriptions as objects of consideration
-The objects of evaluation are descriptions. Something is not evaluated unless it is described, and it is not described unless it can be stated. One can notice non-descriptions — sounds, objects, movements — but in the relevant sense one evaluates descriptions of them.
-
-Relationships not known through direct observation
-Some relationships are known, not through direct observation, but through reasoning. Such relationships are structural, as opposed to observational. Examples of structural relationships are:
-
-If A, then A or B.
-
-All tools require some form of use.
-
-Nothing can be both moving and perfectly still.
-
-There are no rules without conditions.
-
-1 obviously expresses a relationship; 2–4 do so less obviously, as their meanings are:
-
-2*. A tool's being functional depends on its being usable.
-3*. An object's being both moving and still depends on contradictory conditions, which cannot occur together.
-4*. The existence of rules depends on the existence of conditions to which they apply.
-
-Structural truth and structural understanding
-Structural understanding is always understanding of relationships. Observational understanding can be either direct or indirect; the same is true of structural understanding.`
-    },
+  'philosophical': [
     {
       id: 'explanatory-efficiency',
       title: 'Alternative Account of Explanatory Efficiency',
       content: `A continuation of the earlier case will make it clear what this means and why it matters. Why doesn't the outcome change under the given conditions? Because, says the standard account, the key factor remained in place. But, the skeptic will counter, perhaps we can discard that account; perhaps there's an alternative that fits the observations equally well. But, I would respond, even granting for argument's sake that such an alternative exists, it doesn't follow that it avoids more gaps than the one it replaces. It doesn't follow that it is comparable from a trade-off standpoint to the original—that it reduces as many issues as the old view while introducing no more new ones. In fact, the opposite often holds. Consider the alternative mentioned earlier. The cost of that account—meaning what new puzzles it creates—is vastly greater than its value—meaning what old puzzles it removes. It would be difficult to devise an account inconsistent with the conventional one that, while still matching the relevant evidence, is equally efficient in explanatory terms. You can test this for yourself. If there is reason to think even one such account exists, it is not because it has ever been produced. That reason, if it exists, must be purely theoretical. And for reasons soon to be made clear, no such purely theoretical reason can justify accepting it.`
-    }
-  ],
-  'epistemology': [
+    },
     {
       id: 'rational-belief',
       title: 'Rational Belief and Underlying Structure',
       content: `When would it become rational to believe that, next time, you're more likely than not to roll this as opposed to that number—that, for example, you're especially likely to roll a 27? This belief becomes rational when, and only when, you have reason to believe that a 27-roll is favored by the structures involved in the game. And that belief, in its turn, is rational if you know that circumstances at all like the following obtain: *The dice are magnetically attracted to the 27-slot. *On any given occasion, you have an unconscious intention to roll a 27 (even though you have no conscious intention of doing this), and you're such a talented dice-thrower that, if you can roll a 27 if it is your (subconscious) intention to do so. *The 27-slot is much bigger than any of the other slots. In fact, it takes up so much space on the roulette wheel that the remaining spaces are too small for the ball to fit into them. You are rational to believe that you'll continue to roll 27s to the extent that your having thus far rolled multiple 27s in a row gives you reason to believe there to be some underlying structure favoring that outcome.`
+    },
+    {
+      id: 'hume-induction',
+      title: 'Hume, Induction, and the Logic of Explanation',
+      content: `We haven't yet refuted Hume's argument—we've only taken the first step towards doing so. Hume could defend his view against what we've said thus by far by saying the following: Suppose that, to explain why all phi's thus far known are psi's, you posit some underlying structure or law that disposes phi's to be psi's. Unless you think that nature is uniform, you have no right to expect that connection to continue to hold. But if, in order to deal with this, you suppose that nature is uniform, then you're using the very principle—the uniformity of nature—whose legitimacy is in question. So you haven't solved the problem; you've just pushed it back a level.`
+    },
+    {
+      id: 'explanatory-goodness',
+      title: 'Explanatory Goodness vs. Correctness',
+      content: `For an explanation to be good isn't for it to be correct. Sometimes the right explanations are bad ones. A story will make this clear. I'm on a bus. The bus driver is smiling. A mystery! 'What on Earth does he have to smile about?' I ask myself. His job is so boring, and his life must therefore be such a horror.' But then I remember that, just a minute ago, a disembarking passenger gave him fifty $100 bills as a tip. So I have my explanation: 'he just came into a lot of money.' But wait. That explanation is wrong. The passenger didn't give him $5000. He gave him fake bills. They looked real to me, but the bus driver could see that they were fake. So why is he smiling? Because he thinks it's funny that somebody tried to pay him with counterfeit money. That's the right explanation. But it's also a worse explanation than the wrong one.`
+    },
+    {
+      id: 'knowledge-awareness',
+      title: 'Knowledge vs. Awareness',
+      content: `Knowledge is conceptually articulated awareness. In order for me to know that my shoes are uncomfortably tight, I need to have the concepts shoe, tight, discomfort, etc. I do not need to have these concepts—or, arguably, any concepts—to be aware of the uncomfortable tightness in my shoes. My knowledge of that truth is a conceptualization of my awareness of that state of affairs. Equivalently, there are two kinds of awareness: propositional and objectual. My visual perception of a red rose involves objectual awareness of that rose. My knowledge that the rose is red involves propositional awareness of the fact that it is red. The first is non-conceptual; the second is conceptual.`
     }
   ],
   'paradoxes': [
     {
-      id: 'hume-induction',
-      title: 'Hume, Induction, and the Logic of Explanation',
-      content: `Hume's problem of induction concerns the justification of inductive inference. The problem is that inductive inferences seem to require the assumption that the future will resemble the past, but this assumption cannot itself be justified by inductive inference without circularity. Consider the standard formulation: we observe that the sun has risen every day in the past, and we infer that it will rise tomorrow. But what justifies this inference? It seems we must assume that the patterns we have observed will continue. Yet this assumption itself seems to require inductive support. But any attempt to provide such support would be circular, since it would involve using induction to justify induction. This is Hume's circle, and it poses a fundamental challenge to our epistemic practices.`
+      id: 'loser-paradox',
+      title: 'The Loser Paradox',
+      content: `People who are the bottom of a hierarchy are far less likely to spurn that hierarchy than they are to use it against people who are trying to climb the ranks of that hierarchy. The person who never graduated from college may in some contexts claim that a college degree is worthless, but he is unlikely to act accordingly. When he comes across someone without a college degree who is trying to make something of himself, he is likely to pounce on that person, claiming he is an uncredentialed fraud. Similarly, the person who never got his driver's license may claim that cars are a waste of money, but when he comes across someone who just got his driver's license, he is likely to be highly critical of that person's driving.`
+    },
+    {
+      id: 'secretary-paradox',
+      title: 'The Sour Secretary Paradox',
+      content: `The more useless a given employee is to the organization that employs her, the more unstintingly she will toe that organization's line. This is a corollary of the loser paradox.`
+    },
+    {
+      id: 'indie-writer-paradox',
+      title: 'The Indie Writer\'s Paradox',
+      content: `People don't give good reviews to writers who do not already have positive reviews. Analysis: This is a veridical paradox, in the sense that it describes an actual vicious circle and does not represent a logical blunder. An independent writer is by definition one who does not have a marketing apparatus behind him, and such a writer depends on uncoerced positive reviews. But people are extremely reluctant to give good reviews to writers who are not popular already or who do not have institutional backing.`
+    },
+    {
+      id: 'connectedness-paradox',
+      title: 'Paradox of Connectedness',
+      content: `Communications technology is supposed to connect us but separates us into self-contained, non-interacting units. Solution: Communications technology is not supposed to connect us emotionally. On the contrary, it is supposed to connect us in such a way that we can transact without having to bond emotionally. And that is what it does. It connects us logically while disconnecting us emotionally.`
+    },
+    {
+      id: 'information-paradox',
+      title: 'Arrow\'s Information Paradox',
+      content: `If you don't know what it is, you don't buy it. Therefore, you don't buy information unless you know what it is. But if you know what it is, you don't need to buy it. But information is bought. Solution: The obvious solution is that information can be described without being disclosed. I can tell you that I have the so and so's phone number without giving you that number, and the circumstances may give you reason to believe me. But oftentimes it isn't until a given person has bought the information that he can adequately judge whether that information was worth buying.`
+    },
+    {
+      id: 'education-paradox',
+      title: 'Soft Communism and the Paradox of American Education',
+      content: `The more money that the United States invests in education, the worse American education is. Explanation: In the US, when money is poured into education, it is not to improve education but is rather to provide incompetent people with fake employment as educational administrators or teachers. So with each new wave of educational funding, a bloated, entrenched and incompetent cadre of educational bureaucrats becomes even more bloated, entrenched and incompetent, with predictably adverse effects on student-learning.`
     }
   ]
 };
@@ -598,12 +600,7 @@ export function HumanizerSection({ onSendToInput, initialText }: HumanizerSectio
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {WRITING_SAMPLES['content-neutral'].map(sample => (
-                    <SelectItem key={sample.id} value={sample.id}>
-                      📝 {sample.title}
-                    </SelectItem>
-                  ))}
-                  {WRITING_SAMPLES['epistemology'].map(sample => (
+                  {WRITING_SAMPLES['philosophical'].map(sample => (
                     <SelectItem key={sample.id} value={sample.id}>
                       🧠 {sample.title}
                     </SelectItem>
