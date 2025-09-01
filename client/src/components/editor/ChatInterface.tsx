@@ -15,8 +15,6 @@ interface ChatInterfaceProps {
   messages: Message[];
   onSendMessage: (content: string, contextDocument?: string) => void;
   onClearChat: () => void;
-  reprocessOutput: boolean;
-  onReprocessOutputChange: (value: boolean) => void;
   onSendToInput?: (content: string) => void;
 }
 
@@ -24,8 +22,6 @@ export function ChatInterface({
   messages,
   onSendMessage,
   onClearChat,
-  reprocessOutput,
-  onReprocessOutputChange,
   onSendToInput
 }: ChatInterfaceProps) {
   const [inputValue, setInputValue] = useState('');
@@ -279,17 +275,7 @@ export function ChatInterface({
             </Button>
           </div>
         </form>
-        <div className="flex justify-between mt-1.5">
-          <div className="flex items-center">
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="reprocess-output" 
-                checked={reprocessOutput}
-                onCheckedChange={(checked) => onReprocessOutputChange(!!checked)}
-              />
-              <Label htmlFor="reprocess-output" className="text-sm">Send output to input box after processing</Label>
-            </div>
-          </div>
+        <div className="flex justify-end mt-1.5">
           <span className="text-xs text-slate-400">{characterCount} characters</span>
         </div>
       </div>

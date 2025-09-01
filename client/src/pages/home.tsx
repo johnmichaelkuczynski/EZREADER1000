@@ -485,8 +485,6 @@ export default function Home() {
                 // processDocument(content); // REMOVED - this was causing chat responses to appear in output box
               }}
               onClearChat={clearChat}
-              reprocessOutput={reprocessOutput}
-              onReprocessOutputChange={setReprocessOutput}
               onSendToInput={(content) => {
                 setInputText(content);
               }}
