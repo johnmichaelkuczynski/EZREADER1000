@@ -693,15 +693,25 @@ export function HumanizerSection({ onSendToInput, initialText }: HumanizerSectio
               </div>
             </CardHeader>
             <CardContent>
-              <div 
-                {...aiTextDropzone.getRootProps()}
-                className={`border-2 border-dashed rounded-lg p-4 ${
-                  aiTextDropzone.isDragActive 
-                    ? 'border-blue-400 bg-blue-50 dark:bg-blue-950' 
-                    : 'border-gray-200 dark:border-gray-700'
-                }`}
-              >
-                <input {...aiTextDropzone.getInputProps()} />
+              <div className="relative">
+                <div 
+                  {...aiTextDropzone.getRootProps()}
+                  className={`absolute inset-0 ${
+                    aiTextDropzone.isDragActive 
+                      ? 'border-4 border-dashed border-blue-400 bg-blue-50 dark:bg-blue-950 bg-opacity-75 rounded-lg z-10' 
+                      : 'pointer-events-none'
+                  }`}
+                >
+                  <input {...aiTextDropzone.getInputProps()} />
+                  {aiTextDropzone.isDragActive && (
+                    <div className="flex items-center justify-center h-full">
+                      <p className="text-blue-600 dark:text-blue-400 font-medium">
+                        Drop file here to upload
+                      </p>
+                    </div>
+                  )}
+                </div>
+                
                 <input
                   type="file"
                   ref={aiTextFileRef}
@@ -717,16 +727,8 @@ export function HumanizerSection({ onSendToInput, initialText }: HumanizerSectio
                   value={aiText}
                   onChange={(e) => setAiText(e.target.value)}
                   placeholder="Type, paste, or upload AI-generated text here... Supports PDF, Word, and text files."
-                  className="min-h-[200px] border-0 resize-none focus-visible:ring-0"
+                  className="min-h-[200px] border-2 border-dashed border-gray-200 dark:border-gray-700 resize-none focus-visible:ring-0"
                 />
-                
-                {aiTextDropzone.isDragActive && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-blue-50 dark:bg-blue-950 bg-opacity-75 rounded-lg">
-                    <p className="text-blue-600 dark:text-blue-400 font-medium">
-                      Drop file here to upload
-                    </p>
-                  </div>
-                )}
               </div>
             </CardContent>
           </Card>
@@ -778,15 +780,25 @@ export function HumanizerSection({ onSendToInput, initialText }: HumanizerSectio
               </div>
             </CardHeader>
             <CardContent>
-              <div 
-                {...styleTextDropzone.getRootProps()}
-                className={`border-2 border-dashed rounded-lg p-4 ${
-                  styleTextDropzone.isDragActive 
-                    ? 'border-blue-400 bg-blue-50 dark:bg-blue-950' 
-                    : 'border-gray-200 dark:border-gray-700'
-                }`}
-              >
-                <input {...styleTextDropzone.getInputProps()} />
+              <div className="relative">
+                <div 
+                  {...styleTextDropzone.getRootProps()}
+                  className={`absolute inset-0 ${
+                    styleTextDropzone.isDragActive 
+                      ? 'border-4 border-dashed border-blue-400 bg-blue-50 dark:bg-blue-950 bg-opacity-75 rounded-lg z-10' 
+                      : 'pointer-events-none'
+                  }`}
+                >
+                  <input {...styleTextDropzone.getInputProps()} />
+                  {styleTextDropzone.isDragActive && (
+                    <div className="flex items-center justify-center h-full">
+                      <p className="text-blue-600 dark:text-blue-400 font-medium">
+                        Drop file here to upload
+                      </p>
+                    </div>
+                  )}
+                </div>
+                
                 <input
                   type="file"
                   ref={styleTextFileRef}
@@ -802,16 +814,8 @@ export function HumanizerSection({ onSendToInput, initialText }: HumanizerSectio
                   value={styleText}
                   onChange={(e) => setStyleText(e.target.value)}
                   placeholder="Upload your own writing sample or leave empty to use the selected writing sample from the dropdown..."
-                  className="min-h-[150px] border-0 resize-none focus-visible:ring-0"
+                  className="min-h-[150px] border-2 border-dashed border-gray-200 dark:border-gray-700 resize-none focus-visible:ring-0"
                 />
-                
-                {styleTextDropzone.isDragActive && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-blue-50 dark:bg-blue-950 bg-opacity-75 rounded-lg">
-                    <p className="text-blue-600 dark:text-blue-400 font-medium">
-                      Drop file here to upload
-                    </p>
-                  </div>
-                )}
               </div>
             </CardContent>
           </Card>
