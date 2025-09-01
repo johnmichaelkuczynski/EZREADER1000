@@ -208,11 +208,23 @@ function ChunkSelectionDialog({ chunks, onSelect, onClose, isOpen }: ChunkSelect
   );
 }
 
-export function HumanizerSection() {
+interface HumanizerSectionProps {
+  onSendToInput?: (text: string) => void;
+  initialText?: string;
+}
+
+export function HumanizerSection({ onSendToInput, initialText }: HumanizerSectionProps) {
   const { toast } = useToast();
   
   // State for the three main boxes
   const [aiText, setAiText] = useState('');
+
+  // Update aiText when initialText changes
+  React.useEffect(() => {
+    if (initialText && initialText.trim()) {
+      setAiText(initialText);
+    }
+  }, [initialText]);
   const [styleText, setStyleText] = useState('');
   const [humanizedText, setHumanizedText] = useState('');
   
@@ -704,7 +716,7 @@ export function HumanizerSection() {
                 <Textarea
                   value={aiText}
                   onChange={(e) => setAiText(e.target.value)}
-                  placeholder="Paste or upload AI-generated text here... Supports PDF, Word, and text files."
+                  placeholder="Type, paste, or upload AI-generated text here... Supports PDF, Word, and text files."
                   className="min-h-[200px] border-0 resize-none focus-visible:ring-0"
                 />
                 
@@ -865,6 +877,22 @@ export function HumanizerSection() {
                     <Download className="h-4 w-4 mr-1" />
                     PDF
                   </Button>
+                  {onSendToInput && (
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() => {
+                        onSendToInput(humanizedText);
+                        toast({
+                          title: "Text sent to main input",
+                          description: "Humanized text has been sent to the main input box"
+                        });
+                      }}
+                      disabled={!humanizedText.trim()}
+                    >
+                      Send to Main Input
+                    </Button>
+                  )}
                 </div>
               </div>
             </CardHeader>

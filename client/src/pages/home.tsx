@@ -118,6 +118,7 @@ export default function Home() {
   const [audioTranscribeDialogOpen, setAudioTranscribeDialogOpen] = useState(false);
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [examMode, setExamMode] = useState(false);
+  const [humanizerInitialText, setHumanizerInitialText] = useState<string>('');
   
   const { toast } = useToast();
   const mediaRecorder = useRef<MediaRecorder | null>(null);
@@ -733,7 +734,29 @@ export default function Home() {
       
       {/* AI Text Humanizer Section - Added at bottom as requested */}
       <div className="mt-16 border-t pt-16">
-        <HumanizerSection />
+        <div className="mb-6">
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              onClick={() => {
+                // Find the HumanizerSection and set initial text
+                setHumanizerInitialText(outputText);
+                toast({
+                  title: "Text sent to humanizer",
+                  description: "Output text has been sent to the AI Text Humanizer"
+                });
+              }}
+              disabled={!outputText.trim()}
+              className="mb-4"
+            >
+              Send Output to Humanizer
+            </Button>
+          </div>
+        </div>
+        <HumanizerSection 
+          onSendToInput={(text) => setInputText(text)}
+          initialText={humanizerInitialText}
+        />
       </div>
     </div>
   );
