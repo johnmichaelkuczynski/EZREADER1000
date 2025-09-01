@@ -1,0 +1,613 @@
+USE DEEPSEEK, OPENAI, ANTHROPIC, PERPLEXITY, AND GTPZERO.
+
+BOX A: THIS BOX CONTAINS THE TEXT THE USER IS GOING TO REWRITE.  
+IT IS ASSUMED THAT THIS TEXT IS CLEARLY AI-WRITTEN; THE USER'S INTENTION IS TO CONVERT AI-WRITTEN TEXT INTO TEXT THAT GPTZERO DOES NOT BELIEVE TO BE AI-WRITTEN.
+USER UPLOADS OR COPIES-AND-PASTES TEXT INTO BOX. 
+UPLOAD SUPPORTS PDF/WORD/DOC 
+GPTZERO IS INSTALLED; TEXT IN INPUT BOX IS AUTOMATICALLY EVALUATED FOR AI. 
+GTPZERO'S SCORE IS DISPLAYED CLEARLY (THE PERCENTAGE, NOT SOME VERBAL DESCRIPTOR. "83% HUMAN" NOT "LIKELY HUMAN.")
+THE USER CAN UPLOAD TEXTS OF ANY LENGTH, UP TO SEVERAL HUNDRED PAGES. 
+THIS IS BECAUSE THE APP WILL 'CHUNK' (SEPARATE INTO SEGMENTS OF 500 WORDS OR SO) LONG (MORE THAN 500 WORDS) TEXT, SO AS TO AVOID TOKEN ISSUES AND OTHER PROBLEMS. 
+AFTER UPLOADING A LARGE TEXT, THE USER HAS THE OPTION OF SELECTING WHICH CHUNKS HE WANTS TO REWRITE; PREVIEWS OF THE CHUNKS WILL APPEAR IN A POPUP THAT 
+
+BOX B: THIS BOX CONTAINS THE TEXT WHOSE STYLE THE APP WILL MIMIC (WITH SURGICAL PRECISION) WHEN GENERATING THE REWRITE.
+IT IS ASSUMED THAT THIS TEXT IS WRITTEN BY A HUMAN (IN MOST CASES, THE USER HIMSELF, SINCE HE IS PROBABLY USING THIS APP TO SCALE HIS OWN WORK). 
+USER UPLOADS OR COPIES-AND-PASTES TEXT INTO BOX. 
+UPLOAD SUPPORTS PDF/WORD/DOC 
+GPTZERO IS INSTALLED; TEXT IN INPUT BOX IS AUTOMATICALLY EVALUATED FOR AI. 
+GTPZERO'S SCORE IS DISPLAYED CLEARLY (THE PERCENTAGE, NOT SOME VERBAL DESCRIPTOR. "83% HUMAN" NOT "LIKELY HUMAN.")
+
+BOX C: THIS IS WHERE THE REWRITE IS DEPOSITED. 
+THIS BOX IS LARGE. AFTER THE USER GENERATES THE REWRITE, HE DOES NOT HAVE TO PRESS ANY MORE BUTTONS TO SEE THE REWRITE; IT JUST 'PRESENTS'.
+AND HE DOES NOT HAVE TO DOWNLOAD THE REWRITE TO SEE. 
+BUT HE CAN DOWNLOAD IT (AS PDF/TXT/WORD). 
+WHEWN THE REWRITE APPEARS IN THIS BOX, IT IS AUTOMATICALLY EVALUATED BY GPTZERO, WITH THE RESULTS BEING DISPLAYED (IN PERCENTAGES, NOT IN PARAPHRASES)
+
+UNDERNEATH BOX A, THERE WILL BE A CUSTOM-INSTRUCTION BOX (NICE AND BIG, SO THE USER CAN SEE WHAT HE IS WRITING), WHERE THE USER CAN GIVE HIS OWN INSTRUCTIONS ABOUT HOW 
+THE REWRITE SHOULD BE. 
+THE USER DOES NOT HAVE TO ENTER CUSTOMZIED INSTRUCTIONS. AND WHETHER HE DOES SO OR NOT, THE APP WILL DO THE REWRITE WITH SURGICAL PRECISION; IT WILL CLONE THE STYLE OF 
+THE STYLE-SAMPLE (IE THE THING IN BOX) AT A MOLECULAR LEVEL; AND IT WILL ALSO PRESERVE CONTENT (SO FAR AS THE USER'S INSTRUCTIONS ALLOW). 
+
+UNDERNEATH BOX C (WHERE THE REWRITES ARE DEPOSITED), THERE WILL BE A RE-REWRITE FUNCTION; SO THAT THE USER CAN REWRITE THE REWRITE WITHOUT HAVING TO COPY AND PASTE 
+THE CONTENTS OF BOX AND MOVE THEM TO BOX A. IN OTHER WORDS, THE APP WILL PERMIT 'RECURSIVE' REWRITING. THIS IS BECAUSE THE USER MAY LIKE A GIVEN REWRITE BUT WANT TO GET THE 
+AI-SCORE DOWN AND NOT WANT TO HAVE TO REWRITE DE NOVO. 
+
+ON THE LEFT OF THE SCREEN, IN A LONG VERTICAL LIST, THERE WILL BE A LONG LIST OF BUTTONS, EACH OF WHICH PICKS OUT A WRITING SAMPLE. THESE ARE BELOW. ONE BUTTON FOR EACH PARADOX
+THESE PARADOXES ARE HUMAN-WRITTEN WRITING SAMPLES; THESE ARE FOR WHEN THE USER DOES NOT WANT TO UPLOAD HIS OWN WRITING SAMPLE. 
+IF THE USER DOES NOT UPLOAD A WRITING SAMPLE AND ALSO DOES NOT MANUALLY SELECT ONE OF THE (BELOW) PARADOXES, THE APP WILL DEFAULT TO ONE OF THEM (THE RULE FOLLOWING PARADOX)
+
+TO THE LEFT OF THIS VERTICAL LIST THERE WILL BE ANOTHER LONG VERTICAL LIST, THIS ONE CONTAINING BOXES CONTAINING PHRASES THAT CAN SERVE AS INSTRUCTIONS FOR THE REWRITE; THE USER
+CAN USE ONE/ALL/SOME OF THESE BUTTONS (OR BOXES) SIMULTANEOUSLY (IE HE CAN CHECK OFF ANY SUBSET OF THESE BOXES); THESE BOXES WORK BOTH FOR THE INITIAL REWRITE (IE THEY SEND THE INSTYRUCTION 
+RIGHT IN THERE) AND FOR THE RE-REWRITE FUNCTION (IN BOX C), IE THEY SEND THESE INSTRUCTIONS RIGHT IN THERE: 
+
+HERE ARE THYE ARE (CATEGORIZED): 
+
+Structure & Cadence
+Compression — light (−15%): Cut filler; merge short clauses; keep meaning.
+
+Compression — medium (−30%): Trim hard; delete throat-clearing; tighten syntax.
+
+Compression — heavy (−45%): Sever redundancies; collapse repeats; keep core claims.
+
+Mixed cadence: Alternate 5–35-word sentences; no uniform rhythm.
+
+Clause surgery: Reorder main/subordinate clauses in 30% of sentences.
+
+Front-load claim: Put the main conclusion in sentence 1; support follows.
+
+Back-load claim: Delay the conclusion to the final 2–3 sentences.
+
+Seam/pivot: Drop smooth connectors once; abrupt turn is fine.
+
+Framing & Inference
+Imply one step: Omit an obvious inferential step; leave it implicit.
+
+Conditional framing: Recast one key sentence as “If/Unless …, then …”.
+
+Local contrast: Use “but/except/aside” once to mark a boundary—no new facts.
+
+Scope check: Replace one absolute with a bounded form (“in cases like these”).
+
+Diction & Tone
+Deflate jargon: Swap nominalizations for verbs where safe (e.g., “utilization” → “use”).
+
+Kill stock transitions: Delete “Moreover/Furthermore/In conclusion” everywhere.
+
+Hedge once: Use exactly one: “probably/roughly/more or less.”
+
+Drop intensifiers: Remove “very/clearly/obviously/significantly.”
+
+Low-heat voice: Prefer plain verbs; avoid showy synonyms.
+
+One aside: One short parenthetical or em-dash aside; keep it factual.
+
+Concreteness & Benchmarks
+Concrete benchmark: Replace one vague scale with a testable one (e.g., “enough to X”).
+
+Swap generic example: If the source has an example, make it slightly more specific; else skip.
+
+Metric nudge: Replace “more/better” with a minimal, source-safe comparator (“more than last case”).
+
+Asymmetry & Focus
+Asymmetric emphasis: Linger on the main claim; compress secondary points sharply.
+
+Cull repeats: Delete duplicated sentences/ideas; keep the strongest instance.
+
+Topic snap: Change focus abruptly once; no recap.
+
+Formatting & Output Hygiene
+No lists: Force continuous prose; remove bullets/numbering.
+
+No meta: No prefaces, apologies, or “as requested” scaffolding.
+
+Exact nouns: Replace vague pronouns where antecedent is ambiguous.
+
+Quote once: If the source contains a strong phrase, quote it once; else skip.
+
+Safety / Guardrails
+Claim lock: Do not add examples, scenarios, or data not present in the source.
+
+Entity lock: Keep names, counts, and attributions exactly as given.
+
+Combo presets (one-liners)
+Lean & Sharp: Compression-medium + mixed cadence + imply one step + kill stock transitions.
+
+Analytic: Clause surgery + front-load claim + scope check + exact nouns + no lists.
+
+
+
+THERE WILL BE A DROPDOWN WHERE THE USER CAN CHOOSE WHICH LLM TO USE: OPENAI, ANTHROPIC, DEEPSEEK, PERPLEXITY. 
+
+NO CANNED LOGIC WILL BE USED IN THE CONSTRUCTION OF THIS APP.  
+
+
+
+AS PREVIOUSLY STATED, USERS WHO DO NOT HAVE THEIR OWN WRITING SAMPLES CAN CHOOSE ONE (OR MORE) OF THE THE FOLLOWING: 
+
+The Loser Paradox 
+
+People who are the bottom of a hierarchy are far less likely to spurn that hierarchy than they are to use it against people who are trying to climb the ranks of that hierarchy. The person who never graduates from college may in some contexts claim that a college degree is worthless, but he is unlikely to act accordingly. When he comes across someone without a college degree who is trying to make something of himself, he is likely to pounce on that person, claiming he is an uncredentialed fraud. Explanation: Losers want others to share their coffin, and if that involves hyper-valuing the very people or institutions that put them in that coffin, then so be it. 
+
+The Sour Secretary Paradox 
+
+The more useless a given employee is to the organization that employs her, the more unstintingly she will toe that organization’s line. This is a corollary of the loser paradox. 
+
+The Indie Writer’s Paradox 
+
+People don’t give good reviews to writers who do not already have positive reviews. Analysis: This is a veridical paradox, in the sense that it describes an actual vicious circle and does not represent a logical blunder. An independent writer is by definition one who does not have a marketing apparatus behind him, and such a writer depends on uncoerced positive reviews. But people are extremely reluctant to give good reviews to writers who are not popular already or who do not have the weight of some institution behind them. This circle can be broken by writers who mass-produce schlock, but there is no real way for other writers to break it. This is a special form of the Grass Roots Movement Paradox. 
+
+
+Paradox of Connectedness 
+
+Communications technology is supposed to connect us but separates us into self-contained, non-interacting units. Solution: Communications technology is not supposed to connect us emotionally. On the contrary, it is supposed to connect us in such a way that we can transact without having to bond emotionally. And that is what it does. It connects us logically while disconnecting us emotionally. 
+
+Arrow’s Information Paradox 
+
+If you don’t know what it is, you don’t buy it. Therefore, you don’t buy information unless you know what it is. But if you know what it is, you don’t need to buy it. But information is bought. Solution: The obvious solution is that information can be described without being disclosed. I can tell you that I have the so and so’s phone number without giving you that number, and the circumstances may give you reason to believe me. But oftentimes it isn’t until a given person discloses what he says he knows that he there is any reason to believe him to know it. There are a lot of people who make a living charging others for insights into the market, even they have no such insight, as their customers eventually find out.  
+
+Soft Communism and the Paradox of American Education 
+
+The more money that the United States invests in education, the worse American education is. 
+Explanation: In the US, when money is poured into education, it is not to improve education but is rather to provide incompetent people with fake employment as educational administrators or teachers. So with each new wave of educational funding, a bloated, entrenched and incompetent cadre of educational bureaucrats becomes even more bloated, entrenched and incompetent, with predictably adverse effects on student-learning. 
+In the US, when money is poured into public schools, it isn’t about improving education. It is about creating straw government jobs at the expense of real private sector jobs. In other words, it is about the dead of hand of government bureaucracy replacing the invisible hand of the market. It is about communism displacing capitalism, under the banner of helping the public. The same is true to a large extent of investment in law enforcement. Law enforcement jobs, like most jobs in education, are basically fake jobs that are created for dummies as a way of buying their votes and also of having a moralistic pretext for absconding with funds. The less money spent on public schools the better, the same being true, with obvious qualifications, of law-enforcement. 
+
+Buridan’s Ass 
+
+An ass that has to choose between food and water and is exactly as hungry as it is thirsty cannot make a choice and will therefore be paralyzed by indecision. But such an ass would in fact be able to make a decision. 
+Explanation: This isn’t exactly a paradox. There is nothing absurd in the supposition that a creature in such a situation might simply ‘halt’, and we don’t know that actual biological creatures would not in fact halt in such a situation, since it seldom if ever happens that a creature is confronted with options that are exactly equally appealing. 
+If there is a paradox here, it is that a creature’s rationality is supposed to help it optimize its situation but Buridan’s Ass is paralyzed by its own rationality. The right response to this point is that rationality, unlike intelligence, is inherently reflective in nature. Intelligence cannot decide between two equally reasonable options, but rationality can so decide, since rationality, being reflective, can decide that it is good to make a decision, even if no particular decision is optimal, whereas intelligence, being non-reflective, can only chose between the options on the table and is therefore paralyzed by the absence of one that is optimal. 
+
+Obsessive-compulsive’s Paradox 
+
+If the obsessive-compulsive doesn't give in to his compulsions, he suffers. If he does give into them, they get worse.
+Solution: If the obsessive-compulsive fights his compulsions, they wither and go away.
+
+Analysis Paralysis Paradox 
+
+Given that there is almost always a more rational course of action, the ability to identify rational courses of action may lead to a failure to act.
+Solution: There is a difference between intelligence and rationality. Intelligence answers the question: What is it objectively possible to do? Rationality answers the question: What do my limited resources of time, energy and intelligence make it incumbent on me to do? And the second answer breaks any deadlocks created by the first.
+
+The Primerica Paradox 
+
+In order to work for Primerica, you need to have money, since you don’t make any money working there. But if you have money you won’t work for Primerica, because there is no reason to do so. And yet people work for Primerica. 
+Explanation: Primerica is a multi-level insurance company. Its representatives have to pay to work there. They do not make a salary and only make money off of commissions. But they don’t make money off of commissions since they almost never make sales, and they don’t make sales because nobody wants Primerica insurance since it’s bad and definitely don’t want to buy it from some sleazy Primerica sales representative.
+And yet Primerica has hundreds of thousands of ‘employees.' What's the explanation?
+Part of it, of course, is that Primerica sales reps are chumps. Another part of it is that, although they sometimes vaguely understand that it is a scam, they give their money to Primerica thinking that in due course they will be on the inside of that scam. 
+But there is a simpler and more cogent explanation. 
+People who are on welfare often have to provide proof that either have employment or are looking for it. If you pay a monthly fee of $50 to Primerica, you can list it as an employer. Plus, given that you are technically employed but are making no money at all, you are entitled to major tax exemptions. 
+There is no money to be made at Primerica. Zero. The people who work there are slimy lying chumps. But it makes it possible to get welfare, and what Primerica charges its fake employees is a lot less than their subsequent welfare checks. So it’s worth it for them to let Primerica rip them off a little bit, and that’s why Primerica remains ‘in business.’ 
+
+ 
+
+The Leno Paradox 
+
+The people who should commit suicide don’t. 
+
+
+Skeptical Bureaucrat Paradox 
+
+When bureaucrats say they ‘need more information’, it’s because they don’t need it. They are determined not to help you and they’re sending you on a fool’s errand.
+
+The Forest Paradox
+
+Knowing involves not knowing too much. If you know too much about Smith, you are likely to make excuses for him. If you know just enough, you can’t make excuses for him and you’ll see him for what he is.
+
+The Larry David Paradox 
+
+It is only when somebody has no merit that it becomes politically obligatory to say that they have merit. 
+
+The Gratitude Paradox 
+
+The people who should be the most grateful are the least grateful. Explanation: The people who should be the most grateful are losers who were bailed out, and they needed to bailed out because they don’t have enough integrity to give credit where it is due.
+
+The Seinfeld Paradox 
+
+You are far more likely to succeed as a comedian if you are medium funny than if you are actually funny.
+
+
+The Gas-guzzling Hippie Paradox 
+
+Self-identified liberals claim to be pro-environment but on average have a dramatically higher environmental footprint than self-identified conservatives. Explanation: The self-identified conservative tends to be a do-it-yourselfer who takes a certain pride fixing his own machinery and in general taking the path of most resistance, whereas the self-identified liberal tends to be group-people and thus lack the loner’s streak of eco-friendly do-it-your-selfism. 
+
+The Progress Paradox 
+
+Progress for man is often regress for a specific man. What is good for humanity as a whole often involves a given person being rendered unnecessary. For example, nothing could do more good for humanity than the digital optimization of education, but once education is duly digitized, an entire class of educational bureaucrats will be obsolete. 
+
+
+The Conformist/Non-conformist Paradox 
+
+When people become goths or hippies, they do so to be different but are in fact conforming to the norm.
+
+The Fake Rebel Paradox 
+
+The fewer legitimate reasons there are to rebel in a given a society, the more self-identified rebels there are. Explanation: where there are legitimate reasons to rebel, it is dangerous to rebel.
+
+
+The Old Guard Hippie Paradox 
+
+The hippies who self-identify as rebels are the establishment and the non-hippies on whom they trample are the actual rebels. 
+
+The Good Lawyer Bad Lawyer Paradox 
+
+In most cases, the reason you need a lawyer is to defend yourself against other lawyers, either because of direct affronts on their part or, more likely, because of gratuitous laws put in place by lawyers, along with a general air of litigiousness for which they are responsible.
+
+Suicide Paradox 
+
+When people kill themselves, the only people they hurt are the ones who care about them. 
+
+Churchill’s Paradox 
+
+In a non-democratic society, the government oppresses the people. In a democratic society, the people oppress themselves.
+
+Orlov’s Paradox 
+
+The more computers eliminate the need to do work, the more work we end up doing.
+
+Unemployment as Consequence of Macroeconomic Efficient Paradox 
+
+An economy is efficient if few man-hours of work lead to high output and inefficient if many manhours of work lead to low output. This means that the more efficient an economy is, the higher the rate of employment, setting aside government-created, economically unnecessary employment.
+
+Hilbert-Bernays Paradox 
+
+If there is a name of a natural number that is identical with the name of the successor that number, then some natural number is its own successor. 
+The argument: Let h be a term referring to a such a natural number such that h is synonymous with ‘the reference of h+1’, and let n be the referent of h. Since h is synonymous with, and therefore has the same referent as ‘the referent of h+1’, it follows that the referent of h is n+1. And since n is by hypothesis the referent of h, it follows that n+n+1. 
+Analysis: If h is synonymous with ‘the referent of h+1', then h is defined in terms of an expression that is itself defined in terms of h and h consequently has no referent. So h doesn’t refer to any number and a fortiori doesn’t refer to the successor of any number.
+
+ Kuczynski’s Recursion Paradox 
+
+There is no recursive definition of the class of recursive definitions. 
+
+Corollary
+
+There is no formal characterization of formal truth. 
+
+The Automation Paradox 
+
+Everything can be automated except for automation itself. 
+
+
+Heterological Paradox 
+
+A word is ‘heterological’ if it is false of itself. Thus ‘monosyllabic’ is heterological, whereas ‘polysyllabic’ is not heterological. 
+Question: Is ‘heterological’ heterological? It is if it isn’t and if isn’t if it is. 
+Solution: To say that ‘polysyllabic’ is true of itself is to say that ‘polysyllabic’ is polysyllabic. To say that ‘is an English expression’ is true of itself is to say that ‘is an English expression' is an English expression. ‘True of itself,' when meaningful, simply abbreviates some non-reflexive construction; and when it doesn't do so, the term ‘self' an undefined pronoun—a free variable, in other words. The statement ‘the word “heterological” is true of itself’ does not abbreviate a non-reflexive construction, and neither does the sentence ‘the word “heterological” is heterological’; therefore, neither is either true or false.
+
+The Liar Paradox 
+
+Suppose Smith says “I am lying.” He is lying if he’s telling the truth and he’s telling the truth if he’s lying. 
+Analysis: It is not words per se but the underlying meanings, or propositions, that are true or false. So when Smith says “I am lying”, what he is saying, if stated perspicuously, is to the effect that: There exists a proposition P such that P is false if affirmed and true if denied and such that, moreover, I am not affirming P. But the statement just made is neither false-if-true nor true-if-false: it is simply false.  
+
+Berry’s Paradox 
+
+The expression “the first number not nameable in under ten words” names that number in nine words.
+Solution: There are different ways of picking out a number. The canonical way of doing so is by using the usual numerical notation. Thus, the expression “117,334” is the canonical way of picking out the corresponding number, but “the exact number of dollars in Jim’s saving’s account” is not. In light of this, let n be the least number that cannot be canonically picked out in less than ten words. Given that E is not a canonical description of n, there is nothing paradoxical about E if it is taken to be short for “the first number not canonically nameable in under ten words.” So E is paradoxical only if taken to mean “the first number not nameable in any way at all in under ten words.” But thus taken, E isn’t paradoxical at all as it doesn’t refer to anything. For while there is indeed a first number that cannot be canonically named in less than ten words, there is no first number that cannot be named in any way at all in less than ten words, simply because, given suitable linguistic conventions, anything can refer to anything.
+
+Wittgenstein’s Rule-following Paradox 
+
+Any given course of conduct complies with many different rules, and there is therefore no good reason to say of a given act that it is an act of following this as opposed to that rule. So any putative case of following a given rule might equally reasonably be seen as a case of following some other, incompatible rule, and there is therefore no good reason to regard any act as a case of following any given rule. 
+The solution: Taken in isolation, a given action can be interpreted as an act of compliance with any given one of a plurality of incompatible rules. If you say "4" when I ask you "what is 2+2?", I cannot on the basis alone rule out the possibility that you took "what is 2+2?" and "4" to mean, respectively,  "I want to play chess" and "I do not have time for childish pastimes." But if that is what you meant, there will be independent evidence for it, meaning that there will be some reason independently of this context to believe that you take those words to have those meanings. And attempts to manufacture such evidence by ascribing non-standard interpretations to other acts of yours will quickly lead to hypotheses that are inconsistent with one another and with well-established principles of psychology and natural law generally. 
+So Wittgenstein’s ‘paradox’ collapses into the trivial point that erroneous hypotheses may be compatible with artificially restricted data sets. Exactly the same thing is true of Quine's ‘indeterminacy of translation' thesis, according to which people's overt behaviors leave it open what they mean by their words---which isn't true and which only appears true if one considers artificially constricted data-sets. 
+Both of these contentions are motivated by behaviorist psychological theories and, though they are meant to provide support for such theories, they in fact presuppose them and show how broken such theories are.
+
+
+The Sorites Paradox
+
+A single grain of sand is not a heap. If n grains of sand, then neither are n+1 grains. Therefore, a billion grains of sands are not a heap.
+Analysis: Three grains of sand is more of a heap than two; four are more of a heap than three. n+1 grains of sand are more ‘heapy’ than n grains. If, for arbitrary n, n grains of sand qualify as a heap, they do so because they are heapy enough relative to some benchmark. They may be heapy enough to alter the path of a rolling golf ball or they may be heapy enough to block traffic. 
+There are infinitely many different Sorites paradoxes and they are all to be solved in more or less the same way. For example: A person who has only $1 is not rich. If a person with $n is not rich, neither is a person with $n+1. Therefore, a billionaire is not rich. Solution: A person with $n+1 is richer than one with only $n. If, for arbitrary n, a person with $n counts as ‘rich’, that is because he is rich relative to some benchmark. He may be rich enough to afford entry into a certain club or to fall into a certain tax bracket. 
+Next example: If x is a given water-molecule and x is one mile away from cloud y, then x is not a part of y. If a water-molecule that is n millimeters away from a cloud is not a part of that cloud, then neither is a molecule that is n-1 millimeters away. Solution: Analysis: A water-molecule that is n-1 millimeters away from a given cloud is more a part of that cloud than an otherwise comparable one that is n millimeters away, in the sense that the first molecule's condition is relevant to the cloud's condition in a wider range of contexts than the second molecule. If, for arbitrary n, a water molecule that is n millimeters away from a given cloud ‘belongs' to that cloud, it is because it is close enough relative to some benchmark: it is sufficiently close that it was involved in the occurrence of some electrical storm that was otherwise the responsibility of that cloud or because it was involved in the slowing the descent of some object that was otherwise the responsibility of that cloud. 
+In general, Sorites paradoxes are solved by replacing binary characterizations (‘heap’, ‘rich’, ‘part of a given cloud’) with the corresponding comparatives (‘more of a heap’, ‘rich’, ‘more a part of that cloud’), along with the contextually supplied benchmarks. n+1 straws are more of an unbearable load than n straws; and if a given number counts as an ‘unbearable load’, without being preceded by ‘more’ or some other comparative term, that is because that number of straws is unbearable enough in relation to some benchmark, for example, the camel’s back breaks if it has to carry that many straws. 
+
+The Paradox of the Grain of Millet 
+
+If a single grain of millet falls to the earth, it doesn’t make a sound. But if a billion such grains do so, they do make a sound. Therefore, a billion nothings add up to something. 
+Analysis: If a given grain of millet falls to the earth, it does make a sound. If you were millet-sized and appropriately located in relation to the millet grains impact with the earth, the sound would be intolerably loud. To say that a single millet-grain doesn't make a sound when it hits the earth is comparable to saying that your stereo doesn't make a sound because your deaf grandfather can't hear it.
+
+Arrow Paradox 
+
+Since an arrow is at rest at any given instant, it never moves. Since any given object is at rest at any given instant, nothing moves. 
+The solution: To be at rest is to fail to move during a non-null interval. So while it is true that the arrow occupies different places during its flight, the arrow is nonetheless isn’t at rest during its occupancy of any given one of those points. 
+
+The Irresistible Force Paradox 
+
+What happens if an irresistible force meets an unmovable object? Isaac Asimov solved this paradox long ago. If there is an irresistible force, there are no unmovable objects, and if there are unmovable objects, there are no irresistible forces. 
+
+
+The Horny Nerd Paradox 
+
+Males with high sex drive may for that reason put off women and therefore have less sex than men with low sex drive.
+
+
+The Licensed Therapist Paradox 
+
+The more stringent the licensing process for therapists, the less effective therapists are. 
+
+The two-for-one-psychiatrist Paradox 
+
+For every hour of psychiatric treatment that you received, you need two hours of psychiatric treatment to undo the damage.
+
+The Economics Research Paradox 
+
+The more money is spent on economic research, the more useless are the results of that research.
+
+ 
+The Defense-lawyer Paradox 
+
+Lawyers are better at defending the guilty than at defending the innocent. 
+
+The Union Paradox 
+
+Unions are needed to help people keep jobs only because they prevent people from getting jobs in the first place. 
+
+The Useless Functionary Paradox 
+
+Oftentimes people who have very modest responsibilities will intentionally fail to fulfill them or fulfill them only very inefficiently, so as to inflate their own importance. Hence the sports club attendant whose one job is to buzz people into the athletic center may deliberately make people wait while he takes his time settling into his seat and primping his hair, and the like. 
+
+
+The Useless Professor Paradox 
+
+Professors are supposed to make information available. But oftentimes they withhold the little information that they have, in order to make it seem more valuable. In general, people have incentives to inflate the value of the information that they have to offer, and they often do so by withholding it or by communicating it only to those who won’t expose them. 
+
+Zeno’s Paradox: Achilles and the Tortoise 
+
+If the tortoise is ahead of Achilles, Achilles can never overtake the tortoise, since, by the time Achilles gets to a position previously occupied by the tortoise, the tortoise has already moved on.
+The solution: Whenever Achilles is occupying a point that the tortoise has already occupied, Achilles is indeed behind the tortoise. This is a tautology and in no way paradoxical. So the paradox must therefore be that in order for Achilles to catch up to the tortoise, he must traverse an infinite series of distances in a finite amount of time. But there is nothing paradoxical about this, given that any finite number can be represented as the sum of an infinite series (for example, 1 can be represented as the sum of ½ and ¼ and 1/8th and so on) and given, consequently, that any case of an object’s moving at a finite rate involves its traversing infinitely many finite distances in a finite amount of time. 
+	
+
+Paradox of Place 
+
+If everything has a place, then each place has a place, and so on ad infinitum. 
+Response: When it is said that everything has a place, what is meant is that every occupant of space-time has a place. Space-time regions do not themselves have places, since they are constituents, not occupants, of space-time.
+
+The Coin Paradox 
+
+There are non-denumerably many regions R that a given coin dropped on a flat surface can occupy after settling. So if R* is the exact region that the coin does occupy, the chances of the coin’s occupying that exact region are 1 divided by the number of such regions and are therefore zero. But since the coin does occupy R*, the chances of its doing so are greater than zero.  
+The solution: If an infinitely large class contains zero x’s, then the chances of choosing an x from that class are nil. If an infinitely large class contains one x, then the chances of choosing an x from that class are infinitesimally small but not nil.  
+
+
+Stockdale Paradox 
+
+Self-belief leads to success, but optimism leads to failure. According to James Stockton, an admiral in the US Navy, the soldiers who survived war were the ones who believed in themselves while not lying to themselves about the direness of the situation, and the soldiers who did not survive were the ones who were positive that ‘everything would be ok.’ 
+	The explanation of this paradox is straightforward. Optimism is a form of denial. One believes that ‘everything will be ok’ when one has one reason to believe that everything won’t be ok but lacks the self-confidence to confront that fact. So optimism is motivated by insecurity-driven lack of realism and therefore leads to failure, whereas self-belief is motivated by confidence-driven realism and tends to lead to success.
+
+Self-absorption Paradox 
+
+High-levels of self-awareness are associated with high levels of well-being and also with high levels of distress, including distress of the neurotic variety.  
+How is this to be explained? First of all, without self-awareness, one tends not to adapt well, since a precondition for adaption is revising, and therefore being aware of, one’s own conduct. So a certain degree of self-awareness is inherent in adapting and therefore in living well. But if one is aware, one is self-critical and for that reason prone to forms of distress to which non-self-aware are not prone. 
+
+Ironic Process Theory 
+
+Attempting to not to have thoughts of a certain kind tends to make such thoughts more likely to occur. If you try not to think of a white bear, you are for that reason more likely to think of a white bear. 
+Explanation: You cannot try to not have a thought of a certain kind without for that very reason having that thought. Also, in trying not to have a thought of a certain kind, you are initiating a cognitive process without letting it run its course, and the simplest way to terminate a thought process is indeed to let it run its course, and if you don't let it do so, it will continue to obtrude itself upon consciousness.
+
+
+Outcomes Paradox
+
+Schizophrenics in developing countries seems to respond better to psychiatric treatment than schizophrenics in developed countries. This is a paradox since people in developed countries generally respond better to medical treatment than their counterparts in developing countries. 
+ A possible explanation: Having schizophrenia involves having a profound loss of self-esteem, and it is easier to restore self-esteem in a developing country, where simply making a living is considered a respectable outcome, than it is a developed country, where being a success involves satisfying standards that are both very high and very poorly defined.
+
+The Antitrust Paradox
+
+The Title of a book by Robert Bork, in which he argues that Anti-trust laws hurt consumers by insulating inefficient competitors from their more efficient competitors. This is a ‘paradox’ in the sense that anti-trust laws are supposed to protect consumers from shoddy products put out by firms that have 100% market-share and therefore don’t have to compete. 
+Bork’s position is prima facie correct. If the government artificially restricted Walmart's market-share, would consumers have to pay more or less for the products that Walmart supplies? Probably more. 
+Some businesses have large market-shares because they outcompete their rivals. Others have large market shares because they restrict competition. When anti-trust laws are applied to businesses of the second kind, consumers benefit, but they are hurt when such laws are applied to businesses of the first kind.
+
+The Tenure Paradox
+
+Explanation: Tenure is supposed to allow scholars to have intellectual freedom but actually does the opposite. Tenure strips those who have it of any economic incentive to do good work and also of any economic incentive to hire people who will upstage them. So tenure prevents those who could use it do good work from having it.
+
+The Benevolent Leader Paradox
+
+If a leader is vindictive, people risk a lot by rebelling, and people gain a lot by reporting rebels to the authorities, making rebellion unlikely. If a leader is not vindictive, people risk little by rebelling and gain little by reporting rebels to the authorities. So a vindictive leader is less likely to be overthrown than a benevolent one, it being irrelevant who does more good for society. 
+
+
+The Paradox of Analysis 
+
+A conceptual analysis is given by a true, non-trivial and non-empirical proposition of the form x is a phi if and only if x is a psi, for example, ‘x is a circle if and only if x is a closed planar figure of uniform curvature.’ According to G.E. Moore, there is a ‘paradox of analysis,' for the reason that if a conceptual analysis is true, then both sides of the ‘if and only if' say the same thing, in which case said analysis is uninformative. So according to Moore, ‘x is a circle if and only if x is a closed planar figure of uniform curvature' is true only if ‘x is a circle' says the same thing as ‘x is a closed planar figure of uniform curvature'; but if they both say the same thing, Moore also holds, then ‘x is a circle if and only if x is a closed planar figure of uniform curvature' is uninformative.  
+The solution is that the information-load borne by a statement is a function not only of what it says but how it says it. If I tell you that x is a closed planar figure of uniform curvature, the property that I am ascribing to x is the same as the property I’m ascribing to it if I say that x is a circle. But since the one ascription involves different concepts from the other and since in each case you must work through the concepts involved in the property-ascription to identify the property in question, the information borne by the one statement will differ from that borne by the other. 
+
+Fitch’s Paradox 
+
+If all truths can be known, then all truths are known. Here is the supposed proof. Suppose that any given truth can be known. Let P be an unknown truth. In that case, ‘P is an unknown truth’ is a truth and can itself be known. But if ‘P is an unknown truth’ is known then P is known to be a truth and therefore is not an unknown truth. 
+This is not a paradox. It is a proof that not all truths can be known.  
+
+
+
+The Reddit-loser Paradox 
+
+No one spends time on Reddit who by doing so is foregoing opportunities to advance professionally. Therefore, chronic Redditors are people who have no Reddit-external professional opportunities to forego. Therefore, chronic Redditors are precisely the people who should most support attempts on the part of other Redditors to use Reddit to advance their careers. But chronic Redditors do the exact opposite, doing everything in their power to prevent people from using to their professional advantage and consequently doing everything in their power to prevent themselves from doing so. This paradox is a special case of the low-man-on-the-totem-pole paradox. 
+
+The Low-man-on-the-totem-pole Paradox 
+
+The lower down somebody is in a hierarchy, the less likely he is to rebel against it and the more likely he is to use it to prevent other people from his own level from moving up in the hierarchy. Therefore, the people who are the most oppressed by a given hierarchy do the most to give it the power to oppress them. 
+
+
+The Grassroots Movement Paradox 
+
+A movement needs a leader to be effective. A grassroots movement is by definition one whose leader has no power apart from the support of the people in that movement. But since people will not support someone unless he already has the power to benefit them, it is not possible for a grassroots movement to exist.  
+
+The Meek Shall Inherit the Earth Paradox 
+
+If you are overly competent, people will resent you and try to tear you down. So a good survival-stratagem is to seek less than hyper-competent, and the best way to do this is to be less than hyper-competent. Therefore, incompetence may have survival value, showing that Spencer's belief in the ‘survival of the fittest' is only qualifiedly true.  
+
+The Paradox of Hyper-competence 
+
+If you are incompetent, you are likely to be over-promoted since you are seen as controllable and non-threatening. If you are hyper-competent, you are likely to be underpromoted since you are soon as threatening and uncontrollable. 
+
+
+The Paradox of the School Psychologist
+
+If a disproportionate number of students in a given school are becoming mentally ill, the school psychologist can take the position that the school is to blame or she can take the position that the children are to blame. Statistically speaking, the first position is probably the right one. But the school psychologist will lose her job if she says as much. So she has to take the second position, which will involve undermining the very people she is supposed to help.
+
+
+The Paradox of the Useless Law
+
+If a law is necessary, like the laws that prohibit assault and robbery, there is no need to make that law seem necessary and therefore no need to make violators of it seem like criminals. If a law is unnecessary or only arguably necessary, then there is a need to make that law seem necessary and there consequently is a need to make violators of it seem like, and therefore be, criminals. Therefore, useless laws give the state an incentive to criminalize the populations that are subject to them. This is why possession of a gram of cocaine is subject to harsher to penalties than assault.
+
+The Useless Lawyer Paradox 
+
+The lawyer who represents you when you are arrested for drug-possession poses as your friend and may indeed be your friend in the context of that specific proceeding. But his livelihood depends on drugs being illegal, and he knows this and is therefore unlikely to do anything, including representing you adequately, that would conduce to their being made legal. 
+
+The Paradox of Gratuitous Scholarship 
+
+A superabundance of scholarship in a given area can create institutional roadblocks to actual progress in that area. If somebody has an actual insight into philosophy or economics, the existence of a mass of scholarship in that area means that there are people who deeply vested interests in suppressing or caricaturing that insight, since its existence means that their work is for naught. If there is a mass of scholarship in a given area, most of it is bound to be uninspired and mediocre and will for the most part be less about people looking for real answers and more about institutions commandeering territory for themselves.  
+
+ 
+
+The Know-it-All Paradox 
+
+If a being is omniscient, then it doesn’t know what it is like to be ignorant. 
+
+The Paradox of the Omniscient Decider 
+
+If a being is omniscient, then it knows what it will decide to do. But if it always knows what it will decide to do, then it never decides to do anything. An omniscient being has a frozen belief-set. It knows past, present, and future and therefore never changes its mind. Therefore, it never changes its mind as to the desirability of a given course of action. Therefore, it never decides that a given course of action is indicated. Therefore, it never decides anything. Nor can it decide in advance that it will act in certain ways at certain junctions, since that too would be a form of decision-making. 
+
+ 
+The Paradox of the Omniscient Ignoramus
+
+If a being is omniscient, then it is not ignorant and therefore cannot know what it is like to be ignorant and therefore is not omniscient. 
+This is a veridical paradox, meaning that, rather than being a logical blunder, it is a cogent reductio ad absurdum on some proposition, the proposition in this case being that the concept of omniscience is coherent. And, as this paradox shows, the reason that proposition is incoherent is that knowledge of one kind may exclude knowledge of some other kind. And, as this paradox also shows, the reason for this in its turn that when subjective conditions are incompatible with each other, so are the corresponding bodies of self-knowledge.
+
+
+The Heavy Rock Paradox 
+
+If a being is omnipotent, he can make a rock so heavy that he cannot lift it, in which case he is not omnipotent. 
+Here is how this paradox is to be resolved. If a being is omnipotent, then it is ipso facto logically impossible that there should exist a rock so heavy that said being cannot lift it. In other words, if there exists such a being, then the existence of a rock that it cannot lift is in the same category as a four-sided triangle: such a rock is a surd and the inability of an omnipotent being to create such a rock is no more of an abridgement of its powers than such a being’s inability to create a four-sided triangle. 
+If there is some rock that a being cannot lift, that being is not omnipotent. But if there some incoherent condition that a creature cannot cause to be satisfied, that creature does not for that reason fail to be omnipotent. So if the concept of omnipotence is incoherent, it is not for the reason suggested by this paradox. 
+
+ 
+
+The Paradox of the Incoherent Institution
+
+If an institution exists to solve some problem, then it has an incentive to prevent that problem from being solved, since there will be no demand for that institution. So creating institutions to solve problems may prevent those problems from being solved. 
+For example, philosophy departments supposedly exist to solve philosophical problems (or teach people how to solve them). But as anyone who has been in such a department knows, on the rare occasions that somebody comes along who actually has a solution, or even a fragment thereof, he is mercilessly attacked. 
+To take another example: Departments that exist to help eliminate racial tensions exacerbate those tensions and create race-related problems where none existed. The same being true mutatis mutandis of women’s studies departments and gay studies departments. 
+But not all institutions are like this. Hospitals exist to solve medical problems and they do solve them. 
+The question is: What is the difference between an institution that solves the problems that it is meant to solve and an institution that prevents the solving of the problem that it is meant to solve? How does one know in advance whether a given institution will fall into the one category or the other? 
+The answer seems to be this. If an institution stands to gain money by solving the problem that it is supposed to solve, then it will try to do so; and it stands to lose money by doing so, it will prevent it from it being solved. 
+This raises the question: When is it profitable for an institution to solve a given problem and when it is not profitable? The answer to be this. A problem is profitable to solve if other problems take its place when it is solved and unprofitable to solve if they don’t. There are always more sick and injured people; and a hospital will get more future business if it does a good job with the patients that it has than if it doesn’t. There are not always more race-related problems or problems; so if a race-studies department actually eliminated racism, it would go out of existence. As for philosophical problems, there are always more philosophical problems, since philosophical problems are by-products of progress; but the intellectual instruments needed to solve a given philosophical problem are very often not those that are needed to solve the problems that would take its place were it to be solved. Advancing technology creates many new philosophical questions, but contemporary epistemologists would almost never even be able to recognize such problems, let alone solve them. So relative to the limitations of the people tasked with solving them, philosophical problems are the end-of-the-line, that being why philosophy departments are so inhospitable to attempts to solve the problems those same departments are supposed to solve. 
+
+
+
+The Preface Paradox 
+
+An author presumably believes each of the assertions in a book that he writes. But many books contain forward by the author in which he says that there are inevitably many false statements in the pages to come. How is this paradox to be solved? 
+It is solved by pointing that the key premise is false: an author usually doesn’t believe everything that he writes in a given book. A book is not just a list of assertions. A book consists of assertions supported by arguments. Let us grant for argument’s sake that a given author believes the main assertions of a book that he writes. It doesn’t follow that he wholeheartedly believes in each of the arguments that he adduces on behalf of those assertions. He probably judges those arguments to be relatively probative. He also may well have doubts about many of them but believes that, the totality of the relevant data being what it is, those arguments are probably more probative than not. 
+Much of what an author writes he writes not because he believes that it is true but because he believes that, the data being what it is, it must be true. 
+Suppose that Smith is an author who writes a book that is just a bare list of indisputable assertions, along the lines of: 1+1=2, Paris is the Capital of France, apes are mammals, and the like. Will Smith write a preface in which he says that the pages to come contain false assertions? No, except as an empty gesture. And a very empty gesture it would be, since he obviously does believe in each of the statements he makes in that book. Contrariwise, when an author does disclaim the contents of some book of his, it is at least in part because he isn’t 100% confident in the accuracy of what it contains, the reason being much of what he writes he writes not because he knows it to be true but because he judges it to be warranted, which is very different from believing it to be true. And there is nothing paradoxical about the idea that one might make a judgement in which one is not completely confident. We make such judgements every day. When deciding who to hire, I have to choose between Smith and Jones. I have only limited information but have to make a judgment, so I make one. Am I sure that it’s correct? Not necessarily. I may be sure only that given the limited information at my disposal, along with my limited ability to analyze that data, I made the best that choice that I could. An author is often in a similar position, especially when he is writing a bona fide book of substance, as opposed to a mere recitation of facts.
+
+Bhartrhari’s Paradox
+
+The contention that some things cannot be described self-refutes, since in saying of something that it cannot be described, one is describing that thing. This is Bhartrhari’s Paradox. 
+This paradox is based on a fallacy. Let S be the statement: “some things cannot be described.” There is no particular object x such that S says of x that x cannot be described. S makes a statement about a class of objects. It says that the class of indescribable objects is non-empty. There is no particular member of that class to which it ascribes the property of being indescribable. So there is no particular object to which S ascribes any property, and S therefore doesn’t self-refute. 
+We have seen that S does not self-refute. But is S true? Yes and no. S is ambiguous, and one of its disambiguations is true and the is false. S can be taken to mean: Given any language L, there exist objects that cannot be described in L. Thus disambiguated, S is true. A language is a recursively defined expression-class and therefore contains denumerably many expressions. (A class is denumerably if it has the same number of members as the class of natural numbers.) There exist non-denumerably many real numbers. (A class is non-denumerable if it is larger than the class of natural numbers.) Therefore, for any language, there exist objects that cannot be referred to in L. 
+S can also be taken to mean: There exist objects that cannot be described in any given language. Thus disambiguated, S is false, since given any object, there exists a possible language that can be refer to that object. 
+So S not only fails to refute but is actually true on one of its disambiguations, and  Bhartrhari’s Paradox is not so much a real paradox as it is a logical blunder.
+
+The Barber Paradox 
+
+Consider a barber who shaves all and only those who do not shave themselves. Does that barber shave himself? If he does, then he doesn’t; and if he doesn’t, then he does. Conclusion: Such a barber cannot exist. That is what this paradox shows. 
+Now consider the set of all sets that don’t contain themselves. If that set contains itself, then it doesn’t, and if doesn’t, then it does. Therefore, such a set cannot exist. 
+Bertrand Russell believed this to prove the falsity of the so-called Axiom of Comprehension, this being the principle that any given property generates a set. The idea is that although the property of being a set of all sets that don’t self-contain exists, there is no corresponding set; so the Axiom of Comprehension is false. 
+But the Axiom of Comprehension is correct, it being Russell’s reasoning that is off. To say that the class of humans doesn’t self-contain is to say that the set of humans is not a human. To say that the class of triangles doesn’t self-contain is to say that the set of triangles is not a triangle. In general, whenever it is meaningful, ‘S doesn’t self-contain’ is elliptical for some non-reflexive statement, the reason being that when it isn’t elliptical for such a statement it contains an undefined pronoun—a free-variable, in other words. And ‘the set of all sets that don’t contain themselves doesn’t contain itself’ is not elliptical for some non-reflexive statement and therefore isn’t significant, containing as it does an undefined pronoun and, consequently, a free variable.
+
+Unexpected Hanging Paradox 
+
+On Sunday, judge condemns Smith to be hanged some day the subsequent week on or before Friday, with the qualification that the day of the hanging will be a surprise to Smith. Smith deduces that he will not be hanged, his reasoning being as follows. He cannot be hanged on Friday, since, if he makes it to Friday, it won’t be a surprise to him that he is to hanged on that day. Nor therefore can be hanged on Thursday, since Friday has already been ruled out and since, if he makes it to Thursday, a Thursday-hanging won’t be a surprise to him. Nor, by parity of reasoning, can Smith be hanged on Wednesday, Tuesday, or Monday. So Smith won’t be hanged at all.  But Smith can be hanged under these circumstances.  
+The solution to this paradox lies in the fact that ‘surprise’ is a relative term: what is a surprise to one person may not be a surprise to another; and what is a surprise to a person at one time may not be a surprise to him at a later time. When the judge tells Smith that the day of his hanging will be a ‘surprise’ to him, he is correctly saying that until the day of his hanging, Smith will not have enough information to determine the day of his hanging. And the judge is right. Smith does not have enough information now to know when he will be hanged. And if he is hanged on Monday, he won’t have the requisite information until Monday. Same with Tuesday, Wednesday, Thursday, and Friday. For any given day of the week, Smith will not know until that day whether or not he will be hanged on that day. So until the very day it occurs, Smith’s hanging is indeed a surprise to him, it being irrelevant that on that day Smith ceases to be surprised, since by then the surprise has in effect already occurred. 
+	
+
+
+Ross’s Paradox
+
+If your room is clean, it follows that either your room is clean or the house has burned down. The strong entails the weak. But if I order you to clean your room, you are not complying if you either clean your room or burn down the house. Where ‘imperatival logic’ is concerned, the strong appears not to entail the weak. This asymmetry between alethic and imperatival logic is known as Ross’s Paradox. 
+Why this asymmetry? Because whereas statements have a word-to-world direction of fit, meaning that the speech-act must conform to the world, imperatives have a world-to-word direction of fit, meaning that the world must conform to the speech-act. A consequence is that in the logic of imperatives, validity flows from the general to the specific, not from the specific to the general, as with statement-logic. If I tell you “either clean your room or burn down the house”, you are complying with my command if you burn down the house, since you have thereby created a state of affairs that validates the proposition expressed in my command (namely, you either you clean your room or burn down the house). Not so if I tell you, “clean your room” and you burn down the house. But if I correctly say “your room is clean”, the world has already supplied us with a state of affairs that validates “either your room is clean or the house has burned down.” 
+To sum up: When direction-of-fit is from word-to-world, the general follows from the specific, but when direction-of-fit is from world-to-word, the specific follows from the general. 
+
+The Lottery Paradox 
+
+Suppose that there is a lottery in which 1,000 tickets are sold but only one ticket wins. It is rational regard to any given ticket as a loser. But if one does so, one must irrationally regard all of the tickets as losers. 
+This is not much of a paradox. First of all, given any ticket, it cannot be rationally believed that it will lose, but only that it is more likely than not that it will lose. To be sure, in some contexts, high probabilities are interchangeable with certainties: if one knows that x is 99% likely to occur, then one can ‘accept’ x’s occurrence, in the sense that one will act and within limits even reason as though it will definitely occur. But in this particular context, as in others, high probabilities are not interchangeable with certainties and that is the end of it. 
+It is not rational to believe (prior to the final lottery drawing) that a given ticket will lose, even though it is rational to believe it more likely than not that it will lose and to place one's bets accordingly. Acceptance is not belief. Acceptance is a pragmatic notion, and the legitimacy of a given case of acceptance is decided by its practical consequences. Belief is an alethic notion, and the legitimacy of a given case of belief is decided not by its practical consequences but by its correspondence with the truth.
+A related point is that beliefs are not justified on strictly statistical grounds. If your belief that Smith is smart is justified, it is not justified on the basis of your knowledge that Smith belongs to a category 99% of whose members are smart. It is justified by its being more explanatory than its negation.
+
+ 
+The Slacker’s Paradox 
+
+People who try to avoid working end up working harder than people who don't try to avoid working. Case in point: People who work for pyramid schemes. These schemes never involve putting in time at an office, and one can work one's own hours. Also, theoretically, one can make an unlimited amount of money at one of these schemes doing very little work. But that isn't how it works out. People involved in such schemes end up putting in longer hours than people with real jobs and doing harder work, while being paid little or nothing.
+This is not an isolated phenomenon. There are entire demographics of people whose professional lives are about avoiding work but who for that reason end up working far more than most people: street musicians, struggling actors, sex workers, and criminals. 
+The solution to this paradox is that slackers are playing a defensive game. By spurning the normal rules of economic engagement, they are forced to take whatever opportunities come their way, which means that they aren’t deciding the terms of those transactions and are therefore constantly short-selling themselves, so that the have to work extra hard to make up the difference. 
+People who are extremely successful don’t slack off, but they also don’t work excessively hard. And these two facts are related. They work mainly at choosing the kind of work that they do and spend relatively little of their energy doing work-proper. By contrast, less successful people, including drifters, do little in the way of deciding what kind of work they will do and commensurately more in the way of doing work-proper. 
+
+
+The Paradox of Economic Efficiency
+
+The more efficient an economy is, the less it depends on the work-input of any given person. The less it depends on any given person, the more useless to the economy any given person is and, consequently, the less able any given person is to find a way to earn a living by participating in it. So as economies become more efficient, people become more economically useless and therefore less able to earn a living and more dependent for their livelihood on welfare of some kind. Hence the following paradox: The more efficient an economy is, the more people tend to be prevented from profiting from it.  
+	Let us put this in concrete terms. Until recently, audio editing, such as the editing involved in making this very audio book, had to be done almost entirely manually. Very little of the process was automated. Somebody had to physically splice the tape to edit out sounds. Another person had to be in charge of all of the splicing-relating technology. And so on. This meant a lot of jobs for a lot of people. All of those jobs are now gone, since sound-editing is now done by an app that costs around $30/year, as opposed to the $30/hour charged by some union sound-technician. Now that sound-editing can be done so cheaply, audio-products are less expensive than before and also available in greater number and variety. But all of those sound people are either excluded from the economy or they had to find entirely new lines of work. In most cases, they are living off of dwindling savings and are basically parasites. 
+	And what is true of audio editing is true to varying degrees of many other economic sectors. Banking is largely automated. No more need for bank-tellers. Insurance-sales is largely automated. No more need for insurance salesman.  No more need for salesman of any kind. Nor is there is much of a need for supermarket cashiers. And the list goes on.
+	Where do these people go? Further and further down, until they cannot live without handouts. So as the economy becomes more efficient, people become more useless to the economy and therefore less able to profitably engage the economy. 
+
+The Raven Paradox
+
+Presumably, logically equivalent statements are confirmationally equivalent. In other words, if two statements entail each other, then anything that one confirms the one statement to a given degree also confirms the other statement to that degree. But this actually seems false when consider statement-pairs such as: 
+
+(i)	All ravens are black, 
+and 
+(ii)	All non-black things are non-ravens, 
+
+which, though logically equivalent, seem to confirmationally equivalent, in that a non-black non-raven confirms (ii) to a high degree but confirms (i) to no degree or at most to a low degree. 
+A number of very contrived solutions to this paradox have been proposed, all of which either deny that there is a paradox or invent ad hoc systems of logic to validate the ‘solution’ in question. 
+But the real solution is clear. First of all, it is only principled generalizations that can be confirmed. Supposing that you assert (i) with the intention of affirming a principled as opposed to an accidental generalization, you are saying that instances of the property of being a raven grounds or causes instances of blackness. Read thus, (i) is most certainly not equivalent with (ii) or with any variation thereof. Be it noted that while there is a natural nomic or causal reading of (i), there is no such reading of (ii). Also be it noted that it is only principled as opposed to accidental generalizations that can be confirmed. “All metal expands when heated” can be confirmed but not “all objects in Smith’s  pocket expand when heated.” In general, when read as principled and therefore confirmable generalization, “all x’s are y’s” has nomic or causal content is therefore not equivalent with “all non-y’s are non-x’s.” Case closed on the Raven Paradox. 
+
+The Riddle of Induction 
+
+I cannot legitimately infer that x’s will lead to y’s from the fact they have done so thus far unless I know that what has happened will continue to happen, but I cannot know that what has happened will continue to happen unless I can legitimately infer that x’s will lead to y’s from the fact that they have do so thus far. Knowledge of the past provides no basis for knowledge of the future. 
+Solution: When we know the future, it is on the basis of continuities, not regularities. For x to cause y is for y to be a continuation of x. It is not for x-like events to always precede y-like events. It is obviously to some extent on the basis of regularities that we know what causes what, but that is because regularities often tell us where to look for continuities---if I notice that the elevator comes every time I push a certain button, then I know where to look for a causal connection, meaning that I know where to look for a continuity. And until I have knowledge of such a continuity, I don’t have a good reason to believe that the elevator will come when the button is pushed. And once I do have knowledge of such a continuity, that is what serves as the basis for my being able to legitimately infer that the elevator will come after I push the button. And it so serves because, whereas discontinuity represent ex nihilo change, continuity represents preservation, and the legitimacy of the inference from cause to effect lies simply in the irrationality of positing spontaneities. 
+	Of course, one often knows that x causes y without knowing exactly how y is continuous with x. One can know that pushing the button causes the elevator to come without knowing anything about the intervening electrical and mechanical events. But such a case, one knows of secondary continuities that require one to posit a continuity in the context in question. I know of continuities involving the activities of building-personnel and maintenance-staff and the like, and these continuities are not compatible with the supposition that there is a gap between the pushing of the button and the arrival of the elevator.  
+	It follows that enumerative induction is either non-existent or illegitimate. When we make legitimate inferences as to the future, it is not on the basis of observation of repetitions; it is on the basis of knowledge of continuities. In some cases, knowledge of repetitions tells us where to look for continuities, but it never constitutes such knowledge. 
+And—to introduce a new point—we may have knowledge of continuities without having knowledge of repetitions, this being why we may know that x caused y, even though we know of no other cases of x-like events being followed by y-like events. For example, if I see the ice-cube melt, then even if I have never previously seen anything melt, I can know that the melting of the ice-cube is responsible for the puddle on the counter.
+	Given that knowledge of the future is not ultimately based on knowledge of past repetitions, it follows that Nelson Goodman’s so-called ‘new riddle of induction’, to which we now turn, is a non-riddle.
+
+The New Riddle of Induction 
+
+Suppose that up until time present time t, every time the button is pushed, the elevator comes, and suppose that this gives us reason to conclude that after t the elevator will come when the button is pushed. In that case, we have equal reason to suppose that the elevator will “shmarive”, where x “shmarives” if x either comes before time t or explodes after t. So the fact that has arrive after the button was pushed confirms that it will explode the next time the button is pushed no less than it confirms that it will arrive. 
+Solution: This riddle is a non-riddle, since it isn’t on the basis of concomitances, but of continuities, that we know what is going to happen. 
+
+Frege’s Puzzle 
+
+“Superman” and “Clark Kent” co-refer, but “Superman is in the building” doesn’t have the same meaning as “Clark Kent is in the building.” 
+The solution: “Superman is in the building” says that a certain property-set—being superhumanly strong and being able to fly, etc.—is uniquely instantiated and that any such instance is in the building, and “Clark Kent is in the building” says that a different property-set---being a reporter, wearing spectacles, etc.—is uniquely instantiated and that any such instance is in the building. 
+This brings us to Kripke’s Paradox. 
+
+Kripke’s Paradox 
+
+Names are mere labels; they are non-descriptive. “Clark Kent is a reporter”, though true, is not definitionally so; neither is “Clark Kent wears glasses” or any other statement that in any way singles out Clark Kent. The same is true of any given name, including “Superman”, so the solution just stated to Frege’s paradox cannot be right. 
+Solution: Kripke is right that names are non-descriptive and are therefore mere labels. But even mere labels ‘pick up’ descriptive information. One doesn’t know learn what a given name refers to in a vacuum. Suppose that person x’s is name is “Hendricks”, and suppose that I learn this because, while pointing to x, you say “that is Henricks.” Hendricks is given to me as having various features—as being a in a certain place, having a certain appearance, and so on. So even though “Hendricks” is tall simply means “x is tall”, for the right value of “x”, what it means to me is descriptively much richer and will be along the lines “there was an individual having such and such features whom I saw on a certain occasion and that individual is tall.” And if x also goes by the name “Revere”, then even though “Revere is tall” simply means “x is tall”, what such utterances mean to me may so different from what utterances of “Hendricks is tall” mean to me that I won’t know that “Hendricks” and “Revere” co-refer. There is semantics—what expressions literally mean—and there is knowledge of semantics. And how a given person knows the literal meaning of a given expression may affect what is to meant to him by sentences involving that expression. So yes—Kripke is right about the semantics of proper names. But semantics isn’t known in a vacuum, a consequence being that two utterances that have the same literal meaning—for example “Hendricks is tall” and “Revere is tall”—may convey very different bodies of information to whose who know that literal meaning.
+
+The Ratiocinator’s Paradox 
+
+If I know that X is true, then I know of some truth Y that justifies my acceptance of X; and by the same token, if I know of that Y is true, then I know of some truth Z that justifies my acceptance of Y; and so on ad infinitum. Therefore, one must have knowledge of infinitely many truths before one can have knowledge of a single one, and knowledge is therefore impossible. The solution: Although a belief must be justified if it is to be knowledge, it isn’t necessary that one know that justification. Knowledge starts with beliefs that are not knowledge. If such a belief is useful, which it won’t be unless it is consistent with the data and therefore justified, its owner is likely to retain it. But it isn’t because its owner knows it to be useful that he retains it; it is because it is useful. Nor therefore is it because its owner knows it to be justified that he retains it; it is because it is justified. So even though only justified beliefs are knowledge-constitutive, there is no regress of the above-mentioned kind, since a belief can be justified without its owner knowing what that justification is. 
+
+Meno’s Paradox 
+
+In order to search for something, you must know what it is that you’re looking for. So in order to search for knowledge, you must know what it is that you're looking for. But if you know what it is that you're looking for, then you already know it and therefore cannot search for it. Solution: Suppose I am looking for your phone number. In that case, I know of a certain description (namely, 'sequence of digits that if entered on a phone dials your phone') that it is uniquely instantiated, but I don't know of any specific number-sequence that it instantiates that description; and my finding that number involves my coming to learn of some number-sequence that it satisfies description. In general, looking given piece of information involves knowing of some description that it is uniquely instantiated but not knowing what that instance is, and finding that information involves learning of some object that satisfies that description. Seeking knowledge knowing of a description that it is instantiated but not knowing what that instance; finding knowledge involves learning that of an already known object that it satisfies that description.
+
+The Learner’s Paradox 
+
+One cannot have knowledge without acquiring it, since all knowledge is learned, but one cannot acquire it without having it, since a mind devoid of knowledge is no mind at all. Solution: The ability to learn does indeed presuppose knowledge of a kind, but such knowledge is constitutive of one’s mind and therefore isn’t acquired. 
+
+The Content Externalism Paradox 
+
+Suppose that Mary lives here on Earth and Twin-Mary lives on some planet that is just like Earth except that it is on the other side of the universe. I have a concept of Mary as opposed to Twin-Mary because I am causally connected to Mary in a way that I am not causally connected to Twin-Mary, notwithstanding the fact that Mary-thoughts are subjectively indistinguishable from Twin-Mary-thoughts. Content externalism is the doctrine that, for the reason just given, thoughts that are subjectively indistinguishable may indeed have different contents. 
+If content externalism is correct, thoughts that have different contents may have the very same psychological properties, and content externalism therefore has the absurd consequence that a thought’s content has no effect on its psychological properties. Also, if content-externalism is correct, then Mary-thoughts are subjectively just like Twin-Mary-thoughts, and content externalism therefore has the false consequence that I cannot know that I am thinking about Mary as opposed to Twin-Mary. Content externalists either accept these absurdities or falsely deny that they follow from content externalism. 
+In any case, there is a straightforward and non-revisionist way to model this data-set. If JM sees Mary and thinks to himself whatever it is that caused this perception is lovely, his thought is true if Mary is lovely, it being irrelevant whether or not Twin-Mary is lovely. Similarly, if Twin-JM sees Twin-Mary and thinks to himself whatever it is that caused this perception is lovely, his thought is true if Twin-Mary is lovely, it being irrelevant whether or not Mary is lovely. So even though JM’s though concerns Mary whereas Twin-JM’s thought concerns Twin-Mary, the two thoughts are subjectively identical and they also agree in content. In light of this, suppose that JM thinks Mary is lovely by way of his having a self-referential thought of the just-described kind and make the corresponding supposition about Twin-JM. In that case, it immediately follows that even though JM’s thought concerns Mary and Twin-JM’s thought concerns Twin-Mary, those the two thoughts are subjectively identical and also agree in content. It also follows that JM cannot possibly be wrong if he thinks I am now thinking that Mary is lovely. This is because, relative to that supposition, JM has that thought by way of his thinking I am now thinking that whatever it is that caused this perception is lovely, and he obviously cannot be wrong to think the latter. 
+In general, when it is supposed that thoughts about the external world are had by way of self-referential thoughts of the just-described kind, it is immediately explained how it is that thoughts having different external referents may nonetheless be subjectively identical and also coincide in content, and it is also explained why it is that self-ascriptive thoughts of the kind we’ve been discussing cannot be possibly be false. 
+
+
+The Secession Paradox 
+
+The following paradox was brought to my attention by a Youtuber known as ‘Fringe Elements’. The more of a legal right one nation has to secede from another, the less of a moral right it has to do so. Explanation: Oftentimes when states attempt to secede from nations, they do so claiming that their act of secession is ‘legal’ under the laws of the host state. The Confederacy appears to have claimed this, its position being that the Constitution, or the spirit thereof, allowed states a certain degree of autonomy, including the right to secede. But the more legitimate a nation’s laws are, the less legitimate it is to secede from that nation. Hence our initial claim that the more of a legal ‘right’ to secede that a nation has, the less of a moral right it has to do so. 
+
+
+
+

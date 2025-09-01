@@ -1,0 +1,32 @@
+There are two broad types of relationships: formal and functional.
+Formal relationships hold between descriptions. A description is any statement that can be true or false.
+Example of a formal relationship: The description that a shape is a square cannot be true unless the description that it has four equal sides is true. Therefore, a shape’s being a square depends on its having four equal sides.
+
+Functional relationships hold between events or conditions. (An event is anything that happens in time.)
+Example of a functional relationship: A plant cannot grow without water. Therefore, a plant’s growth depends on its receiving water.
+
+The first type is structural, i.e., it holds between statements about features.
+The second is operational, i.e., it holds between things in the world as they act or change.
+
+Descriptions as objects of consideration
+The objects of evaluation are descriptions. Something is not evaluated unless it is described, and it is not described unless it can be stated. One can notice non-descriptions — sounds, objects, movements — but in the relevant sense one evaluates descriptions of them.
+
+Relationships not known through direct observation
+Some relationships are known, not through direct observation, but through reasoning. Such relationships are structural, as opposed to observational. Examples of structural relationships are:
+
+If A, then A or B.
+
+All tools require some form of use.
+
+Nothing can be both moving and perfectly still.
+
+There are no rules without conditions.
+
+1 obviously expresses a relationship; 2–4 do so less obviously, as their meanings are:
+
+2*. A tool’s being functional depends on its being usable.
+3*. An object’s being both moving and still depends on contradictory conditions, which cannot occur together.
+4*. The existence of rules depends on the existence of conditions to which they apply.
+
+Structural truth and structural understanding
+Structural understanding is always understanding of relationships. Observational understanding can be either direct or indirect; the same is true of structural understanding.

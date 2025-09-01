@@ -1,0 +1,115 @@
+Open server/services/aiProviders.ts
+
+1) At top of file (below imports), ADD this mapping EXACTLY:
+
+const PRESET_TEXT: Record<string,string> = {
+  "Compression — light (−15%)": "Cut filler; merge short clauses; keep meaning. Target ≈15% shorter.",
+  "Compression — medium (−30%)": "Trim hard; delete throat-clearing; tighten syntax. Target ≈30% shorter.",
+  "Compression — heavy (−45%)": "Sever redundancies; collapse repeats; keep core claims. Target ≈45% shorter.",
+  "Mixed cadence": "Alternate short (5–12 words) and long (20–35 words) sentences; avoid uniform rhythm.",
+  "Clause surgery": "Reorder main/subordinate clauses in ~30% of sentences without changing meaning.",
+  "Front-load claim": "Put the main conclusion in sentence 1; evidence follows.",
+  "Back-load claim": "Delay the main conclusion to the final 2–3 sentences.",
+  "Seam/pivot": "Drop smooth connectors once; allow one abrupt thematic pivot.",
+  "Imply one step": "Omit one obvious inferential step; keep it implicit (context makes it recoverable).",
+  "Conditional framing": "Recast one key sentence as: If/Unless …, then …. Keep content identical.",
+  "Local contrast": "Use exactly one contrast marker (but/except/aside) to mark a boundary; add no new facts.",
+  "Scope check": "Replace one absolute with a bounded form (e.g., 'in cases like these').",
+  "Deflate jargon": "Swap nominalizations for plain verbs where safe (e.g., utilization→use).",
+  "Kill stock transitions": "Delete 'Moreover/Furthermore/In conclusion' everywhere.",
+  "Hedge once": "Use exactly one hedge: probably/roughly/more or less.",
+  "Drop intensifiers": "Remove 'very/clearly/obviously/significantly'.",
+  "Low-heat voice": "Prefer plain verbs; avoid showy synonyms.",
+  "One aside": "Allow one short parenthetical or em-dash aside; strictly factual.",
+  "Concrete benchmark": "Replace one vague scale with a testable one (e.g., 'enough to X').",
+  "Swap generic example": "If the source has an example, make it slightly more specific; else skip.",
+  "Metric nudge": "Replace 'more/better' with a minimal, source-safe comparator (e.g., 'more than last case').",
+  "Asymmetric emphasis": "Linger on the main claim; compress secondary points sharply.",
+  "Cull repeats": "Delete duplicated sentences/ideas; keep the strongest instance.",
+  "Topic snap": "Allow one abrupt focus change; no recap.",
+  "No lists": "Output as continuous prose; remove bullets/numbering.",
+  "No meta": "No prefaces/apologies/phrases like 'as requested'.",
+  "Exact nouns": "Replace ambiguous pronouns with exact nouns.",
+  "Quote once": "If the source has a strong phrase, quote it once; otherwise skip.",
+  "Claim lock": "Do not add examples, scenarios, or data not present in the source.",
+  "Entity lock": "Keep names, counts, and attributions exactly as given.",
+  // Combo presets expand to atomic ones:
+  "Lean & Sharp": "Compression — medium (−30%); Mixed cadence; Imply one step; Kill stock transitions",
+  "Analytic": "Clause surgery; Front-load claim; Scope check; Exact nouns; No lists",
+};
+
+function expandPresets(selected: string[] = []): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  const add = (name: string) => {
+    const txt = PRESET_TEXT[name];
+    if (!txt) return;
+    if (txt.includes(";") && !txt.includes("…")) {
+      // combo: split by ';' and add atomic names
+      txt.split(";").map(s => s.trim()).forEach(alias => { if (PRESET_TEXT[alias] && !seen.has(alias)) { seen.add(alias); out.push(alias); }});
+    } else {
+      if (!seen.has(name)) { seen.add(name); out.push(name); }
+    }
+  };
+  selected.forEach(add);
+  return out;
+}
+
+function buildPresetBlock(selectedPresets?: string[], customInstructions?: string): string {
+  const expanded = expandPresets(selectedPresets || []);
+  const lines: string[] = [];
+  expanded.forEach(name => { lines.push(`- ${PRESET_TEXT[name]}`); });
+  const custom = (customInstructions || "").trim();
+  if (custom) lines.push(`- ${custom}`);
+  if (lines.length === 0) return "";
+  return `Apply ONLY these additional rewrite instructions (no other goals):\n${lines.join("\n")}\n\n`;
+}
+
+2) REPLACE your current prompt-building code with this (use the Raven Paradox default you already approved):
+
+function buildRewritePrompt(params: {
+  inputText: string;
+  styleText?: string;
+  contentMixText?: string;
+  selectedPresets?: string[];
+  customInstructions?: string;
+}): string {
+  const hasStyle = !!(params.styleText && params.styleText.trim() !== "");
+  const hasContent = !!(params.contentMixText && params.contentMixText.trim() !== "");
+  const styleSample = hasStyle ? params.styleText! : `DEFAULT STYLE SAMPLE (The Raven Paradox):
+
+Presumably, logically equivalent statements are confirmationally equivalent. In other words, if two statements entail each other, then anything that one confirms the one statement to a given degree also confirms the other statement to that degree. But this actually seems false when consider statement-pairs such as: 
+
+(i) All ravens are black, 
+and 
+(ii) All non-black things are non-ravens, 
+
+which, though logically equivalent, seem to confirmationally equivalent, in that a non-black non-raven confirms (ii) to a high degree but confirms (i) to no degree or at most to a low degree. 
+A number of very contrived solutions to this paradox have been proposed, all of which either deny that there is a paradox or invent ad hoc systems of logic to validate the ‘solution’ in question. 
+But the real solution is clear. First of all, it is only principled generalizations that can be confirmed. Supposing that you assert (i) with the intention of affirming a principled as opposed to an accidental generalization, you are saying that instances of the property of being a raven grounds or causes instances of blackness. Read thus, (i) is most certainly not equivalent with (ii) or with any variation thereof. Be it noted that while there is a natural nomic or causal reading of (i), there is no such reading of (ii). Also be it noted that it is only principled as opposed to accidental generalizations that can be confirmed. “All metal expands when heated” can be confirmed but not “all objects in Smith’s pocket expand when heated.” In general, when read as principled and therefore confirmable generalization, “all x’s are y’s” has nomic or causal content is therefore not equivalent with “all non-y’s are non-x’s.” Case closed on the Raven Paradox.`;
+
+  let prompt = `Rewrite the text below so that its style matches, at a granular level, the style of the following style sample:\n"${styleSample}"\n\n`;
+
+  if (hasContent) {
+    prompt += `Judiciously integrate relevant ideas, examples, and details from the following content reference to enrich the rewrite:\n"${params.contentMixText}"\n\n`;
+  }
+
+  // <<< PRESETS/APPLIED INSTRUCTIONS HERE >>>
+  prompt += buildPresetBlock(params.selectedPresets, params.customInstructions);
+
+  prompt += `Text to rewrite:\n"${params.inputText}"`;
+  return prompt;
+}
+
+3) In EACH provider method (rewriteWithOpenAI / Anthropic / Perplexity / DeepSeek), BEFORE sending to the model, set:
+const prompt = buildRewritePrompt({
+  inputText: params.inputText,
+  styleText: params.styleText,
+  contentMixText: params.contentMixText,
+  selectedPresets: params.selectedPresets,
+  customInstructions: params.customInstructions,
+});
+
+4) Remove any remaining “human-sounding”/“best rewrite” language anywhere.
+
+5) Save and redeploy.

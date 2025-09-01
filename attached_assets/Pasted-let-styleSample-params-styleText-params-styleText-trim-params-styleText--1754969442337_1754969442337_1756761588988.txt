@@ -1,0 +1,31 @@
+let styleSample =
+  params.styleText && params.styleText.trim() !== ""
+    ? params.styleText
+    : `DEFAULT STYLE SAMPLE (The Raven Paradox):
+
+Presumably, logically equivalent statements are confirmationally equivalent. In other words, if two statements entail each other, then anything that one confirms the one statement to a given degree also confirms the other statement to that degree. But this actually seems false when consider statement-pairs such as: 
+
+(i)	All ravens are black, 
+and 
+(ii)	All non-black things are non-ravens, 
+
+which, though logically equivalent, seem to confirmationally equivalent, in that a non-black non-raven confirms (ii) to a high degree but confirms (i) to no degree or at most to a low degree. 
+A number of very contrived solutions to this paradox have been proposed, all of which either deny that there is a paradox or invent ad hoc systems of logic to validate the ‘solution’ in question. 
+But the real solution is clear. First of all, it is only principled generalizations that can be confirmed. Supposing that you assert (i) with the intention of affirming a principled as opposed to an accidental generalization, you are saying that instances of the property of being a raven grounds or causes instances of blackness. Read thus, (i) is most certainly not equivalent with (ii) or with any variation thereof. Be it noted that while there is a natural nomic or causal reading of (i), there is no such reading of (ii). Also be it noted that it is only principled as opposed to accidental generalizations that can be confirmed. “All metal expands when heated” can be confirmed but not “all objects in Smith’s  pocket expand when heated.” In general, when read as principled and therefore confirmable generalization, “all x’s are y’s” has nomic or causal content is therefore not equivalent with “all non-y’s are non-x’s.” Case closed on the Raven Paradox.`
+
+let prompt = "";
+const hasContent = !!(params.contentMixText && params.contentMixText.trim() !== "");
+
+// CASES 1 & 3 (no Box C) — match style only
+if (!hasContent) {
+  prompt =
+    `Rewrite the text below so that its style matches, at a granular level, the style of the following style sample:\n"${styleSample}"\n\n` +
+    `Text to rewrite:\n"${params.inputText}"`;
+}
+// CASES 2 & 4 (has Box C) — match style + enrich with Box C
+else {
+  prompt =
+    `Rewrite the text below so that its style matches, at a granular level, the style of the following style sample:\n"${styleSample}"\n\n` +
+    `Judiciously integrate relevant ideas, examples, and details from the following content reference to enrich the rewrite:\n"${params.contentMixText}"\n\n` +
+    `Text to rewrite:\n"${params.inputText}"`;
+}
