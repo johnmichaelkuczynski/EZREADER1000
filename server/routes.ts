@@ -558,6 +558,150 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // AI Text Humanization endpoint
+  app.post('/api/humanize-text', async (req: Request, res: Response) => {
+    try {
+      const { text, styleSource, customInstructions = '', styleInstructions = '', llmProvider = 'anthropic' } = req.body;
+      
+      if (!text || !text.trim()) {
+        return res.status(400).json({ error: "Text to humanize is required" });
+      }
+
+      // Build comprehensive humanization prompt
+      let humanizationPrompt = `You are a professional text humanizer. Your goal is to rewrite AI-generated text to make it sound completely human-written while preserving all original meaning and content.
+
+CRITICAL REQUIREMENTS:
+1. Make the text sound natural and human-written
+2. Preserve ALL original meaning, facts, and information
+3. Match the writing style of the provided style source with surgical precision
+4. Apply the specified style techniques to improve naturalness
+5. Do NOT add new information not present in the original text
+6. Do NOT remove important content or context
+
+ORIGINAL TEXT TO HUMANIZE:
+${text}
+
+STYLE SOURCE TO MIMIC:
+${styleSource || 'Use natural, conversational academic writing style'}
+
+CUSTOM INSTRUCTIONS:
+${customInstructions || 'Rewrite to sound completely human while preserving all content'}
+
+STYLE TECHNIQUES TO APPLY:
+${styleInstructions || 'Apply natural human writing patterns'}
+
+OUTPUT INSTRUCTIONS:
+- Return ONLY the humanized text
+- No meta-commentary or explanations
+- Preserve exact meaning while making it sound human-written
+- Match the style source's tone, structure, and voice patterns
+- Apply humanization techniques subtly but effectively`;
+
+      let humanizedText = '';
+
+      // Route to appropriate LLM
+      switch (llmProvider) {
+        case 'openai':
+          humanizedText = await processTextWithOpenAI({
+            text: text,
+            instructions: humanizationPrompt,
+            contentSource: styleSource,
+            useContentSource: !!styleSource
+          });
+          break;
+        case 'anthropic':
+          humanizedText = await processTextWithAnthropic({
+            text: text,
+            instructions: humanizationPrompt,
+            contentSource: styleSource,
+            useContentSource: !!styleSource
+          });
+          break;
+        case 'deepseek':
+          humanizedText = await processTextWithDeepSeek(
+            text,
+            humanizationPrompt,
+            styleSource || undefined
+          );
+          break;
+        case 'perplexity':
+          humanizedText = await processTextWithPerplexity({
+            text: text,
+            instructions: humanizationPrompt,
+            contentSource: styleSource,
+            useContentSource: !!styleSource
+          });
+          break;
+        default:
+          humanizedText = await processTextWithAnthropic({
+            text: text,
+            instructions: humanizationPrompt,
+            contentSource: styleSource,
+            useContentSource: !!styleSource
+          });
+      }
+
+      if (!humanizedText) {
+        throw new Error('Failed to generate humanized text');
+      }
+
+      console.log(`Text humanized using ${llmProvider}, original length: ${text.length}, humanized length: ${humanizedText.length}`);
+      
+      res.json({ 
+        humanizedText: humanizedText.trim(),
+        originalLength: text.length,
+        humanizedLength: humanizedText.length,
+        llmProvider 
+      });
+    } catch (error: any) {
+      console.error('Text humanization error:', error);
+      res.status(500).json({ error: error.message || "Failed to humanize text" });
+    }
+  });
+
+  // File processing endpoint for humanizer
+  app.post('/api/process-file', upload.single('file'), async (req: Request, res: Response) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file provided" });
+      }
+
+      console.log('Processing file for humanizer:', req.file.originalname, 'Type:', req.file.mimetype, 'Size:', req.file.size);
+      
+      let extractedText = '';
+
+      if (req.file.mimetype === 'application/pdf') {
+        extractedText = await extractTextFromPDF(req.file.buffer);
+      } else if (req.file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || 
+                 req.file.mimetype === 'application/msword' ||
+                 req.file.mimetype === 'application/octet-stream') {
+        // Process Word document
+        const mammoth = await import('mammoth');
+        const result = await mammoth.extractRawText({ buffer: req.file.buffer });
+        extractedText = result.value;
+      } else if (req.file.mimetype === 'text/plain') {
+        extractedText = req.file.buffer.toString('utf-8');
+      } else {
+        return res.status(400).json({ error: "Unsupported file type for humanizer" });
+      }
+
+      if (!extractedText || extractedText.trim().length === 0) {
+        return res.status(400).json({ error: "Could not extract text from file" });
+      }
+
+      console.log('Extracted text length:', extractedText.length);
+      
+      res.json({ 
+        text: extractedText,
+        filename: req.file.originalname,
+        wordCount: extractedText.split(' ').length
+      });
+    } catch (error: any) {
+      console.error('File processing error for humanizer:', error);
+      res.status(500).json({ error: error.message || "Failed to process file" });
+    }
+  });
+
   // Send email with processed text
   // Simple PDF export using print dialog approach
   app.post('/api/export-pdf', async (req: Request, res: Response) => {

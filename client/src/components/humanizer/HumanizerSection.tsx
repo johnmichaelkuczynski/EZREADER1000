@@ -1,0 +1,916 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Upload, Download, Copy, RefreshCw, FileText, AlertCircle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { useDropzone } from 'react-dropzone';
+
+// Writing samples data structure
+const WRITING_SAMPLES = {
+  'content-neutral': [
+    {
+      id: 'formal-functional',
+      title: 'Formal and Functional Relationships',
+      content: `There are two broad types of relationships: formal and functional.
+Formal relationships hold between descriptions. A description is any statement that can be true or false.
+Example of a formal relationship: The description that a shape is a square cannot be true unless the description that it has four equal sides is true. Therefore, a shape's being a square depends on its having four equal sides.
+
+Functional relationships hold between events or conditions. (An event is anything that happens in time.)
+Example of a functional relationship: A plant cannot grow without water. Therefore, a plant's growth depends on its receiving water.
+
+The first type is structural, i.e., it holds between statements about features.
+The second is operational, i.e., it holds between things in the world as they act or change.
+
+Descriptions as objects of consideration
+The objects of evaluation are descriptions. Something is not evaluated unless it is described, and it is not described unless it can be stated. One can notice non-descriptions — sounds, objects, movements — but in the relevant sense one evaluates descriptions of them.
+
+Relationships not known through direct observation
+Some relationships are known, not through direct observation, but through reasoning. Such relationships are structural, as opposed to observational. Examples of structural relationships are:
+
+If A, then A or B.
+
+All tools require some form of use.
+
+Nothing can be both moving and perfectly still.
+
+There are no rules without conditions.
+
+1 obviously expresses a relationship; 2–4 do so less obviously, as their meanings are:
+
+2*. A tool's being functional depends on its being usable.
+3*. An object's being both moving and still depends on contradictory conditions, which cannot occur together.
+4*. The existence of rules depends on the existence of conditions to which they apply.
+
+Structural truth and structural understanding
+Structural understanding is always understanding of relationships. Observational understanding can be either direct or indirect; the same is true of structural understanding.`
+    },
+    {
+      id: 'explanatory-efficiency',
+      title: 'Alternative Account of Explanatory Efficiency',
+      content: `A continuation of the earlier case will make it clear what this means and why it matters. Why doesn't the outcome change under the given conditions? Because, says the standard account, the key factor remained in place. But, the skeptic will counter, perhaps we can discard that account; perhaps there's an alternative that fits the observations equally well. But, I would respond, even granting for argument's sake that such an alternative exists, it doesn't follow that it avoids more gaps than the one it replaces. It doesn't follow that it is comparable from a trade-off standpoint to the original—that it reduces as many issues as the old view while introducing no more new ones. In fact, the opposite often holds. Consider the alternative mentioned earlier. The cost of that account—meaning what new puzzles it creates—is vastly greater than its value—meaning what old puzzles it removes. It would be difficult to devise an account inconsistent with the conventional one that, while still matching the relevant evidence, is equally efficient in explanatory terms. You can test this for yourself. If there is reason to think even one such account exists, it is not because it has ever been produced. That reason, if it exists, must be purely theoretical. And for reasons soon to be made clear, no such purely theoretical reason can justify accepting it.`
+    }
+  ],
+  'epistemology': [
+    {
+      id: 'rational-belief',
+      title: 'Rational Belief and Underlying Structure',
+      content: `When would it become rational to believe that, next time, you're more likely than not to roll this as opposed to that number—that, for example, you're especially likely to roll a 27? This belief becomes rational when, and only when, you have reason to believe that a 27-roll is favored by the structures involved in the game. And that belief, in its turn, is rational if you know that circumstances at all like the following obtain: *The dice are magnetically attracted to the 27-slot. *On any given occasion, you have an unconscious intention to roll a 27 (even though you have no conscious intention of doing this), and you're such a talented dice-thrower that, if you can roll a 27 if it is your (subconscious) intention to do so. *The 27-slot is much bigger than any of the other slots. In fact, it takes up so much space on the roulette wheel that the remaining spaces are too small for the ball to fit into them. You are rational to believe that you'll continue to roll 27s to the extent that your having thus far rolled multiple 27s in a row gives you reason to believe there to be some underlying structure favoring that outcome.`
+    }
+  ],
+  'paradoxes': [
+    {
+      id: 'hume-induction',
+      title: 'Hume, Induction, and the Logic of Explanation',
+      content: `Hume's problem of induction concerns the justification of inductive inference. The problem is that inductive inferences seem to require the assumption that the future will resemble the past, but this assumption cannot itself be justified by inductive inference without circularity. Consider the standard formulation: we observe that the sun has risen every day in the past, and we infer that it will rise tomorrow. But what justifies this inference? It seems we must assume that the patterns we have observed will continue. Yet this assumption itself seems to require inductive support. But any attempt to provide such support would be circular, since it would involve using induction to justify induction. This is Hume's circle, and it poses a fundamental challenge to our epistemic practices.`
+    }
+  ]
+};
+
+// Style presets - top 8 are most important for humanization
+const STYLE_PRESETS = [
+  // Most important for humanization (1-8)
+  { id: 'mixed-cadence', label: 'Mixed cadence + clause sprawl', description: 'Alternate short and long sentences; allow some long sentences to wander with extra clauses.', priority: 'high' },
+  { id: 'asymmetric-emphasis', label: 'Asymmetric emphasis', description: 'Over-elaborate one point; compress or skate past another.', priority: 'high' },
+  { id: 'one-aside', label: 'One aside', description: 'Add a quick parenthetical or em-dash remark — factual, not jokey.', priority: 'high' },
+  { id: 'hedge-twice', label: 'Hedge twice', description: 'Use two mild uncertainty markers ("probably," "seems," "roughly," "I think").', priority: 'high' },
+  { id: 'local-disfluency', label: 'Local disfluency', description: 'Keep one redundant or slightly awkward phrase that still makes sense.', priority: 'high' },
+  { id: 'analogy-injection', label: 'Analogy injection', description: 'Insert a short, concrete comparison to something unrelated but illustrative.', priority: 'high' },
+  { id: 'topic-snap', label: 'Topic snap', description: 'Abruptly shift focus once, then return.', priority: 'high' },
+  { id: 'friction-detail', label: 'Friction detail', description: 'Drop in a small, seemingly unnecessary but real-world-plausible detail.', priority: 'high' },
+  
+  // Structure & Cadence
+  { id: 'compression-light', label: 'Compression — light (−15%)', description: 'Cut filler; merge short clauses; keep meaning.', priority: 'medium' },
+  { id: 'compression-medium', label: 'Compression — medium (−30%)', description: 'Trim hard; delete throat-clearing; tighten syntax.', priority: 'medium' },
+  { id: 'compression-heavy', label: 'Compression — heavy (−45%)', description: 'Sever redundancies; collapse repeats; keep core claims.', priority: 'medium' },
+  { id: 'decrease-50', label: 'Decrease by 50%', description: 'Reduce the length by half while preserving meaning.', priority: 'medium' },
+  { id: 'increase-150', label: 'Increase by 150%', description: 'Expand the text to 150% longer with additional detail and elaboration.', priority: 'medium' },
+  { id: 'mixed-cadence-alt', label: 'Mixed cadence', description: 'Alternate 5–35-word sentences; no uniform rhythm.', priority: 'medium' },
+  { id: 'clause-surgery', label: 'Clause surgery', description: 'Reorder main/subordinate clauses in 30% of sentences.', priority: 'medium' },
+  { id: 'front-load-claim', label: 'Front-load claim', description: 'Put the main conclusion in sentence 1; support follows.', priority: 'medium' },
+  { id: 'back-load-claim', label: 'Back-load claim', description: 'Delay the conclusion to the final 2–3 sentences.', priority: 'medium' },
+  { id: 'seam-pivot', label: 'Seam/pivot', description: 'Drop smooth connectors once; abrupt turn is fine.', priority: 'medium' },
+  
+  // Framing & Inference
+  { id: 'imply-one-step', label: 'Imply one step', description: 'Omit an obvious inferential step; leave it implicit.', priority: 'medium' },
+  { id: 'conditional-framing', label: 'Conditional framing', description: 'Recast one key sentence as "If/Unless …, then …".', priority: 'medium' },
+  { id: 'local-contrast', label: 'Local contrast', description: 'Use "but/except/aside" once to mark a boundary—no new facts.', priority: 'medium' },
+  { id: 'scope-check', label: 'Scope check', description: 'Replace one absolute with a bounded form ("in cases like these").', priority: 'medium' },
+  
+  // Diction & Tone
+  { id: 'deflate-jargon', label: 'Deflate jargon', description: 'Swap nominalizations for verbs where safe (e.g., "utilization" → "use").', priority: 'medium' },
+  { id: 'kill-stock-transitions', label: 'Kill stock transitions', description: 'Delete "Moreover/Furthermore/In conclusion" everywhere.', priority: 'medium' },
+  { id: 'hedge-once', label: 'Hedge once', description: 'Use exactly one: "probably/roughly/more or less."', priority: 'medium' },
+  { id: 'drop-intensifiers', label: 'Drop intensifiers', description: 'Remove "very/clearly/obviously/significantly."', priority: 'medium' },
+  { id: 'low-heat-voice', label: 'Low-heat voice', description: 'Prefer plain verbs; avoid showy synonyms.', priority: 'medium' },
+  { id: 'one-aside-alt', label: 'One aside', description: 'One short parenthetical or em-dash aside; keep it factual.', priority: 'medium' },
+  
+  // Concreteness & Benchmarks
+  { id: 'concrete-benchmark', label: 'Concrete benchmark', description: 'Replace one vague scale with a testable one (e.g., "enough to X").', priority: 'medium' },
+  { id: 'swap-generic-example', label: 'Swap generic example', description: 'If the source has an example, make it slightly more specific; else skip.', priority: 'medium' },
+  { id: 'metric-nudge', label: 'Metric nudge', description: 'Replace "more/better" with a minimal, source-safe comparator ("more than last case").', priority: 'medium' },
+  
+  // Asymmetry & Focus
+  { id: 'asymmetric-emphasis-alt', label: 'Asymmetric emphasis', description: 'Linger on the main claim; compress secondary points sharply.', priority: 'medium' },
+  { id: 'cull-repeats', label: 'Cull repeats', description: 'Delete duplicated sentences/ideas; keep the strongest instance.', priority: 'medium' },
+  { id: 'topic-snap-alt', label: 'Topic snap', description: 'Change focus abruptly once; no recap.', priority: 'medium' },
+  
+  // Formatting & Output Hygiene
+  { id: 'no-lists', label: 'No lists', description: 'Force continuous prose; remove bullets/numbering.', priority: 'low' },
+  { id: 'no-meta', label: 'No meta', description: 'No prefaces, apologies, or "as requested" scaffolding.', priority: 'low' },
+  { id: 'exact-nouns', label: 'Exact nouns', description: 'Replace vague pronouns where antecedent is ambiguous.', priority: 'low' },
+  { id: 'quote-once', label: 'Quote once', description: 'If the source contains a strong phrase, quote it once; else skip.', priority: 'low' },
+  
+  // Safety / Guardrails
+  { id: 'claim-lock', label: 'Claim lock', description: 'Do not add examples, scenarios, or data not present in the source.', priority: 'low' },
+  { id: 'entity-lock', label: 'Entity lock', description: 'Keep names, counts, and attributions exactly as given.', priority: 'low' },
+  
+  // Combo presets
+  { id: 'lean-sharp', label: 'Lean & Sharp', description: 'Compression-medium + mixed cadence + imply one step + kill stock transitions.', priority: 'medium' },
+  { id: 'analytic', label: 'Analytic', description: 'Clause surgery + front-load claim + scope check + exact nouns + no lists.', priority: 'medium' }
+];
+
+interface ChunkSelectionDialogProps {
+  chunks: string[];
+  onSelect: (selectedIndices: number[]) => void;
+  onClose: () => void;
+  isOpen: boolean;
+}
+
+function ChunkSelectionDialog({ chunks, onSelect, onClose, isOpen }: ChunkSelectionDialogProps) {
+  const [selectedChunks, setSelectedChunks] = useState<number[]>([]);
+
+  const toggleChunk = (index: number) => {
+    setSelectedChunks(prev => 
+      prev.includes(index) 
+        ? prev.filter(i => i !== index)
+        : [...prev, index]
+    );
+  };
+
+  const handleConfirm = () => {
+    onSelect(selectedChunks);
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-4xl max-h-[80vh] overflow-y-auto">
+        <h3 className="text-lg font-semibold mb-4">Select Chunks to Humanize</h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          Your document has been divided into {chunks.length} chunks. Select which ones you want to humanize:
+        </p>
+        
+        <div className="space-y-3 mb-6">
+          {chunks.map((chunk, index) => (
+            <div key={index} className="border rounded p-3">
+              <div className="flex items-start gap-3">
+                <Checkbox
+                  checked={selectedChunks.includes(index)}
+                  onCheckedChange={() => toggleChunk(index)}
+                />
+                <div className="flex-1">
+                  <h4 className="font-medium mb-2">Chunk {index + 1}</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3">
+                    {chunk.substring(0, 200)}...
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        <div className="flex gap-2">
+          <Button onClick={() => setSelectedChunks(chunks.map((_, i) => i))}>
+            Select All
+          </Button>
+          <Button variant="outline" onClick={() => setSelectedChunks([])}>
+            Clear All
+          </Button>
+          <div className="ml-auto flex gap-2">
+            <Button variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button onClick={handleConfirm} disabled={selectedChunks.length === 0}>
+              Humanize Selected ({selectedChunks.length})
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function HumanizerSection() {
+  const { toast } = useToast();
+  
+  // State for the three main boxes
+  const [aiText, setAiText] = useState('');
+  const [styleText, setStyleText] = useState('');
+  const [humanizedText, setHumanizedText] = useState('');
+  
+  // State for custom instructions
+  const [customInstructions, setCustomInstructions] = useState('');
+  
+  // State for controls
+  const [selectedLLM, setSelectedLLM] = useState('anthropic');
+  const [selectedWritingSample, setSelectedWritingSample] = useState('formal-functional');
+  const [selectedStylePresets, setSelectedStylePresets] = useState<string[]>([]);
+  
+  // State for AI detection results
+  const [aiTextDetection, setAiTextDetection] = useState<{ confidence: number } | null>(null);
+  const [styleTextDetection, setStyleTextDetection] = useState<{ confidence: number } | null>(null);
+  const [humanizedTextDetection, setHumanizedTextDetection] = useState<{ confidence: number } | null>(null);
+  
+  // State for processing
+  const [isHumanizing, setIsHumanizing] = useState(false);
+  const [isDetectingAI, setIsDetectingAI] = useState(false);
+  
+  // State for chunking
+  const [textChunks, setTextChunks] = useState<string[]>([]);
+  const [showChunkSelection, setShowChunkSelection] = useState(false);
+  
+  // File upload refs
+  const aiTextFileRef = useRef<HTMLInputElement>(null);
+  const styleTextFileRef = useRef<HTMLInputElement>(null);
+
+  // Dropzone for AI text
+  const aiTextDropzone = useDropzone({
+    onDrop: (files) => handleFileUpload(files[0], 'ai'),
+    accept: {
+      'application/pdf': ['.pdf'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'application/msword': ['.doc'],
+      'text/plain': ['.txt']
+    },
+    multiple: false
+  });
+
+  // Dropzone for style text
+  const styleTextDropzone = useDropzone({
+    onDrop: (files) => handleFileUpload(files[0], 'style'),
+    accept: {
+      'application/pdf': ['.pdf'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'application/msword': ['.doc'],
+      'text/plain': ['.txt']
+    },
+    multiple: false
+  });
+
+  // File upload handler
+  const handleFileUpload = async (file: File, boxType: 'ai' | 'style') => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/process-file', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error(`Upload failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (boxType === 'ai') {
+        setAiText(data.text);
+        // Auto-detect AI for uploaded text
+        detectAI(data.text, 'ai');
+      } else {
+        setStyleText(data.text);
+        // Auto-detect AI for uploaded style text
+        detectAI(data.text, 'style');
+      }
+
+      toast({
+        title: "File uploaded successfully",
+        description: `Document processed and text extracted.`
+      });
+    } catch (error: any) {
+      console.error('File upload error:', error);
+      toast({
+        title: "Upload failed",
+        description: error.message || "Could not process file",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // AI Detection function
+  const detectAI = async (text: string, boxType: 'ai' | 'style' | 'humanized') => {
+    if (!text.trim()) return;
+    
+    try {
+      setIsDetectingAI(true);
+      
+      const response = await fetch('/api/detect-ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
+      });
+
+      if (!response.ok) {
+        throw new Error(`AI detection failed: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (boxType === 'ai') {
+        setAiTextDetection(result);
+      } else if (boxType === 'style') {
+        setStyleTextDetection(result);
+      } else {
+        setHumanizedTextDetection(result);
+      }
+    } catch (error: any) {
+      console.error('AI detection error:', error);
+      toast({
+        title: "AI detection failed",
+        description: error.message || "Could not analyze text",
+        variant: "destructive"
+      });
+    } finally {
+      setIsDetectingAI(false);
+    }
+  };
+
+  // Auto-detect AI when text changes
+  useEffect(() => {
+    if (aiText.trim()) {
+      const debounceTimer = setTimeout(() => detectAI(aiText, 'ai'), 1000);
+      return () => clearTimeout(debounceTimer);
+    }
+  }, [aiText]);
+
+  useEffect(() => {
+    if (styleText.trim()) {
+      const debounceTimer = setTimeout(() => detectAI(styleText, 'style'), 1000);
+      return () => clearTimeout(debounceTimer);
+    }
+  }, [styleText]);
+
+  useEffect(() => {
+    if (humanizedText.trim()) {
+      const debounceTimer = setTimeout(() => detectAI(humanizedText, 'humanized'), 1000);
+      return () => clearTimeout(debounceTimer);
+    }
+  }, [humanizedText]);
+
+  // Text chunking function
+  const chunkText = (text: string, chunkSize: number = 500): string[] => {
+    const words = text.split(' ');
+    const chunks: string[] = [];
+    
+    for (let i = 0; i < words.length; i += chunkSize) {
+      chunks.push(words.slice(i, i + chunkSize).join(' '));
+    }
+    
+    return chunks;
+  };
+
+  // Handle humanization
+  const handleHumanize = async (textToHumanize?: string) => {
+    const sourceText = textToHumanize || aiText;
+    
+    if (!sourceText.trim()) {
+      toast({
+        title: "No text to humanize",
+        description: "Please enter or upload text in Box A first.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Check if text is long and needs chunking
+    const wordCount = sourceText.split(' ').length;
+    if (wordCount > 500) {
+      const chunks = chunkText(sourceText);
+      setTextChunks(chunks);
+      setShowChunkSelection(true);
+      return;
+    }
+
+    await performHumanization(sourceText);
+  };
+
+  // Handle chunk selection
+  const handleChunkSelection = async (selectedIndices: number[]) => {
+    const selectedText = selectedIndices.map(i => textChunks[i]).join('\n\n');
+    await performHumanization(selectedText);
+  };
+
+  // Perform actual humanization
+  const performHumanization = async (text: string) => {
+    try {
+      setIsHumanizing(true);
+
+      // Get style source - either uploaded text or selected writing sample
+      let styleSource = styleText;
+      if (!styleSource.trim() && selectedWritingSample) {
+        // Find the selected writing sample
+        for (const category of Object.values(WRITING_SAMPLES)) {
+          const sample = category.find(s => s.id === selectedWritingSample);
+          if (sample) {
+            styleSource = sample.content;
+            break;
+          }
+        }
+      }
+
+      // Build style instructions from selected presets
+      const styleInstructions = selectedStylePresets
+        .map(presetId => {
+          const preset = STYLE_PRESETS.find(p => p.id === presetId);
+          return preset ? `${preset.label}: ${preset.description}` : '';
+        })
+        .filter(Boolean)
+        .join('\n');
+
+      const response = await fetch('/api/humanize-text', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text,
+          styleSource,
+          customInstructions,
+          styleInstructions,
+          llmProvider: selectedLLM
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Humanization failed: ${response.status}`);
+      }
+
+      const result = await response.json();
+      setHumanizedText(result.humanizedText);
+
+      toast({
+        title: "Text humanized successfully",
+        description: "The humanized text has been generated and AI detection is running."
+      });
+    } catch (error: any) {
+      console.error('Humanization error:', error);
+      toast({
+        title: "Humanization failed",
+        description: error.message || "Could not humanize text",
+        variant: "destructive"
+      });
+    } finally {
+      setIsHumanizing(false);
+    }
+  };
+
+  // Handle re-humanization
+  const handleReHumanize = () => {
+    if (!humanizedText.trim()) {
+      toast({
+        title: "No text to re-humanize",
+        description: "Generate a humanized text first.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    handleHumanize(humanizedText);
+  };
+
+  // Export functions
+  const exportText = async (format: 'pdf' | 'docx' | 'txt') => {
+    if (!humanizedText.trim()) {
+      toast({
+        title: "No content to export",
+        description: "Generate humanized text first.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/export-${format}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: humanizedText, title: 'Humanized Text' })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Export failed: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `humanized-text.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: "Export successful",
+        description: `Text exported as ${format.toUpperCase()}`
+      });
+    } catch (error: any) {
+      console.error('Export error:', error);
+      toast({
+        title: "Export failed",
+        description: error.message || "Could not export text",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Copy to clipboard
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Copied to clipboard",
+      description: "Text copied successfully"
+    });
+  };
+
+  return (
+    <div className="w-full max-w-7xl mx-auto p-6 space-y-8">
+      <div className="text-center mb-8">
+        <h2 className="text-3xl font-bold mb-2">AI Text Humanizer</h2>
+        <p className="text-gray-600 dark:text-gray-400">
+          Convert AI-written text into human-like text that bypasses AI detection
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Left Sidebar - Controls */}
+        <div className="lg:col-span-1 space-y-4">
+          {/* LLM Selection */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm">Language Model</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Select value={selectedLLM} onValueChange={setSelectedLLM}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="anthropic">Anthropic (Default)</SelectItem>
+                  <SelectItem value="openai">OpenAI</SelectItem>
+                  <SelectItem value="deepseek">DeepSeek</SelectItem>
+                  <SelectItem value="perplexity">Perplexity</SelectItem>
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
+
+          {/* Writing Samples */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm">Writing Samples</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Select value={selectedWritingSample} onValueChange={setSelectedWritingSample}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {WRITING_SAMPLES['content-neutral'].map(sample => (
+                    <SelectItem key={sample.id} value={sample.id}>
+                      📝 {sample.title}
+                    </SelectItem>
+                  ))}
+                  {WRITING_SAMPLES['epistemology'].map(sample => (
+                    <SelectItem key={sample.id} value={sample.id}>
+                      🧠 {sample.title}
+                    </SelectItem>
+                  ))}
+                  {WRITING_SAMPLES['paradoxes'].map(sample => (
+                    <SelectItem key={sample.id} value={sample.id}>
+                      ❓ {sample.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
+
+          {/* Style Presets */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm">Style Presets</CardTitle>
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                Presets 1-8 are most effective for humanization
+              </p>
+            </CardHeader>
+            <CardContent className="max-h-96 overflow-y-auto">
+              <div className="space-y-3">
+                {STYLE_PRESETS.map(preset => (
+                  <div key={preset.id} className="flex items-start space-x-2">
+                    <Checkbox
+                      id={preset.id}
+                      checked={selectedStylePresets.includes(preset.id)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedStylePresets(prev => [...prev, preset.id]);
+                        } else {
+                          setSelectedStylePresets(prev => prev.filter(id => id !== preset.id));
+                        }
+                      }}
+                    />
+                    <div className="flex-1">
+                      <Label 
+                        htmlFor={preset.id} 
+                        className="text-sm font-medium cursor-pointer flex items-center gap-1"
+                      >
+                        {preset.label}
+                        {preset.priority === 'high' && (
+                          <Badge variant="destructive" className="text-xs">★</Badge>
+                        )}
+                      </Label>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        {preset.description}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Main Content - Three Boxes */}
+        <div className="lg:col-span-3 space-y-6">
+          {/* Box A - AI Text Input */}
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <CardTitle className="flex items-center gap-2">
+                  Box A: AI Text to Humanize
+                  {aiTextDetection && (
+                    <Badge variant={aiTextDetection.confidence > 0.5 ? "destructive" : "default"}>
+                      {Math.round((1 - aiTextDetection.confidence) * 100)}% Human
+                    </Badge>
+                  )}
+                </CardTitle>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => aiTextFileRef.current?.click()}
+                  >
+                    <Upload className="h-4 w-4 mr-1" />
+                    Upload
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setAiText('')}
+                  >
+                    Clear
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div 
+                {...aiTextDropzone.getRootProps()}
+                className={`border-2 border-dashed rounded-lg p-4 ${
+                  aiTextDropzone.isDragActive 
+                    ? 'border-blue-400 bg-blue-50 dark:bg-blue-950' 
+                    : 'border-gray-200 dark:border-gray-700'
+                }`}
+              >
+                <input {...aiTextDropzone.getInputProps()} />
+                <input
+                  type="file"
+                  ref={aiTextFileRef}
+                  className="hidden"
+                  accept=".pdf,.docx,.doc,.txt"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleFileUpload(file, 'ai');
+                  }}
+                />
+                
+                <Textarea
+                  value={aiText}
+                  onChange={(e) => setAiText(e.target.value)}
+                  placeholder="Paste or upload AI-generated text here... Supports PDF, Word, and text files."
+                  className="min-h-[200px] border-0 resize-none focus-visible:ring-0"
+                />
+                
+                {aiTextDropzone.isDragActive && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-blue-50 dark:bg-blue-950 bg-opacity-75 rounded-lg">
+                    <p className="text-blue-600 dark:text-blue-400 font-medium">
+                      Drop file here to upload
+                    </p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Custom Instructions */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Custom Instructions (Optional)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Textarea
+                value={customInstructions}
+                onChange={(e) => setCustomInstructions(e.target.value)}
+                placeholder="Enter any specific instructions for how the text should be rewritten..."
+                className="min-h-[100px]"
+              />
+            </CardContent>
+          </Card>
+
+          {/* Box B - Style Sample */}
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <CardTitle className="flex items-center gap-2">
+                  Box B: Human Writing Style Sample
+                  {styleTextDetection && (
+                    <Badge variant={styleTextDetection.confidence > 0.5 ? "destructive" : "default"}>
+                      {Math.round((1 - styleTextDetection.confidence) * 100)}% Human
+                    </Badge>
+                  )}
+                </CardTitle>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => styleTextFileRef.current?.click()}
+                  >
+                    <Upload className="h-4 w-4 mr-1" />
+                    Upload
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setStyleText('')}
+                  >
+                    Clear
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div 
+                {...styleTextDropzone.getRootProps()}
+                className={`border-2 border-dashed rounded-lg p-4 ${
+                  styleTextDropzone.isDragActive 
+                    ? 'border-blue-400 bg-blue-50 dark:bg-blue-950' 
+                    : 'border-gray-200 dark:border-gray-700'
+                }`}
+              >
+                <input {...styleTextDropzone.getInputProps()} />
+                <input
+                  type="file"
+                  ref={styleTextFileRef}
+                  className="hidden"
+                  accept=".pdf,.docx,.doc,.txt"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleFileUpload(file, 'style');
+                  }}
+                />
+                
+                <Textarea
+                  value={styleText}
+                  onChange={(e) => setStyleText(e.target.value)}
+                  placeholder="Upload your own writing sample or leave empty to use the selected writing sample from the dropdown..."
+                  className="min-h-[150px] border-0 resize-none focus-visible:ring-0"
+                />
+                
+                {styleTextDropzone.isDragActive && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-blue-50 dark:bg-blue-950 bg-opacity-75 rounded-lg">
+                    <p className="text-blue-600 dark:text-blue-400 font-medium">
+                      Drop file here to upload
+                    </p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Humanize Button */}
+          <div className="text-center">
+            <Button 
+              onClick={() => handleHumanize()}
+              disabled={isHumanizing || !aiText.trim()}
+              size="lg"
+              className="w-64 h-12"
+            >
+              {isHumanizing ? 'Humanizing...' : 'Humanize Text'}
+            </Button>
+          </div>
+
+          {/* Box C - Humanized Output */}
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <CardTitle className="flex items-center gap-2">
+                  Box C: Humanized Text
+                  {humanizedTextDetection && (
+                    <Badge variant={humanizedTextDetection.confidence > 0.5 ? "destructive" : "default"}>
+                      {Math.round((1 - humanizedTextDetection.confidence) * 100)}% Human
+                    </Badge>
+                  )}
+                </CardTitle>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => copyToClipboard(humanizedText)}
+                    disabled={!humanizedText.trim()}
+                  >
+                    <Copy className="h-4 w-4 mr-1" />
+                    Copy
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => exportText('txt')}
+                    disabled={!humanizedText.trim()}
+                  >
+                    <Download className="h-4 w-4 mr-1" />
+                    TXT
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => exportText('docx')}
+                    disabled={!humanizedText.trim()}
+                  >
+                    <Download className="h-4 w-4 mr-1" />
+                    DOCX
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => exportText('pdf')}
+                    disabled={!humanizedText.trim()}
+                  >
+                    <Download className="h-4 w-4 mr-1" />
+                    PDF
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="border-2 border-gray-200 dark:border-gray-700 rounded-lg p-4 min-h-[300px]">
+                {humanizedText ? (
+                  <div className="whitespace-pre-wrap text-sm">
+                    {humanizedText}
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-400 dark:text-gray-600">
+                    <div className="text-center">
+                      <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                      <p>Humanized text will appear here</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Re-Humanize Button */}
+          {humanizedText && (
+            <div className="text-center">
+              <Button 
+                onClick={handleReHumanize}
+                disabled={isHumanizing}
+                variant="outline"
+                size="lg"
+                className="w-64 h-12"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                {isHumanizing ? 'Re-Humanizing...' : 'Re-Humanize'}
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Chunk Selection Dialog */}
+      <ChunkSelectionDialog
+        chunks={textChunks}
+        onSelect={handleChunkSelection}
+        onClose={() => setShowChunkSelection(false)}
+        isOpen={showChunkSelection}
+      />
+    </div>
+  );
+}

@@ -5,6 +5,7 @@ import { InputEditor } from "@/components/editor/InputEditor";
 import { OutputEditor } from "@/components/editor/OutputEditor";
 import { ContentSourceBox } from "@/components/editor/ContentSourceBox";
 import { VoiceInput } from "@/components/ui/voice-input";
+import { HumanizerSection } from "@/components/humanizer/HumanizerSection";
 
 import { ChatInterface } from "@/components/editor/ChatInterface";
 import { DialogueBox } from "@/components/editor/DialogueBox";
@@ -729,6 +730,11 @@ export default function Home() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      {/* AI Text Humanizer Section - Added at bottom as requested */}
+      <div className="mt-16 border-t pt-16">
+        <HumanizerSection />
+      </div>
     </div>
   );
 }
