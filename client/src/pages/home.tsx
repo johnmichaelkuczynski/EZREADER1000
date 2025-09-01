@@ -431,6 +431,13 @@ export default function Home() {
                 }}
                 onSendEmail={sendEmailWithDocument}
                 onRewrite={handleRewrite}
+                onSendToHumanizer={(text) => {
+                  setHumanizerInitialText(text);
+                  toast({
+                    title: "Text sent to humanizer",
+                    description: "Output text has been sent to the AI Text Humanizer"
+                  });
+                }}
                 isDetecting={isOutputDetecting}
                 isSendingEmail={isSendingEmail}
                 isRewriting={isRewriting}
@@ -732,25 +739,6 @@ export default function Home() {
       
       {/* AI Text Humanizer Section - Added at bottom as requested */}
       <div className="mt-16 border-t pt-16">
-        <div className="mb-6">
-          <div className="flex justify-end">
-            <Button
-              variant="outline"
-              onClick={() => {
-                // Find the HumanizerSection and set initial text
-                setHumanizerInitialText(outputText);
-                toast({
-                  title: "Text sent to humanizer",
-                  description: "Output text has been sent to the AI Text Humanizer"
-                });
-              }}
-              disabled={!outputText.trim()}
-              className="mb-4"
-            >
-              Send Output to Humanizer
-            </Button>
-          </div>
-        </div>
         <HumanizerSection 
           onSendToInput={(text) => setInputText(text)}
           initialText={humanizerInitialText}

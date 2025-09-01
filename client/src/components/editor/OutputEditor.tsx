@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Trash2, Copy, Download, Bot, Mail, Eye, EyeOff, RefreshCw } from 'lucide-react';
+import { Trash2, Copy, Download, Bot, Mail, Eye, EyeOff, RefreshCw, ArrowDown } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -37,6 +37,7 @@ interface OutputEditorProps {
   onDetectAI: (text: string) => Promise<void>;
   onSendEmail: (to: string, subject: string, message: string, originalText: string, transformedText: string) => Promise<boolean>;
   onRewrite: (text: string, instructions: string) => Promise<void>;
+  onSendToHumanizer?: (text: string) => void;
   isDetecting: boolean;
   isSendingEmail: boolean;
   isRewriting?: boolean;
@@ -56,6 +57,7 @@ export function OutputEditor({
   onDetectAI,
   onSendEmail,
   onRewrite,
+  onSendToHumanizer,
   isDetecting,
   isSendingEmail,
   isRewriting = false,
@@ -220,6 +222,25 @@ export function OutputEditor({
               <TooltipContent>AI Detect</TooltipContent>
             </Tooltip>
           </TooltipProvider>
+
+          {onSendToHumanizer && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="p-1 text-slate-400 hover:text-slate-600 transition-colors"
+                    onClick={() => onSendToHumanizer(text)}
+                    disabled={!text}
+                  >
+                    <ArrowDown className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Send to Humanizer</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
           
           <TooltipProvider>
             <Tooltip>

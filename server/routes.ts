@@ -161,6 +161,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
             data.examMode
           );
           break;
+        case 'azure':
+          // Azure OpenAI uses same interface as OpenAI but with different endpoint
+          processedText = await processTextWithOpenAI({
+            text: data.inputText,
+            instructions: data.instructions,
+            contentSource: data.contentSource,
+            styleSource: data.styleSource,
+            useContentSource: data.useContentSource,
+            useStyleSource: data.useStyleSource,
+            examMode: data.examMode
+          });
+          break;
         default:
           throw new Error('Invalid LLM provider');
       }

@@ -81,7 +81,7 @@ export const processTextSchema = z.object({
   contentSource: z.string().optional().default(""),
   styleSource: z.string().optional().default(""),
   instructions: z.string().optional().default(""),
-  llmProvider: z.enum(["openai", "anthropic", "perplexity", "deepseek"]),
+  llmProvider: z.enum(["openai", "anthropic", "perplexity", "deepseek", "azure"]),
   useContentSource: z.boolean().default(false),
   useStyleSource: z.boolean().default(false),
   reprocessOutput: z.boolean().default(false),
@@ -90,7 +90,7 @@ export const processTextSchema = z.object({
 
 export const detectAiSchema = z.object({
   text: z.string().min(1, "Text is required"),
-  llmProvider: z.enum(["openai", "anthropic", "perplexity", "deepseek"]).optional(),
+  llmProvider: z.enum(["openai", "anthropic", "perplexity", "deepseek", "azure"]).optional(),
 });
 
 export const searchOnlineSchema = z.object({
@@ -111,6 +111,6 @@ export const chatMessageSchema = z.object({
 export const chatRequestSchema = z.object({
   message: z.string().min(1, "Message is required"),
   conversationHistory: z.array(chatMessageSchema).default([]),
-  llmProvider: z.enum(["openai", "anthropic", "perplexity", "deepseek"]),
+  llmProvider: z.enum(["openai", "anthropic", "perplexity", "deepseek", "azure"]),
   contextDocument: z.string().optional(),
 });
