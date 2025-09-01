@@ -386,20 +386,25 @@ export function ContentSourceBox({
           </RadioGroup>
         </div>
 
-        {/* Query Content Source Feature - MUCH BIGGER */}
-        {text.trim() && (
-          <div className="mt-6 p-6 bg-blue-50 dark:bg-blue-950 rounded-lg border-2 border-blue-300 dark:border-blue-700">
-            <Label className="text-lg font-bold text-blue-900 dark:text-blue-100">Query Content Source</Label>
-            <p className="text-sm text-blue-700 dark:text-blue-300 mb-4">Ask questions about your uploaded content</p>
+        {/* Query Content Source Feature - MUCH BIGGER - ALWAYS VISIBLE */}
+        <div className="mt-6 p-6 bg-blue-50 dark:bg-blue-950 rounded-lg border-2 border-blue-300 dark:border-blue-700">
+          <Label className="text-lg font-bold text-blue-900 dark:text-blue-100">Query Content Source</Label>
+          <p className="text-sm text-blue-700 dark:text-blue-300 mb-4">
+            {text.trim() ? 'Ask questions about your uploaded content' : 'Upload content above to enable querying'}
+          </p>
             
             <div className="space-y-4">
               <Textarea
-                placeholder="What would you like to know about this content? Ask detailed questions about specific topics, concepts, or sections..."
+                placeholder={text.trim() ? 
+                  "What would you like to know about this content? Ask detailed questions about specific topics, concepts, or sections..." :
+                  "Upload content above to start asking questions about it..."
+                }
                 value={queryQuestion}
                 onChange={(e) => setQueryQuestion(e.target.value)}
                 className="min-h-[120px] text-base resize-none"
+                disabled={!text.trim()}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && e.ctrlKey) {
+                  if (e.key === 'Enter' && e.ctrlKey && text.trim()) {
                     e.preventDefault();
                     handleQueryContentSource();
                   }
@@ -408,11 +413,12 @@ export function ContentSourceBox({
               
               <Button
                 onClick={handleQueryContentSource}
-                disabled={isQuerying || !queryQuestion.trim()}
+                disabled={isQuerying || !queryQuestion.trim() || !text.trim()}
                 size="lg"
                 className="w-full h-12 text-base font-semibold"
               >
-                {isQuerying ? 'Querying Content Source...' : 'Ask Question (Ctrl+Enter)'}
+                {!text.trim() ? 'Upload content to enable querying' : 
+                 isQuerying ? 'Querying Content Source...' : 'Ask Question (Ctrl+Enter)'}
               </Button>
               
               {queryAnswer && (
@@ -439,7 +445,6 @@ export function ContentSourceBox({
               )}
             </div>
           </div>
-        )}
       </CardContent>
       
       {/* Search Dialog */}
