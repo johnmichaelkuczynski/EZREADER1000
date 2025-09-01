@@ -13,6 +13,44 @@ import { useDropzone } from 'react-dropzone';
 
 // Writing samples data structure - ACTUAL STYLE SAMPLES
 const WRITING_SAMPLES = {
+  'content-neutral': [
+    {
+      id: 'formal-functional',
+      title: 'Formal and Functional Relationships',
+      content: `There are two broad types of relationships: formal and functional.
+Formal relationships hold between descriptions. A description is any statement that can be true or false.
+Example of a formal relationship: The description that a shape is a square cannot be true unless the description that it has four equal sides is true. Therefore, a shape's being a square depends on its having four equal sides.
+
+Functional relationships hold between events or conditions. (An event is anything that happens in time.)
+Example of a functional relationship: A plant cannot grow without water. Therefore, a plant's growth depends on its receiving water.
+
+The first type is structural, i.e., it holds between statements about features.
+The second is operational, i.e., it holds between things in the world as they act or change.
+
+Descriptions as objects of consideration
+The objects of evaluation are descriptions. Something is not evaluated unless it is described, and it is not described unless it can be stated. One can notice non-descriptions — sounds, objects, movements — but in the relevant sense one evaluates descriptions of them.
+
+Relationships not known through direct observation
+Some relationships are known, not through direct observation, but through reasoning. Such relationships are structural, as opposed to observational. Examples of structural relationships are:
+
+If A, then A or B.
+
+All tools require some form of use.
+
+Nothing can be both moving and perfectly still.
+
+There are no rules without conditions.
+
+1 obviously expresses a relationship; 2–4 do so less obviously, as their meanings are:
+
+2*. A tool's being functional depends on its being usable.
+3*. An object's being both moving and still depends on contradictory conditions, which cannot occur together.
+4*. The existence of rules depends on the existence of conditions to which they apply.
+
+Structural truth and structural understanding
+Structural understanding is always understanding of relationships. Observational understanding can be either direct or indirect; the same is true of structural understanding.`
+    }
+  ],
   'philosophical': [
     {
       id: 'explanatory-efficiency',
@@ -70,6 +108,51 @@ const WRITING_SAMPLES = {
       id: 'education-paradox',
       title: 'Soft Communism and the Paradox of American Education',
       content: `The more money that the United States invests in education, the worse American education is. Explanation: In the US, when money is poured into education, it is not to improve education but is rather to provide incompetent people with fake employment as educational administrators or teachers. So with each new wave of educational funding, a bloated, entrenched and incompetent cadre of educational bureaucrats becomes even more bloated, entrenched and incompetent, with predictably adverse effects on student-learning.`
+    },
+    {
+      id: 'buridans-ass',
+      title: 'Buridan\'s Ass',
+      content: `An ass that has to choose between food and water and is exactly as hungry as it is thirsty cannot make a choice and will therefore be paralyzed by indecision. But such an ass would in fact be able to make a decision. Explanation: This isn't exactly a paradox. There is nothing absurd in the supposition that a creature in such a situation might simply 'halt', and we don't know that actual biological creatures would not in fact halt in such a situation, since it seldom if ever happens that a creature is confronted with options that are exactly equally appealing.`
+    },
+    {
+      id: 'obsessive-compulsive-paradox',
+      title: 'Obsessive-compulsive\'s Paradox',
+      content: `If the obsessive-compulsive doesn't give in to his compulsions, he suffers. If he does give into them, they get worse. Solution: If the obsessive-compulsive fights his compulsions, they wither and go away.`
+    },
+    {
+      id: 'analysis-paralysis-paradox',
+      title: 'Analysis Paralysis Paradox',
+      content: `Given that there is almost always a more rational course of action, the ability to identify rational courses of action may lead to a failure to act. Solution: There is a difference between intelligence and rationality. Intelligence answers the question: What is it objectively possible to do? Rationality answers the question: What do my limited resources of time, energy and intelligence make it incumbent on me to do? And the second answer breaks any deadlocks created by the first.`
+    },
+    {
+      id: 'primerica-paradox',
+      title: 'The Primerica Paradox',
+      content: `In order to work for Primerica, you need to have money, since you don't make any money working there. But if you have money you won't work for Primerica, because there is no reason to do so. And yet people work for Primerica. Explanation: People who are on welfare often have to provide proof that either have employment or are looking for it. If you pay a monthly fee of $50 to Primerica, you can list it as an employer. Plus, given that you are technically employed but are making no money at all, you are entitled to major tax exemptions.`
+    },
+    {
+      id: 'leno-paradox',
+      title: 'The Leno Paradox',
+      content: `The people who should commit suicide don't.`
+    },
+    {
+      id: 'skeptical-bureaucrat-paradox',
+      title: 'Skeptical Bureaucrat Paradox',
+      content: `When bureaucrats say they 'need more information', it's because they don't need it. They are determined not to help you and they're sending you on a fool's errand.`
+    },
+    {
+      id: 'forest-paradox',
+      title: 'The Forest Paradox',
+      content: `Knowing involves not knowing too much. If you know too much about Smith, you are likely to make excuses for him. If you know just enough, you can't make excuses for him and you'll see him for what he is.`
+    },
+    {
+      id: 'larry-david-paradox',
+      title: 'The Larry David Paradox',
+      content: `It is only when somebody has no merit that it becomes politically obligatory to say that they have merit.`
+    },
+    {
+      id: 'gratitude-paradox',
+      title: 'The Gratitude Paradox',
+      content: `The people who should be the most grateful are the least grateful. Explanation: The people who should be the most grateful are losers who were bailed out, and they needed to bailed out because they don't have enough integrity to give credit where it is due.`
     }
   ]
 };
@@ -600,6 +683,11 @@ export function HumanizerSection({ onSendToInput, initialText }: HumanizerSectio
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  {WRITING_SAMPLES['content-neutral'].map(sample => (
+                    <SelectItem key={sample.id} value={sample.id}>
+                      📝 {sample.title}
+                    </SelectItem>
+                  ))}
                   {WRITING_SAMPLES['philosophical'].map(sample => (
                     <SelectItem key={sample.id} value={sample.id}>
                       🧠 {sample.title}
