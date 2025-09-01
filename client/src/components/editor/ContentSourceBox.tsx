@@ -386,20 +386,20 @@ export function ContentSourceBox({
           </RadioGroup>
         </div>
 
-        {/* Query Content Source Feature */}
+        {/* Query Content Source Feature - MUCH BIGGER */}
         {text.trim() && (
-          <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950 rounded-md border border-blue-200 dark:border-blue-800">
-            <Label className="text-sm font-medium text-blue-900 dark:text-blue-100">Query Content Source</Label>
-            <p className="text-xs text-blue-700 dark:text-blue-300 mb-2">Ask questions about your uploaded content</p>
+          <div className="mt-6 p-6 bg-blue-50 dark:bg-blue-950 rounded-lg border-2 border-blue-300 dark:border-blue-700">
+            <Label className="text-lg font-bold text-blue-900 dark:text-blue-100">Query Content Source</Label>
+            <p className="text-sm text-blue-700 dark:text-blue-300 mb-4">Ask questions about your uploaded content</p>
             
-            <div className="space-y-2">
-              <Input
-                placeholder="What would you like to know about this content?"
+            <div className="space-y-4">
+              <Textarea
+                placeholder="What would you like to know about this content? Ask detailed questions about specific topics, concepts, or sections..."
                 value={queryQuestion}
                 onChange={(e) => setQueryQuestion(e.target.value)}
-                className="text-sm"
+                className="min-h-[120px] text-base resize-none"
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
+                  if (e.key === 'Enter' && e.ctrlKey) {
                     e.preventDefault();
                     handleQueryContentSource();
                   }
@@ -409,17 +409,31 @@ export function ContentSourceBox({
               <Button
                 onClick={handleQueryContentSource}
                 disabled={isQuerying || !queryQuestion.trim()}
-                size="sm"
-                className="w-full"
+                size="lg"
+                className="w-full h-12 text-base font-semibold"
               >
-                {isQuerying ? 'Querying...' : 'Ask Question'}
+                {isQuerying ? 'Querying Content Source...' : 'Ask Question (Ctrl+Enter)'}
               </Button>
               
               {queryAnswer && (
-                <div className="mt-2 p-2 bg-white dark:bg-gray-800 rounded border text-sm">
-                  <strong className="text-blue-900 dark:text-blue-100">Answer:</strong>
-                  <div className="mt-1 text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                <div className="mt-4 p-4 bg-white dark:bg-gray-800 rounded-lg border-2 border-green-200 dark:border-green-700 shadow-sm">
+                  <div className="flex items-center mb-2">
+                    <strong className="text-lg text-green-800 dark:text-green-200">Answer:</strong>
+                  </div>
+                  <div className="text-base text-gray-800 dark:text-gray-200 whitespace-pre-wrap leading-relaxed min-h-[100px] max-h-[400px] overflow-y-auto">
                     {queryAnswer}
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+                    <Button
+                      onClick={() => {
+                        setQueryQuestion('');
+                        setQueryAnswer('');
+                      }}
+                      variant="outline"
+                      size="sm"
+                    >
+                      Ask Another Question
+                    </Button>
                   </div>
                 </div>
               )}

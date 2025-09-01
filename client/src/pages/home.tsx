@@ -354,8 +354,8 @@ export default function Home() {
         
         {/* Content Source Box and Main Editors Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Content Source Box - Left Column on Large Screens */}
-          <div className="lg:col-span-3 order-2 lg:order-1">
+          {/* Content Source Box - Left Column on Large Screens - MADE BIGGER */}
+          <div className="lg:col-span-4 order-2 lg:order-1">
             <ContentSourceBox
               text={contentSource}
               onTextChange={setContentSource}
@@ -372,8 +372,8 @@ export default function Home() {
 
           </div>
           
-          {/* Main Editor Area - Right Column on Large Screens */}
-          <div className="lg:col-span-9 order-1 lg:order-2">
+          {/* Main Editor Area - Right Column on Large Screens - ADJUSTED FOR BIGGER CONTENT SOURCE */}
+          <div className="lg:col-span-8 order-1 lg:order-2">
             {/* Editor Toolbar */}
             <EditorToolbar
               onProcess={handleProcess}
