@@ -7,7 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Upload, Download, Copy, RefreshCw, FileText, AlertCircle } from 'lucide-react';
+import { Upload, Download, Copy, RefreshCw, FileText, AlertCircle, ChevronDown, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useDropzone } from 'react-dropzone';
 
@@ -248,6 +248,9 @@ export function HumanizerSection({ onSendToInput, initialText }: HumanizerSectio
   // State for chunking
   const [textChunks, setTextChunks] = useState<string[]>([]);
   const [showChunkSelection, setShowChunkSelection] = useState(false);
+  
+  // State for expandable writing samples
+  const [expandedSamples, setExpandedSamples] = useState<Set<string>>(new Set());
   
   // File upload refs
   const aiTextFileRef = useRef<HTMLInputElement>(null);
@@ -612,6 +615,55 @@ export function HumanizerSection({ onSendToInput, initialText }: HumanizerSectio
                   ))}
                 </SelectContent>
               </Select>
+              
+              {/* Writing Sample Previews */}
+              <div className="mt-4 space-y-2">
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-400">Preview Writing Samples:</p>
+                {Object.values(WRITING_SAMPLES).flat().map(sample => (
+                  <div key={sample.id} className="border rounded-md">
+                    <button
+                      onClick={() => {
+                        const newExpanded = new Set(expandedSamples);
+                        if (newExpanded.has(sample.id)) {
+                          newExpanded.delete(sample.id);
+                        } else {
+                          newExpanded.add(sample.id);
+                        }
+                        setExpandedSamples(newExpanded);
+                      }}
+                      className="w-full text-left p-2 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center justify-between"
+                    >
+                      <div className="flex-1">
+                        <p className="text-xs font-medium">{sample.title}</p>
+                        <p className="text-xs text-gray-500">
+                          {selectedWritingSample === sample.id ? '✓ Currently Selected' : 'Click to preview writing style'}
+                        </p>
+                      </div>
+                      {expandedSamples.has(sample.id) ? (
+                        <ChevronDown className="h-3 w-3" />
+                      ) : (
+                        <ChevronRight className="h-3 w-3" />
+                      )}
+                    </button>
+                    {expandedSamples.has(sample.id) && (
+                      <div className="p-3 border-t bg-gray-50 dark:bg-gray-900">
+                        <p className="text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap max-h-32 overflow-y-auto">
+                          {sample.content}
+                        </p>
+                        <div className="mt-2 flex justify-between text-xs text-gray-500">
+                          <span>{sample.content.length} characters</span>
+                          <button
+                            onClick={() => setSelectedWritingSample(sample.id)}
+                            className="text-blue-600 hover:text-blue-700 font-medium"
+                          >
+                            Use This Writing Style
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
 
