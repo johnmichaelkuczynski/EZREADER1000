@@ -31,9 +31,17 @@ export function Header({ llmProvider, onLLMProviderChange }: HeaderProps) {
   return (
     <header className="bg-white border-b border-slate-200 sticky top-0 z-10 shadow-sm">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <div className="flex items-center space-x-2">
-          <BookOpen className="text-2xl text-primary" size={24} />
-          <h1 className="text-xl font-semibold">EZ Reader</h1>
+        <div className="flex items-center space-x-4">
+          <a 
+            href="mailto:contact@zhisystems.ai" 
+            className="text-sm text-blue-600 hover:text-blue-800 hover:underline font-medium"
+          >
+            Contact Us
+          </a>
+          <div className="flex items-center space-x-2">
+            <BookOpen className="text-2xl text-primary" size={24} />
+            <h1 className="text-xl font-semibold">EZ Reader</h1>
+          </div>
         </div>
         <div className="flex items-center space-x-3">
           <div className="hidden md:flex items-center">
@@ -48,10 +56,10 @@ export function Header({ llmProvider, onLLMProviderChange }: HeaderProps) {
                   <SelectValue placeholder="Select LLM" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="openai">OpenAI</SelectItem>
-                  <SelectItem value="anthropic">Anthropic</SelectItem>
-                  <SelectItem value="perplexity">Perplexity</SelectItem>
-                  <SelectItem value="deepseek">DeepSeek</SelectItem>
+                  <SelectItem value="openai">ZHI 1</SelectItem>
+                  <SelectItem value="anthropic">ZHI 2</SelectItem>
+                  <SelectItem value="perplexity">ZHI 3</SelectItem>
+                  <SelectItem value="deepseek">ZHI 4</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -90,15 +98,19 @@ export function Header({ llmProvider, onLLMProviderChange }: HeaderProps) {
                   >
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="openai" id="openai" />
-                      <Label htmlFor="openai">OpenAI</Label>
+                      <Label htmlFor="openai">ZHI 1</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="anthropic" id="anthropic" />
-                      <Label htmlFor="anthropic">Anthropic</Label>
+                      <Label htmlFor="anthropic">ZHI 2</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="perplexity" id="perplexity" />
-                      <Label htmlFor="perplexity">Perplexity</Label>
+                      <Label htmlFor="perplexity">ZHI 3</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="deepseek" id="deepseek" />
+                      <Label htmlFor="deepseek">ZHI 4</Label>
                     </div>
                   </RadioGroup>
                 </div>

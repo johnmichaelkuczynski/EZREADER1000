@@ -660,10 +660,10 @@ export function HumanizerSection({ onSendToInput, initialText }: HumanizerSectio
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="anthropic">Anthropic (Default)</SelectItem>
-                  <SelectItem value="openai">OpenAI</SelectItem>
-                  <SelectItem value="deepseek">DeepSeek</SelectItem>
-                  <SelectItem value="perplexity">Perplexity</SelectItem>
+                  <SelectItem value="anthropic">ZHI 2 (Default)</SelectItem>
+                  <SelectItem value="openai">ZHI 1</SelectItem>
+                  <SelectItem value="deepseek">ZHI 4</SelectItem>
+                  <SelectItem value="perplexity">ZHI 3</SelectItem>
                 </SelectContent>
               </Select>
             </CardContent>

@@ -72,7 +72,7 @@ export default function Settings() {
         <CardContent>
           <div className="grid gap-6">
             <div className="grid gap-2">
-              <Label htmlFor="openai-key">OpenAI API Key</Label>
+              <Label htmlFor="openai-key">ZHI 1 API Key</Label>
               <Input
                 id="openai-key"
                 type="password"
@@ -89,13 +89,13 @@ export default function Settings() {
                   rel="noopener noreferrer"
                   className="text-blue-500 hover:underline"
                 >
-                  OpenAI Dashboard
+                  ZHI 1 Dashboard
                 </a>
               </p>
             </div>
             
             <div className="grid gap-2">
-              <Label htmlFor="anthropic-key">Anthropic API Key</Label>
+              <Label htmlFor="anthropic-key">ZHI 2 API Key</Label>
               <Input
                 id="anthropic-key"
                 type="password"
@@ -112,13 +112,13 @@ export default function Settings() {
                   rel="noopener noreferrer"
                   className="text-blue-500 hover:underline"
                 >
-                  Anthropic Console
+                  ZHI 2 Console
                 </a>
               </p>
             </div>
             
             <div className="grid gap-2">
-              <Label htmlFor="perplexity-key">Perplexity API Key</Label>
+              <Label htmlFor="perplexity-key">ZHI 3 API Key</Label>
               <Input
                 id="perplexity-key"
                 type="password"
@@ -135,7 +135,7 @@ export default function Settings() {
                   rel="noopener noreferrer"
                   className="text-blue-500 hover:underline"
                 >
-                  Perplexity API Settings
+                  ZHI 3 API Settings
                 </a>
               </p>
             </div>
