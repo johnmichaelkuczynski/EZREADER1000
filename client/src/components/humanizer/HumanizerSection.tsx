@@ -802,8 +802,11 @@ export function HumanizerSection({ onSendToInput, initialText }: HumanizerSectio
                 <CardTitle className="flex items-center gap-2">
                   Box A: AI Text to Humanize
                   {aiTextDetection && (
-                    <Badge variant={aiTextDetection.confidence > 0.5 ? "destructive" : "default"}>
-                      {Math.round((1 - aiTextDetection.confidence) * 100)}% Human
+                    <Badge variant={aiTextDetection.confidence > 0.5 ? "destructive" : "secondary"}>
+                      {aiTextDetection.confidence > 0.5 ? 
+                        `${Math.round(aiTextDetection.confidence * 100)}% AI` : 
+                        `${Math.round((1 - aiTextDetection.confidence) * 100)}% Human`
+                      }
                     </Badge>
                   )}
                 </CardTitle>
@@ -889,8 +892,11 @@ export function HumanizerSection({ onSendToInput, initialText }: HumanizerSectio
                 <CardTitle className="flex items-center gap-2">
                   Box B: Human Writing Style Sample
                   {styleTextDetection && (
-                    <Badge variant={styleTextDetection.confidence > 0.5 ? "destructive" : "default"}>
-                      {Math.round((1 - styleTextDetection.confidence) * 100)}% Human
+                    <Badge variant={styleTextDetection.confidence > 0.5 ? "destructive" : "secondary"}>
+                      {styleTextDetection.confidence > 0.5 ? 
+                        `${Math.round(styleTextDetection.confidence * 100)}% AI` : 
+                        `${Math.round((1 - styleTextDetection.confidence) * 100)}% Human`
+                      }
                     </Badge>
                   )}
                 </CardTitle>
@@ -973,8 +979,11 @@ export function HumanizerSection({ onSendToInput, initialText }: HumanizerSectio
                 <CardTitle className="flex items-center gap-2">
                   Box C: Humanized Text
                   {humanizedTextDetection && (
-                    <Badge variant={humanizedTextDetection.confidence > 0.5 ? "destructive" : "default"}>
-                      {Math.round((1 - humanizedTextDetection.confidence) * 100)}% Human
+                    <Badge variant={humanizedTextDetection.confidence > 0.5 ? "destructive" : "secondary"}>
+                      {humanizedTextDetection.confidence > 0.5 ? 
+                        `${Math.round(humanizedTextDetection.confidence * 100)}% AI` : 
+                        `${Math.round((1 - humanizedTextDetection.confidence) * 100)}% Human`
+                      }
                     </Badge>
                   )}
                 </CardTitle>
